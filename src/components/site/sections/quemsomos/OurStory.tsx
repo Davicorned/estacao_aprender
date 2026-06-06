@@ -8,14 +8,14 @@ export function OurStory() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
           <FadeUp>
-            <span className="text-sm font-semibold uppercase tracking-widest text-rose-500">
+            <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
               Nossa história
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
               Nossa História
             </h2>
             <p className="mt-6 leading-relaxed text-gray-600">
-              O Espaço IDE nasceu do sonho de criar um lugar onde crianças e adolescentes pudessem
+              O Estação Aprender nasceu do sonho de criar um lugar onde crianças e adolescentes pudessem
               encontrar apoio especializado para seu desenvolvimento emocional e cognitivo, em um
               ambiente acolhedor e humanizado.
             </p>
@@ -31,10 +31,10 @@ export function OurStory() {
           </FadeUp>
 
           <FadeUp delay={0.15}>
-            <div className="flex items-center justify-center rounded-3xl bg-gradient-to-br from-rose-50 to-pink-50 p-12">
+            <div className="flex items-center justify-center rounded-3xl bg-gradient-to-br from-[#FEF3E8] to-[#FDDFC4] p-12">
               <img
                 src={LOGO}
-                alt="Espaço IDE Psicologia"
+                alt="Estação Aprender"
                 className="h-64 w-64 rounded-full object-cover shadow-xl"
               />
             </div>

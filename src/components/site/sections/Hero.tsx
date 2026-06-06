@@ -8,22 +8,22 @@ const HERO_IMG =
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50 to-white">
+    <section className="relative overflow-hidden bg-gradient-to-br from-[#FEF3E8] via-[#FDDFC4] to-white">
       {/* Decorative blobs */}
-      <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-rose-200/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-pink-200/30 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-[#FBCF9E]/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[#FBCF9E]/30 blur-3xl" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <FadeUp>
-            <span className="inline-flex items-center gap-2 rounded-full bg-rose-100 px-4 py-1.5 text-xs font-semibold text-rose-600">
-              <span className="h-2 w-2 rounded-full bg-rose-500" />
+            <span className="inline-flex items-center gap-2 rounded-full bg-[#FEF3E8] px-4 py-1.5 text-xs font-semibold text-[#B85A24]">
+              <span className="h-2 w-2 rounded-full bg-[#FEF3E8]0" />
               Agendamento em até 24h
             </span>
 
             <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               Cuidamos de cada fase de desenvolvimento do{" "}
-              <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-[#D67F43] to-[#C4682E] bg-clip-text text-transparent">
                 seu filho(a)
               </span>
               !
@@ -40,14 +40,14 @@ export function Hero() {
                 href={WA_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-7 text-sm font-medium text-white shadow-lg shadow-rose-500/25 transition-all hover:from-rose-600 hover:to-pink-600"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-7 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E]"
               >
                 <Calendar className="h-4 w-4" />
                 Agendar atendimento
               </a>
               <a
                 href="/Servicos"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-medium text-gray-700 transition-colors hover:border-rose-200 hover:text-rose-500"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-medium text-gray-700 transition-colors hover:border-[#FBCF9E] hover:text-[#D67F43]"
               >
                 Conhecer serviços
                 <ArrowRight className="h-4 w-4" />
@@ -56,7 +56,7 @@ export function Hero() {
           </FadeUp>
 
           <FadeUp delay={0.15} className="relative hidden lg:block">
-            <div className="relative overflow-hidden rounded-3xl shadow-2xl shadow-rose-500/10">
+            <div className="relative overflow-hidden rounded-3xl shadow-2xl shadow-[#D67F43]/10">
               <img
                 src={HERO_IMG}
                 alt="Atendimento infantojuvenil"

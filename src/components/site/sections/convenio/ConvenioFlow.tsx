@@ -28,7 +28,7 @@ const CONVENIOS = [
 
 const WA_PARTICULAR =
   "https://wa.me/5511966654857?text=" +
-  encodeURIComponent("Olá! Gostaria de agendar uma consulta particular no Espaço IDE.");
+  encodeURIComponent("Olá! Gostaria de agendar uma consulta particular no Estação Aprender.");
 
 export function ConvenioFlow() {
   return (
@@ -66,10 +66,10 @@ export function ConvenioFlow() {
         </p>
       </div>
 
-      <div className="mt-6 rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 p-6 shadow">
+      <div className="mt-6 rounded-xl border-2 border-[#FBCF9E] bg-gradient-to-br from-[#FEF3E8] to-[#FDDFC4] p-6 shadow">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-rose-100">
-            <Zap className="h-6 w-6 text-rose-600" />
+          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-xl bg-[#FEF3E8]">
+            <Zap className="h-6 w-6 text-[#B85A24]" />
           </div>
           <div className="flex-1">
             <h3 className="mb-1 font-semibold text-gray-900">Não quer esperar?</h3>
@@ -81,7 +81,7 @@ export function ConvenioFlow() {
               href={WA_PARTICULAR}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex h-9 items-center rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-4 text-sm font-medium text-white shadow hover:from-rose-600 hover:to-pink-600"
+              className="inline-flex h-9 items-center rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-4 text-sm font-medium text-white shadow hover:from-[#B85A24] hover:to-[#A04E1E]"
             >
               Agendar particular
             </a>

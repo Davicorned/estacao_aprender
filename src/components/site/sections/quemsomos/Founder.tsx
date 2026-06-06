@@ -8,7 +8,7 @@ export function Founder() {
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-rose-500">
+          <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
             Idealizadora
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -16,7 +16,7 @@ export function Founder() {
           </h2>
           <p className="mt-3 text-gray-600">Neuropsicóloga pelo Albert Einstein</p>
 
-          <div className="mx-auto mt-10 h-64 w-64 overflow-hidden rounded-full shadow-xl ring-4 ring-rose-100">
+          <div className="mx-auto mt-10 h-64 w-64 overflow-hidden rounded-full shadow-xl ring-4 ring-[#FEF3E8]">
             <img src={FOUNDER_IMG} alt="Dra Karine Mendes" className="h-full w-full object-cover" />
           </div>
         </FadeUp>

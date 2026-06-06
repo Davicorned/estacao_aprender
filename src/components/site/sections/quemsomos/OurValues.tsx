@@ -29,7 +29,7 @@ export function OurValues() {
     <section className="bg-gray-50 py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="mb-16 text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-rose-500">
+          <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
             Nossos valores
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -41,8 +41,8 @@ export function OurValues() {
           {values.map(({ icon: Icon, title, desc }, i) => (
             <FadeUp key={title} delay={i * 0.08} className="h-full">
               <div className="flex h-full flex-col rounded-xl border-0 bg-white p-6 shadow-lg transition-shadow hover:shadow-xl">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-rose-100 to-pink-100">
-                  <Icon className="h-7 w-7 text-rose-500" />
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[#FEF3E8] to-[#FDDFC4]">
+                  <Icon className="h-7 w-7 text-[#D67F43]" />
                 </div>
                 <h3 className="mb-2 text-xl font-semibold text-gray-900">{title}</h3>
                 <p className="text-gray-600">{desc}</p>

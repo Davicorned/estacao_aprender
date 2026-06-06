@@ -11,13 +11,13 @@ import { Contact } from "@/components/site/sections/Contact";
 export const Route = createFileRoute("/Particular")({
   head: () => ({
     meta: [
-      { title: "Espaço IDE Psicologia — Morumbi" },
+      { title: "Estação Aprender — Morumbi" },
       {
         name: "description",
         content:
           "Equipe multiprofissional especializada no cuidado integral de crianças e adolescentes. Agendamento em até 24h.",
       },
-      { property: "og:title", content: "Espaço IDE Psicologia — Morumbi" },
+      { property: "og:title", content: "Estação Aprender — Morumbi" },
       {
         property: "og:description",
         content:
