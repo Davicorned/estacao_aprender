@@ -1,6 +1,7 @@
 import { FadeUp } from "../../FadeUp";
+import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 
-const LOGO = "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/1b4ae4335_Logo_novo.jpg";
+const LOGO = logoAsset.url;
 
 export function OurStory() {
   return (
@@ -35,7 +36,7 @@ export function OurStory() {
               <img
                 src={LOGO}
                 alt="Estação Aprender"
-                className="h-64 w-64 rounded-full object-cover shadow-xl"
+                className="h-auto w-full max-w-sm object-contain"
               />
             </div>
           </FadeUp>
