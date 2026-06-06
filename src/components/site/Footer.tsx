@@ -1,4 +1,5 @@
 import { Instagram, Facebook, Phone, Mail, MapPin } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 
 const LOGO = logoAsset.url;
@@ -48,9 +49,9 @@ export function Footer() {
               ["Convênio", "/Convenio"],
             ].map(([label, href]) => (
               <li key={href}>
-                <a href={href} className="text-gray-400 transition-colors hover:text-white">
+                <Link to={href} className="text-gray-400 transition-colors hover:text-white">
                   {label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
@@ -67,9 +68,9 @@ export function Footer() {
               ["Psicopedagogia", "/Servicos?servico=psicopedagogia"],
             ].map(([label, href]) => (
               <li key={href}>
-                <a href={href} className="text-gray-400 transition-colors hover:text-white">
+                <Link to={href} className="text-gray-400 transition-colors hover:text-white">
                   {label}
-                </a>
+                </Link>
               </li>
             ))}
           </ul>
