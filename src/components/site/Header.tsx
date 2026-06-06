@@ -11,7 +11,6 @@ const NAV = [
   { label: "Quem Somos", to: "/QuemSomos" },
   { label: "Serviços", to: "/Servicos" },
   { label: "Atendimento", to: "/Atendimento" },
-  { label: "Convênio", to: "/Convenio" },
   { label: "Contato", to: "/Contato" },
 ] as const;
 
@@ -47,7 +46,7 @@ export function Header() {
               className="hidden h-9 items-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-6 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E] sm:inline-flex"
             >
               <Calendar className="h-4 w-4" />
-              Agendar Atendimento (24h)
+              Agendar Atendimento
             </Link>
 
             <Sheet open={open} onOpenChange={setOpen}>

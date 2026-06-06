@@ -42,10 +42,6 @@ function ServicosPage() {
                 <Calendar className="h-4 w-4" />
                 Agendar atendimento
               </a>
-              <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm text-gray-600 shadow">
-                <CheckCircle2 className="h-4 w-4 text-[#D67F43]" />
-                Particular em até 24h
-              </div>
             </div>
           }
         />

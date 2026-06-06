@@ -15,7 +15,7 @@ export const Route = createFileRoute("/Particular")({
       {
         name: "description",
         content:
-          "Equipe multiprofissional especializada no cuidado integral de crianças e adolescentes. Agendamento em até 24h.",
+          "Equipe multiprofissional especializada no cuidado integral de crianças e adolescentes.",
       },
       { property: "og:title", content: "Estação Aprender — Morumbi" },
       {

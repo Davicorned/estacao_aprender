@@ -16,12 +16,7 @@ export function Hero() {
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <FadeUp>
-            <span className="inline-flex items-center gap-2 rounded-full bg-[#FEF3E8] px-4 py-1.5 text-xs font-semibold text-[#B85A24]">
-              <span className="h-2 w-2 rounded-full bg-[#FEF3E8]0" />
-              Agendamento em até 24h
-            </span>
-
-            <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+            <h1 className="text-4xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
               Cuidamos de cada fase de desenvolvimento do{" "}
               <span className="bg-gradient-to-r from-[#D67F43] to-[#C4682E] bg-clip-text text-transparent">
                 seu filho(a)
