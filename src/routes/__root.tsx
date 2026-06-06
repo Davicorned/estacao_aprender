@@ -77,14 +77,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Estação Aprender" },
+      { name: "description", content: "Estação Aprender — acolhimento, desenvolvimento e aprendizagem para crianças, adolescentes e famílias." },
+      { name: "theme-color", content: "#D67F43" },
+      { property: "og:title", content: "Estação Aprender" },
+      { property: "og:description", content: "Acolhimento, desenvolvimento e aprendizagem para crianças, adolescentes e famílias." },
+      { property: "og:site_name", content: "Estação Aprender" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
     ],
     links: [
       {

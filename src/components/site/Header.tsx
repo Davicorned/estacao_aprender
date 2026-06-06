@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Calendar, Menu } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
+import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 
-const LOGO = "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/1b4ae4335_Logo_novo.jpg";
+const LOGO = logoAsset.url;
 
 const NAV = [
   { label: "O Espaço", href: "/Particular" },
@@ -21,7 +22,7 @@ export function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           <a href="/Particular" className="flex items-center gap-3">
-            <img src={LOGO} alt="Estação Aprender" className="h-12 w-12 rounded-full object-cover" />
+            <img src={LOGO} alt="Estação Aprender" className="h-12 w-auto" />
             <span className="hidden font-semibold text-gray-900 sm:inline">
               Estação Aprender
             </span>

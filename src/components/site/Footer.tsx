@@ -1,6 +1,7 @@
 import { Instagram, Facebook, Phone, Mail, MapPin } from "lucide-react";
+import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 
-const LOGO = "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/1b4ae4335_Logo_novo.jpg";
+const LOGO = logoAsset.url;
 
 export function Footer() {
   return (
@@ -9,7 +10,7 @@ export function Footer() {
         {/* Brand */}
         <div>
           <div className="flex items-center gap-3">
-            <img src={LOGO} alt="Estação Aprender" className="h-10 w-10 rounded-full object-cover" />
+            <img src={LOGO} alt="Estação Aprender" className="h-10 w-auto" />
             <span className="text-lg font-semibold">Estação Aprender</span>
           </div>
           <p className="mt-4 text-sm leading-relaxed text-gray-400">
