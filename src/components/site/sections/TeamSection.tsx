@@ -251,13 +251,13 @@ export function TeamSection() {
           <div className="relative">
             <div
               ref={scrollerRef}
-              className="flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth px-2 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+              className="flex snap-x snap-mandatory gap-4 sm:gap-6 overflow-x-auto scroll-smooth px-1 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             >
               {equipe.map((profissional, idx) => (
                 <div
                   key={profissional.nome}
                   data-team-card
-                  className="snap-start shrink-0 basis-[80%] sm:basis-[45%] lg:basis-[30%]"
+                  className="snap-start shrink-0 basis-[85%] sm:basis-[48%] md:basis-[40%] lg:basis-[31%] xl:basis-[24%]"
                 >
                   <FadeUp delay={idx * 0.05}>
                     <TeamCard {...profissional} />
