@@ -27,7 +27,7 @@ const CONVENIOS = [
 ];
 
 const WA_PARTICULAR =
-  "https://wa.me/5511966654857?text=" +
+  "https://wa.me/5511932139815?text=" +
   encodeURIComponent("Olá! Gostaria de agendar uma consulta particular no Estação Aprender.");
 
 export function ConvenioFlow() {

@@ -7,7 +7,7 @@ import { PageBanner } from "@/components/site/PageBanner";
 import { ServicesAccordion } from "@/components/site/sections/servicos/ServicesAccordion";
 import { FadeUp } from "@/components/site/FadeUp";
 
-const WA = "https://wa.me/5511966654857?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20do%20Espa%C3%A7o%20IDE.";
+const WA = "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20do%20Esta%C3%A7%C3%A3o%20Aprender.";
 
 export const Route = createFileRoute("/Servicos")({
   head: () => ({

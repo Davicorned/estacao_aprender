@@ -2,7 +2,7 @@ import { Calendar, ArrowRight, CheckCircle2 } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 
 const WA_LINK =
-  "https://wa.me/5511966654857?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Espa%C3%A7o%20IDE.";
+  "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Esta%C3%A7%C3%A3o%20Aprender.";
 const HERO_IMG =
   "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/81d826ca8_home.png";
 

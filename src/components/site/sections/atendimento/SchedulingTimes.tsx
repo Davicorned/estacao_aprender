@@ -2,7 +2,7 @@ import { Zap, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { FadeUp } from "../../FadeUp";
 
-const WA = "https://wa.me/5511982556501?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Espa%C3%A7o%20IDE.";
+const WA = "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Esta%C3%A7%C3%A3o%20Aprender.";
 
 export function SchedulingTimes() {
   return (

@@ -37,7 +37,7 @@ function AtendimentoPage() {
           title="Pronto para dar o primeiro passo?"
           description="Entre em contato agora e agende sua consulta em até 24 horas."
           buttonLabel="Agendar consulta particular"
-          href="https://wa.me/5511982556501?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Espa%C3%A7o%20IDE."
+          href="https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Esta%C3%A7%C3%A3o%20Aprender."
         />
       </main>
       <Footer />
