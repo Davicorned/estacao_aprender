@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 import ericaAsset from "@/assets/founder-erica.png.asset.json";
 
@@ -26,14 +26,68 @@ const equipe: TeamMember[] = [
     ],
     bio: "Fundadora da Estação Aprender. Especializada no atendimento de crianças com dificuldades de aprendizagem, transtornos do desenvolvimento e necessidade de olhar diferenciado.",
   },
+  {
+    nome: "Mariana Lopes",
+    titulo: "Psicóloga Infantil",
+    foto: null,
+    especialidades: [
+      "Psicologia infantil",
+      "TCC",
+      "Avaliação psicológica",
+      "Orientação parental",
+    ],
+    bio: "Atua há 10 anos no acompanhamento emocional de crianças e adolescentes, com foco em ansiedade e regulação emocional.",
+  },
+  {
+    nome: "Camila Ribeiro",
+    titulo: "Fonoaudióloga",
+    foto: null,
+    especialidades: [
+      "Fonoaudiologia",
+      "Linguagem infantil",
+      "Atraso de fala",
+      "Comunicação alternativa",
+    ],
+    bio: "Especialista em desenvolvimento da linguagem e estímulo da comunicação em crianças com atraso de fala e TEA.",
+  },
+  {
+    nome: "Beatriz Alves",
+    titulo: "Terapeuta Ocupacional",
+    foto: null,
+    especialidades: [
+      "Terapia Ocupacional",
+      "Integração sensorial",
+      "Coordenação motora",
+      "AVD's",
+    ],
+    bio: "Trabalha o desenvolvimento da autonomia e da integração sensorial em crianças com necessidades específicas.",
+  },
+  {
+    nome: "Rafael Mendes",
+    titulo: "Psicólogo ABA",
+    foto: null,
+    especialidades: [
+      "ABA",
+      "TEA",
+      "Manejo comportamental",
+      "Habilidades sociais",
+    ],
+    bio: "Foco no atendimento de crianças no espectro autista usando os princípios da Análise do Comportamento Aplicada (ABA).",
+  },
+  {
+    nome: "Juliana Castro",
+    titulo: "Psicopedagoga",
+    foto: null,
+    especialidades: [
+      "Psicopedagogia",
+      "Dislexia",
+      "TDAH",
+      "Reforço escolar",
+      "Métodos de estudo",
+    ],
+    bio: "Apoio a crianças com dificuldades de aprendizagem, com estratégias personalizadas para cada perfil.",
+  },
 ];
-
-function gridClasses(count: number) {
-  if (count <= 1) return "grid grid-cols-1 gap-6 max-w-sm mx-auto";
-  if (count === 2) return "grid grid-cols-1 sm:grid-cols-2 gap-6 max-w-2xl mx-auto";
-  if (count === 3) return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-5xl mx-auto";
-  return "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto";
-}
 
 function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: TeamMember) {
   const [open, setOpen] = useState(false);
@@ -139,6 +193,39 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: TeamMem
 }
 
 export function TeamSection() {
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const updateArrows = () => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 4);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
+  };
+
+  useEffect(() => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    updateArrows();
+    el.addEventListener("scroll", updateArrows, { passive: true });
+    window.addEventListener("resize", updateArrows);
+    return () => {
+      el.removeEventListener("scroll", updateArrows);
+      window.removeEventListener("resize", updateArrows);
+    };
+  }, []);
+
+  const scrollByCard = (dir: 1 | -1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    const card = el.querySelector<HTMLElement>("[data-team-card]");
+    const step = card ? card.getBoundingClientRect().width + 24 : el.clientWidth * 0.8;
+    el.scrollBy({ left: dir * step, behavior: "smooth" });
+  };
+
+  const single = equipe.length === 1;
+
   return (
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -154,13 +241,53 @@ export function TeamSection() {
           </p>
         </FadeUp>
 
-        <div className={gridClasses(equipe.length)}>
-          {equipe.map((profissional, idx) => (
-            <FadeUp key={profissional.nome} delay={idx * 0.1}>
-              <TeamCard {...profissional} />
+        {single ? (
+          <div className="mx-auto max-w-sm">
+            <FadeUp>
+              <TeamCard {...equipe[0]} />
             </FadeUp>
-          ))}
-        </div>
+          </div>
+        ) : (
+          <div className="relative">
+            <div
+              ref={scrollerRef}
+              className="flex snap-x snap-mandatory gap-6 overflow-x-auto scroll-smooth px-2 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {equipe.map((profissional, idx) => (
+                <div
+                  key={profissional.nome}
+                  data-team-card
+                  className="snap-start shrink-0 basis-[80%] sm:basis-[45%] lg:basis-[30%]"
+                >
+                  <FadeUp delay={idx * 0.05}>
+                    <TeamCard {...profissional} />
+                  </FadeUp>
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => scrollByCard(-1)}
+              aria-label="Anterior"
+              className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-[#D67F43] shadow-lg backdrop-blur transition-all hover:bg-white sm:flex ${
+                canLeft ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
+            >
+              <ChevronLeft className="h-5 w-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => scrollByCard(1)}
+              aria-label="Próximo"
+              className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-[#D67F43] shadow-lg backdrop-blur transition-all hover:bg-white sm:flex ${
+                canRight ? "opacity-100" : "pointer-events-none opacity-0"
+              }`}
+            >
+              <ChevronRight className="h-5 w-5" />
+            </button>
+          </div>
+        )}
       </div>
     </section>
   );
