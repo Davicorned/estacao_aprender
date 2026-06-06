@@ -27,16 +27,16 @@ export function WhenToSeekHelp() {
               Atenção aos sinais
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Quando buscar ajuda para o seu filho?
+              Você sente que algo mudou, mas não sabe ao certo o quê?
             </h2>
             <p className="mt-6 leading-relaxed text-gray-600">
-              Você já notou algo diferente no comportamento do seu filho? Talvez ele esteja mais ansioso,
-              agressivo, desmotivado ou enfrentando dificuldades na escola. Pode ser aquela tristeza que
-              persiste, birras intensas, ou desafios de comunicação que parecem não melhorar.
+              Esse instinto que você tem — de que seu filho não está bem, mas é difícil colocar em
+              palavras — merece ser levado a sério. Ansiedade, desmotivação, dificuldades de
+              aprendizagem ou mudanças de comportamento são formas que a criança tem de pedir ajuda.
             </p>
             <p className="mt-4 leading-relaxed text-gray-600">
-              Esses sinais não devem ser ignorados. Eles podem indicar que seu filho está enfrentando algo
-              que sozinho não consegue lidar e você não precisa passar por isso sem suporte.
+              Reconhecer isso já é o primeiro passo. O segundo é saber que existe suporte
+              especializado para caminhar junto com você e seu filho.
             </p>
 
             <div className="mt-8 grid grid-cols-1 gap-4 sm:grid-cols-2">
