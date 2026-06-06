@@ -1,46 +1,46 @@
-## Nova seção "Nossa Equipe" em /Particular
+## Carrossel horizontal para "Nossa Equipe"
 
-Criar uma nova seção de equipe com cards expansíveis, posicionada entre "Nossa Abordagem" e "Depoimentos" na página `/Particular`. Conforme solicitado, vou **ignorar o campo "Formação"** e usar apenas **especialidades** (tags), título, bio curta e registro (quando houver).
+Transformar a seção `TeamSection` em um **carrossel horizontal com peek** (estilo Netflix/streamers), em vez do grid atual. Comportamento desejado:
 
-### Arquivos
+- Cards lado a lado em uma trilha horizontal com scroll suave.
+- **Peek nas pontas**: o card da extremidade aparece "pela metade" para dar a dica visual de que há mais conteúdo para o lado.
+- **Setinhas discretas** (chevron esquerda/direita) sobrepostas às bordas, semi-transparentes, com hover mais opaco. Aparecem apenas quando há overflow.
+- Swipe nativo no mobile (scroll-snap), setas para desktop.
+- Quando houver apenas 1 profissional → mantém o card único centralizado (sem setas, sem peek).
 
-1. **Criar** `src/components/site/sections/TeamSection.tsx`
-   - Header centralizado: eyebrow "Nossa equipe", título "Profissionais especializados para o seu filho", subtítulo.
-   - Grid responsivo (1 col mobile → 2 sm → 3 lg, `max-w-5xl`).
-   - Anima com `FadeUp` (já usado nas outras seções).
-   - Contém o array `equipe` e o sub-componente `TeamCard`.
+### Implementação
 
-2. **Criar** `src/components/site/sections/TeamCard.tsx` (ou inline dentro do TeamSection)
-   - Estado local `open` (cada card abre/fecha independente).
-   - Card fechado: foto (ou avatar com iniciais sobre gradient laranja), barra accent, nome, título, até 3 tags, botão "Ver detalhes" com chevron.
-   - Card aberto: revela bio, registro (se houver) e todas as especialidades.
-   - Hover: sombra laranja `shadow-[#D67F43]/10` + zoom suave na foto.
+**Editar** `src/components/site/sections/TeamSection.tsx`:
 
-3. **Editar** `src/routes/Particular.tsx`
-   - Importar `TeamSection` e renderizar entre `<OurApproach />` e `<Testimonials />`.
+1. Trocar o `grid` por uma trilha `flex overflow-x-auto snap-x snap-mandatory` com `scroll-smooth` e `scrollbar` escondida.
+2. Cada `TeamCard` recebe largura responsiva fixa:
+   - mobile: `basis-[80%]` (deixa ~20% do próximo aparecendo)
+   - sm: `basis-[45%]`
+   - lg: `basis-[30%]` (mostra 3 + peek do 4º)
+   - `snap-start shrink-0`
+3. Padding lateral no container interno (`px-8 lg:px-12`) para o peek funcionar nas duas pontas.
+4. Botões de navegação:
+   - `<button>` absolutos à esquerda e direita, `top-1/2 -translate-y-1/2`.
+   - Estilo: círculo branco translúcido (`bg-white/70 backdrop-blur`), borda sutil, sombra, ícone `ChevronLeft`/`ChevronRight` em `#D67F43`.
+   - Hover: `bg-white` opaco.
+   - `onClick` faz `scrollBy({ left: ±cardWidth, behavior: "smooth" })` via `useRef`.
+   - Setas desabilitam quando atingem o início/fim (listener de scroll atualiza estado `canScrollLeft`/`canScrollRight`).
+5. Esconder scrollbar via classe utilitária inline (`[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`).
 
-### Conteúdo (dados da equipe)
+### Profissionais fictícios (para visualização)
 
-Como o usuário só forneceu os dados da Érica e pediu para eu decidir o resto, vou começar **apenas com a Érica** (1 card centralizado com `max-w-sm mx-auto`), usando a foto existente `src/assets/founder-erica.png`. Estrutura preparada para adicionar mais profissionais depois — basta inserir novos objetos no array `equipe`, sem alterar o componente.
+Adicionar **5 profissionais fictícios** ao array `equipe` (total 6 com a Érica), todos com `foto: null` para usar o **avatar de iniciais com gradient laranja** (já implementado no card). Conforme pedido, ignoro "Formação" e uso apenas especialidades + bio curta:
 
-Dados da Érica (ignorando "Formação" conforme pedido):
-- **Nome:** Érica Cornedi
-- **Título:** Fundadora
-- **Foto:** `founder-erica.png` (asset já no projeto)
-- **Especialidades:** Psicopedagogia, Psicomotricidade, ABA, Alfabetização, Reforço escolar
-- **Bio:** "Fundadora da Estação Aprender. Especializada no atendimento de crianças com dificuldades de aprendizagem, transtornos do desenvolvimento e necessidade de olhar diferenciado."
-- **Registro:** omitido (não informado)
+1. **Mariana Lopes** — Psicóloga Infantil — Psicologia infantil, TCC, Avaliação psicológica, Orientação parental — "Atua há 10 anos no acompanhamento emocional de crianças e adolescentes, com foco em ansiedade e regulação emocional."
+2. **Camila Ribeiro** — Fonoaudióloga — Fonoaudiologia, Linguagem infantil, Atraso de fala, Comunicação alternativa — "Especialista em desenvolvimento da linguagem e estímulo da comunicação em crianças com atraso de fala e TEA."
+3. **Beatriz Alves** — Terapeuta Ocupacional — Terapia Ocupacional, Integração sensorial, Coordenação motora, AVD's — "Trabalha o desenvolvimento da autonomia e da integração sensorial em crianças com necessidades específicas."
+4. **Rafael Mendes** — Psicólogo ABA — ABA, TEA, Manejo comportamental, Habilidades sociais — "Foco no atendimento de crianças no espectro autista usando os princípios da Análise do Comportamento Aplicada (ABA)."
+5. **Juliana Castro** — Psicopedagoga — Psicopedagogia, Dislexia, TDAH, Reforço escolar, Métodos de estudo — "Apoio a crianças com dificuldades de aprendizagem, com estratégias personalizadas para cada perfil."
 
-Quando houver 1 profissional o grid usa `max-w-sm mx-auto`; com 2 → `sm:grid-cols-2 max-w-2xl`; 3 → `lg:grid-cols-3 max-w-5xl`; 4+ → `lg:grid-cols-4 max-w-6xl` (lógica baseada no `length` do array).
+(Esses dados são apenas placeholders para visualizar o carrossel — você pode me passar os reais depois e eu substituo.)
 
-### Detalhes técnicos
+### Nota técnica
 
-- Tipagem TS para `TeamMember` (nome, titulo, foto?, especialidades, bio?, registro?).
-- Foto importada via `.asset.json` (`src/assets/founder-erica.png.asset.json` → `.url`), padrão do projeto.
-- Ícone `ChevronDown` de `lucide-react`.
-- Cores hardcoded conforme o prompt (`#D67F43`, `#C4682E`, `#FEF3E8`, `#B85A24`) — mesma paleta já usada no resto do site.
-- Sem alterações em `routeTree.gen.ts` nem em outras páginas.
-
-### Próximo passo após implementação
-
-Você poderá me enviar os demais profissionais (nome, título, especialidades, bio) e eu adiciono no array `equipe` — sem mexer no componente.
+- Hook simples com `useRef` + `useEffect` para listener de scroll. Sem dependências novas (sem `embla` / `swiper`) — fica leve e suficiente para o caso.
+- `FadeUp` continua envolvendo cada card.
+- Sem mudanças em `/Particular.tsx` nem em outras páginas.
