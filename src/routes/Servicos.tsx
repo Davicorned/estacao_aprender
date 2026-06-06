@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Calendar, CheckCircle2, MessageCircle } from "lucide-react";
+import { Calendar, MessageCircle } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
@@ -42,10 +42,6 @@ function ServicosPage() {
                 <Calendar className="h-4 w-4" />
                 Agendar atendimento
               </a>
-              <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm text-gray-600 shadow">
-                <CheckCircle2 className="h-4 w-4 text-[#D67F43]" />
-                Particular em até 24h
-              </div>
             </div>
           }
         />

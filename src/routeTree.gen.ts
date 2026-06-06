@@ -12,8 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as ServicosRouteImport } from './routes/Servicos'
 import { Route as QuemSomosRouteImport } from './routes/QuemSomos'
 import { Route as ParticularRouteImport } from './routes/Particular'
-import { Route as ConvenioObrigadoRouteImport } from './routes/ConvenioObrigado'
-import { Route as ConvenioRouteImport } from './routes/Convenio'
 import { Route as ContatoRouteImport } from './routes/Contato'
 import { Route as AtendimentoRouteImport } from './routes/Atendimento'
 import { Route as IndexRouteImport } from './routes/index'
@@ -31,16 +29,6 @@ const QuemSomosRoute = QuemSomosRouteImport.update({
 const ParticularRoute = ParticularRouteImport.update({
   id: '/Particular',
   path: '/Particular',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConvenioObrigadoRoute = ConvenioObrigadoRouteImport.update({
-  id: '/ConvenioObrigado',
-  path: '/ConvenioObrigado',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConvenioRoute = ConvenioRouteImport.update({
-  id: '/Convenio',
-  path: '/Convenio',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContatoRoute = ContatoRouteImport.update({
@@ -63,8 +51,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
-  '/Convenio': typeof ConvenioRoute
-  '/ConvenioObrigado': typeof ConvenioObrigadoRoute
   '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
@@ -73,8 +59,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
-  '/Convenio': typeof ConvenioRoute
-  '/ConvenioObrigado': typeof ConvenioObrigadoRoute
   '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
@@ -84,8 +68,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
-  '/Convenio': typeof ConvenioRoute
-  '/ConvenioObrigado': typeof ConvenioObrigadoRoute
   '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
@@ -96,8 +78,6 @@ export interface FileRouteTypes {
     | '/'
     | '/Atendimento'
     | '/Contato'
-    | '/Convenio'
-    | '/ConvenioObrigado'
     | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
@@ -106,8 +86,6 @@ export interface FileRouteTypes {
     | '/'
     | '/Atendimento'
     | '/Contato'
-    | '/Convenio'
-    | '/ConvenioObrigado'
     | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
@@ -116,8 +94,6 @@ export interface FileRouteTypes {
     | '/'
     | '/Atendimento'
     | '/Contato'
-    | '/Convenio'
-    | '/ConvenioObrigado'
     | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
@@ -127,8 +103,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtendimentoRoute: typeof AtendimentoRoute
   ContatoRoute: typeof ContatoRoute
-  ConvenioRoute: typeof ConvenioRoute
-  ConvenioObrigadoRoute: typeof ConvenioObrigadoRoute
   ParticularRoute: typeof ParticularRoute
   QuemSomosRoute: typeof QuemSomosRoute
   ServicosRoute: typeof ServicosRoute
@@ -155,20 +129,6 @@ declare module '@tanstack/react-router' {
       path: '/Particular'
       fullPath: '/Particular'
       preLoaderRoute: typeof ParticularRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/ConvenioObrigado': {
-      id: '/ConvenioObrigado'
-      path: '/ConvenioObrigado'
-      fullPath: '/ConvenioObrigado'
-      preLoaderRoute: typeof ConvenioObrigadoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/Convenio': {
-      id: '/Convenio'
-      path: '/Convenio'
-      fullPath: '/Convenio'
-      preLoaderRoute: typeof ConvenioRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/Contato': {
@@ -199,8 +159,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtendimentoRoute: AtendimentoRoute,
   ContatoRoute: ContatoRoute,
-  ConvenioRoute: ConvenioRoute,
-  ConvenioObrigadoRoute: ConvenioObrigadoRoute,
   ParticularRoute: ParticularRoute,
   QuemSomosRoute: QuemSomosRoute,
   ServicosRoute: ServicosRoute,

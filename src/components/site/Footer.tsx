@@ -46,7 +46,6 @@ export function Footer() {
               ["Quem Somos", "/QuemSomos"],
               ["Serviços", "/Servicos"],
               ["Atendimento", "/Atendimento"],
-              ["Convênio", "/Convenio"],
             ].map(([label, href]) => (
               <li key={href}>
                 <Link to={href} className="text-gray-400 transition-colors hover:text-white">
