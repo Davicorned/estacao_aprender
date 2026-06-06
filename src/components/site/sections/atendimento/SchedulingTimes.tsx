@@ -1,0 +1,74 @@
+import { Zap, Clock } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { FadeUp } from "../../FadeUp";
+
+const WA = "https://wa.me/5511982556501?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Espa%C3%A7o%20IDE.";
+
+export function SchedulingTimes() {
+  return (
+    <section className="bg-white py-20">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <FadeUp className="mb-16 text-center">
+          <span className="text-sm font-semibold uppercase tracking-widest text-rose-500">
+            Prazos de agendamento
+          </span>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+            Tempo de espera por modalidade
+          </h2>
+        </FadeUp>
+
+        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-8 md:grid-cols-2">
+          {/* Particular */}
+          <FadeUp>
+            <div className="rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 p-8 shadow">
+              <Badge className="bg-rose-500 text-white hover:bg-rose-500">
+                <Zap className="mr-1 h-3 w-3" />
+                Mais Rápido
+              </Badge>
+              <h3 className="mt-4 text-2xl font-bold text-gray-900">Consulta Particular</h3>
+              <div className="mt-4 flex items-center gap-2">
+                <Clock className="h-7 w-7 text-rose-500" />
+                <span className="text-3xl font-bold text-rose-500">Até 24h</span>
+              </div>
+              <p className="mt-4 leading-relaxed text-gray-600">
+                Agende sua consulta e seja atendido rapidamente. Disponibilidade imediata conforme agenda.
+              </p>
+              <a
+                id="whatsapp_start"
+                href={WA}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full bg-gradient-to-r from-rose-500 to-pink-500 text-sm font-medium text-white shadow-lg shadow-rose-500/25 transition-all hover:from-rose-600 hover:to-pink-600"
+              >
+                Agendar agora
+              </a>
+            </div>
+          </FadeUp>
+
+          {/* Convênio */}
+          <FadeUp delay={0.1}>
+            <div className="rounded-xl border border-gray-200 bg-white p-8 shadow">
+              <Badge variant="outline" className="border-gray-300 text-gray-700">
+                Convênio / Plano
+              </Badge>
+              <h3 className="mt-4 text-2xl font-bold text-gray-900">Consulta por Convênio</h3>
+              <div className="mt-4 flex items-center gap-2">
+                <Clock className="h-7 w-7 text-gray-500" />
+                <span className="text-3xl font-bold text-gray-700">15+ dias</span>
+              </div>
+              <p className="mt-4 leading-relaxed text-gray-600">
+                Prazo médio para agendamento via convênio. Depende de elegibilidade e disponibilidade.
+              </p>
+              <a
+                href="/Convenio"
+                className="mt-6 inline-flex h-12 w-full items-center justify-center rounded-full border border-gray-300 bg-white text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Solicitar via convênio
+              </a>
+            </div>
+          </FadeUp>
+        </div>
+      </div>
+    </section>
+  );
+}
