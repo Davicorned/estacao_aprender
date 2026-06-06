@@ -10,13 +10,13 @@ import { ConvenioForm } from "@/components/site/sections/convenio/ConvenioForm";
 export const Route = createFileRoute("/Convenio")({
   head: () => ({
     meta: [
-      { title: "Atendimento por Convênio — Espaço IDE Psicologia" },
+      { title: "Atendimento por Convênio — Estação Aprender" },
       {
         name: "description",
         content:
           "Solicite atendimento via convênio. Validamos a elegibilidade do seu plano e agendamos sua consulta.",
       },
-      { property: "og:title", content: "Atendimento por Convênio — Espaço IDE Psicologia" },
+      { property: "og:title", content: "Atendimento por Convênio — Estação Aprender" },
       {
         property: "og:description",
         content:

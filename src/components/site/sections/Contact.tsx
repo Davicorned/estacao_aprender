@@ -9,7 +9,7 @@ export function Contact() {
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="mb-12 text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-rose-500">
+          <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
             Contato
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -42,22 +42,22 @@ export function Contact() {
 
             {/* E-mail */}
             <a
-              href="mailto:ide.infantojuvenil@gmail.com"
+              href="mailto:contato@estacaoaprender.com.br"
               className="flex items-center gap-4 rounded-2xl bg-gray-50 p-4"
             >
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100">
-                <Mail className="h-6 w-6 text-rose-500" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FEF3E8]">
+                <Mail className="h-6 w-6 text-[#D67F43]" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-gray-900">E-mail</p>
-                <p className="break-all text-sm text-gray-600">ide.infantojuvenil@gmail.com</p>
+                <p className="break-all text-sm text-gray-600">contato@estacaoaprender.com.br</p>
               </div>
             </a>
 
             {/* Endereço */}
             <div className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100">
-                <MapPin className="h-6 w-6 text-rose-500" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FEF3E8]">
+                <MapPin className="h-6 w-6 text-[#D67F43]" />
               </div>
               <div className="flex-1 space-y-3">
                 <div>
@@ -77,8 +77,8 @@ export function Contact() {
 
             {/* Horário */}
             <div className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-rose-100">
-                <Clock className="h-6 w-6 text-rose-500" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[#FEF3E8]">
+                <Clock className="h-6 w-6 text-[#D67F43]" />
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-gray-900">Horário de Funcionamento</p>

@@ -7,7 +7,7 @@ import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 export const Route = createFileRoute("/ConvenioObrigado")({
   head: () => ({
     meta: [
-      { title: "Solicitação recebida — Espaço IDE Psicologia" },
+      { title: "Solicitação recebida — Estação Aprender" },
       {
         name: "description",
         content: "Recebemos sua solicitação de atendimento via convênio. Em breve entraremos em contato.",

@@ -11,12 +11,12 @@ export function QuickChoiceCards() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           {/* Particular */}
           <FadeUp>
-            <div className="rounded-xl border-2 border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 p-6 shadow">
+            <div className="rounded-xl border-2 border-[#FBCF9E] bg-gradient-to-br from-[#FEF3E8] to-[#FDDFC4] p-6 shadow">
               <div className="flex items-center justify-between">
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500">
                   <Phone className="h-7 w-7 text-white" />
                 </div>
-                <Badge className="bg-rose-500 text-white hover:bg-rose-500">Até 24h</Badge>
+                <Badge className="bg-[#FEF3E8]0 text-white hover:bg-[#D67F43]">Até 24h</Badge>
               </div>
               <h3 className="mt-5 text-xl font-bold text-gray-900">Consulta Particular</h3>
               <p className="mt-2 text-sm leading-relaxed text-gray-600">

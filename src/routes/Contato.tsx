@@ -9,9 +9,9 @@ import { Contact } from "@/components/site/sections/Contact";
 export const Route = createFileRoute("/Contato")({
   head: () => ({
     meta: [
-      { title: "Contato — Espaço IDE Psicologia" },
+      { title: "Contato — Estação Aprender" },
       { name: "description", content: "Fale conosco pelo WhatsApp, e-mail ou visite uma de nossas unidades em São Paulo." },
-      { property: "og:title", content: "Contato — Espaço IDE Psicologia" },
+      { property: "og:title", content: "Contato — Estação Aprender" },
       { property: "og:description", content: "Estamos prontos para ajudar você e sua família. Agende sua consulta." },
     ],
   }),

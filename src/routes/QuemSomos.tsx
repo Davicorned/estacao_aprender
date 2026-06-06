@@ -11,9 +11,9 @@ import { Founder } from "@/components/site/sections/quemsomos/Founder";
 export const Route = createFileRoute("/QuemSomos")({
   head: () => ({
     meta: [
-      { title: "Quem Somos — Espaço IDE Psicologia" },
-      { name: "description", content: "Conheça a história, os valores e a equipe do Espaço IDE Psicologia." },
-      { property: "og:title", content: "Quem Somos — Espaço IDE Psicologia" },
+      { title: "Quem Somos — Estação Aprender" },
+      { name: "description", content: "Conheça a história, os valores e a equipe do Estação Aprender." },
+      { property: "og:title", content: "Quem Somos — Estação Aprender" },
       { property: "og:description", content: "Cuidamos de cada fase do desenvolvimento do seu filho com uma equipe multidisciplinar." },
     ],
   }),

@@ -12,9 +12,9 @@ const WA = "https://wa.me/5511966654857?text=Ol%C3%A1!%20Gostaria%20de%20saber%2
 export const Route = createFileRoute("/Servicos")({
   head: () => ({
     meta: [
-      { title: "Serviços — Espaço IDE Psicologia" },
+      { title: "Serviços — Estação Aprender" },
       { name: "description", content: "Psicoterapia, Avaliação Neuropsicológica, Fonoaudiologia e Psicopedagogia para crianças e adolescentes." },
-      { property: "og:title", content: "Serviços — Espaço IDE Psicologia" },
+      { property: "og:title", content: "Serviços — Estação Aprender" },
       { property: "og:description", content: "Reunimos diferentes especialidades para cuidar do desenvolvimento de crianças e adolescentes." },
     ],
   }),
@@ -37,13 +37,13 @@ function ServicosPage() {
                 href={WA}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-6 text-sm font-medium text-white shadow-lg shadow-rose-500/25 transition-all hover:from-rose-600 hover:to-pink-600"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-6 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E]"
               >
                 <Calendar className="h-4 w-4" />
                 Agendar atendimento
               </a>
               <div className="flex items-center gap-2 rounded-full bg-white px-4 py-2 text-sm text-gray-600 shadow">
-                <CheckCircle2 className="h-4 w-4 text-rose-500" />
+                <CheckCircle2 className="h-4 w-4 text-[#D67F43]" />
                 Particular em até 24h
               </div>
             </div>
@@ -66,7 +66,7 @@ function ServicosPage() {
               href={WA}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-7 text-sm font-medium text-white shadow-lg shadow-rose-500/25 transition-all hover:from-rose-600 hover:to-pink-600"
+              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-7 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E]"
             >
               <MessageCircle className="h-4 w-4" />
               Falar com especialista

@@ -21,9 +21,9 @@ export function Header() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           <a href="/Particular" className="flex items-center gap-3">
-            <img src={LOGO} alt="Espaço IDE Psicologia" className="h-12 w-12 rounded-full object-cover" />
+            <img src={LOGO} alt="Estação Aprender" className="h-12 w-12 rounded-full object-cover" />
             <span className="hidden font-semibold text-gray-900 sm:inline">
-              Espaço IDE Psicologia
+              Estação Aprender
             </span>
           </a>
 
@@ -32,7 +32,7 @@ export function Header() {
               <a
                 key={item.href}
                 href={item.href}
-                className="text-sm font-medium text-gray-600 transition-colors hover:text-rose-500"
+                className="text-sm font-medium text-gray-600 transition-colors hover:text-[#D67F43]"
               >
                 {item.label}
               </a>
@@ -42,7 +42,7 @@ export function Header() {
           <div className="flex items-center gap-2">
             <a
               href="/Contato"
-              className="hidden h-9 items-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-6 text-sm font-medium text-white shadow-lg shadow-rose-500/25 transition-all hover:from-rose-600 hover:to-pink-600 sm:inline-flex"
+              className="hidden h-9 items-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-6 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E] sm:inline-flex"
             >
               <Calendar className="h-4 w-4" />
               Agendar Atendimento (24h)
@@ -66,7 +66,7 @@ export function Header() {
                       key={item.href}
                       href={item.href}
                       onClick={() => setOpen(false)}
-                      className="rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-rose-50 hover:text-rose-500"
+                      className="rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-[#FEF3E8] hover:text-[#D67F43]"
                     >
                       {item.label}
                     </a>
@@ -74,7 +74,7 @@ export function Header() {
                   <a
                     href="/Contato"
                     onClick={() => setOpen(false)}
-                    className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-4 text-sm font-medium text-white shadow-lg shadow-rose-500/25"
+                    className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-4 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25"
                   >
                     <Calendar className="h-4 w-4" />
                     Agendar Atendimento

@@ -11,9 +11,9 @@ import { SchedulingTimes } from "@/components/site/sections/atendimento/Scheduli
 export const Route = createFileRoute("/Atendimento")({
   head: () => ({
     meta: [
-      { title: "Atendimento — Espaço IDE Psicologia" },
+      { title: "Atendimento — Estação Aprender" },
       { name: "description", content: "Atendimento presencial e online. Conheça as etapas e prazos do nosso processo." },
-      { property: "og:title", content: "Atendimento — Espaço IDE Psicologia" },
+      { property: "og:title", content: "Atendimento — Estação Aprender" },
       { property: "og:description", content: "Escolha entre atendimento presencial ou online com agendamento em até 24h." },
     ],
   }),

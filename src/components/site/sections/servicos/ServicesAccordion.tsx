@@ -46,10 +46,10 @@ export function ServicesAccordion() {
                 value={id}
                 className="mb-4 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
               >
-                <AccordionTrigger className="px-6 py-5 hover:bg-gray-50/50 hover:no-underline data-[state=open]:bg-rose-50/50">
+                <AccordionTrigger className="px-6 py-5 hover:bg-gray-50/50 hover:no-underline data-[state=open]:bg-[#FEF3E8]/50">
                   <div className="flex flex-1 items-center gap-4 text-left">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-100 to-pink-100">
-                      <Icon className="h-6 w-6 text-rose-500" />
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[#FEF3E8] to-[#FDDFC4]">
+                      <Icon className="h-6 w-6 text-[#D67F43]" />
                     </div>
                     <span className="text-lg font-semibold text-gray-900">{title}</span>
                   </div>
