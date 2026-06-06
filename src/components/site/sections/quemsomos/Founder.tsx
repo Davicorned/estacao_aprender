@@ -1,7 +1,7 @@
 import { FadeUp } from "../../FadeUp";
+import founderAsset from "@/assets/founder-erica.png.asset.json";
 
-const FOUNDER_IMG =
-  "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/d9d93910d_Karine_Mendes2.jpg";
+const FOUNDER_IMG = founderAsset.url;
 
 export function Founder() {
   return (
@@ -12,12 +12,18 @@ export function Founder() {
             Idealizadora
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-            Dra Karine Mendes
+            Erica Roberta Alves da Silva Cornedi
           </h2>
-          <p className="mt-3 text-gray-600">Neuropsicóloga pelo Albert Einstein</p>
+          <p className="mt-3 text-gray-600">
+            Psicopedagoga · Psicomotricidade · Orientação Parental
+          </p>
 
-          <div className="mx-auto mt-10 h-64 w-64 overflow-hidden rounded-full shadow-xl ring-4 ring-[#FEF3E8]">
-            <img src={FOUNDER_IMG} alt="Dra Karine Mendes" className="h-full w-full object-cover" />
+          <div className="mx-auto mt-10 w-full max-w-md">
+            <img
+              src={FOUNDER_IMG}
+              alt="Erica Roberta Alves da Silva Cornedi"
+              className="h-auto w-full object-contain"
+            />
           </div>
         </FadeUp>
       </div>
