@@ -1,56 +1,32 @@
-# Plano — Páginas internas IDE Psicologia (/QuemSomos, /Servicos, /Atendimento, /Contato)
+# Plano — Página /Convenio
 
-Vou adicionar as 4 rotas faltantes mantendo o Header, Footer e WhatsAppFloat já criados. Reutilizo os componentes existentes (`FadeUp`, `Header`, `Footer`, `WhatsAppFloat`, e a seção `Contact` da home no `/Contato`).
+Nova rota com paleta cyan/blue (única no site), formulário interativo e barra de aviso amber.
 
 ## Arquivos a criar
 
-```
-src/components/site/PageBanner.tsx        → banner interno reutilizável (eyebrow + h1 + p + slot opcional)
-src/components/site/CTABanner.tsx         → faixa rose-500→pink-500 com h2/p/botão branco
-src/components/site/sections/quemsomos/   → OurStory, OurValues, Founder
-src/components/site/sections/servicos/    → ServicesAccordion
-src/components/site/sections/atendimento/ → Modalities, ProcessSteps, SchedulingTimes
-src/components/site/sections/contato/     → QuickChoiceCards (reusa Contact existente p/ info+mapa)
+- `src/components/site/sections/convenio/ConvenioBanner.tsx` — banner cyan/blue com blob, eyebrow "Plano de saúde", H1 e parágrafo
+- `src/components/site/sections/convenio/AmberNotice.tsx` — faixa amber com prazo 15+ dias e link WhatsApp particular
+- `src/components/site/sections/convenio/ConvenioFlow.tsx` — coluna esquerda: 3 steps numerados (gradient cyan→blue), card "Convênios aceitos" com 7 badges, card rose "Não quer esperar?"
+- `src/components/site/sections/convenio/ConvenioForm.tsx` — coluna direita: Card com formulário controlado (useState), Select × 2, Textarea, Checkbox LGPD, submit cyan→blue. Submit abre WhatsApp com a mensagem formatada e navega para `/ConvenioObrigado`. Botão desabilitado até `consentimento === true`.
+- `src/routes/Convenio.tsx` — rota `/Convenio` montando Banner → AmberNotice → grid 2 colunas (Flow | Form). `head()` com title/description/og próprios.
+- `src/routes/ConvenioObrigado.tsx` — rota `/ConvenioObrigado` simples com mensagem de agradecimento e link para Home/WhatsApp.
 
-src/routes/QuemSomos.tsx
-src/routes/Servicos.tsx
-src/routes/Atendimento.tsx
-src/routes/Contato.tsx
-```
+## Dependências shadcn
 
-## Conteúdo (verbatim do spec)
-Todos os textos, números de WhatsApp, URLs de imagem, ícones lucide e classes Tailwind seguem exatamente o spec — incluindo o detalhe dos **dois números** (geral `5511966654857`, página /Atendimento `5511982556501`).
+Verificar/garantir presença de `select`, `checkbox`, `textarea`, `input`, `label`, `card`, `button`, `badge` em `src/components/ui/`. Instalar via shadcn apenas os ausentes.
 
-## Detalhes-chave por página
+## Header
 
-**/QuemSomos**
-- `PageBanner` (eyebrow "Sobre nós" + título + subtítulo)
-- `OurStory`: grid 2 col texto+imagem (usa logo como placeholder à direita)
-- `OurValues`: bg-gray-50, 4 cards (Heart/Award/Users/Shield) em gradient rose-100→pink-100
-- `Founder`: foto circular Dra Karine (sem grid de stats — estava vazio no DOM)
-- `CTABanner` "Vamos cuidar da sua família juntos?"
+Adicionar link "Convênio" no `Header.tsx` apontando para `/Convenio` (mantendo ordem do menu atual).
 
-**/Servicos**
-- `PageBanner` com slot extra: botão WhatsApp gradient + pill "Particular em até 24h" (CheckCircle2)
-- `ServicesAccordion`: shadcn `Accordion type="single" collapsible` com 4 itens (Brain, ClipboardList, MessageCircle, GraduationCap) e descrições do spec
-- CTA final bg-gray-50 "Não sabe qual serviço…" + botão gradient
+## Detalhes técnicos
 
-**/Atendimento**
-- `PageBanner` ("Como funciona" / "Atendimento")
-- `Modalities`: 2 cards — Presencial (faixa rose, ícone Building2/MapPin) e Online (faixa cyan, ícone Video/Monitor) com listas de 4 bullets cada (CheckCircle2)
-- `ProcessSteps`: 4 cards numerados (MessageSquare, Calendar, Stethoscope/ClipboardCheck, FileText), conectores `hidden lg:block` em rose-200
-- `SchedulingTimes`: 2 cards — Particular (destaque, badge "Mais Rápido", Zap, "Até 24h") e Convênio (Clock, "15+ dias")
-- `CTABanner` "Pronto para dar o primeiro passo?" — usa número 5511982556501
+- WhatsApp números: links "particular" usam `5511966654857` (conforme prompt). Todos os `<a>` para wa.me recebem `id="whatsapp_start"`. Botão submit recebe `id="negativar"`.
+- Formulário: estado único `formData`, handlers controlados; submit faz `e.preventDefault()`, monta mensagem, `window.open(wa.me/..., '_blank')`, depois `navigate({ to: '/ConvenioObrigado' })`.
+- Cores: usar classes Tailwind cyan/blue diretamente (paleta exclusiva desta página, fora do design token rose padrão).
+- Animações fade-in via `FadeUp` existente.
+- SEO: title "Atendimento por Convênio — IDE Psicologia Morumbi", description sobre validação de plano.
 
-**/Contato**
-- `PageBanner` ("Fale conosco" / "Contato")
-- `QuickChoiceCards`: 2 cards no topo (Particular verde com Phone + badge "Até 24h"; Convênio cyan com Shield + badge outline "15+ dias")
-- Reusa o componente `Contact` existente (4 itens info + mapa) — sem refazer
+## Checklist coberto
 
-## Ajustes adicionais
-- `Header.tsx` e `Footer.tsx`: links já apontam para `/QuemSomos`, `/Servicos`, etc. — agora as rotas existem, sem mudanças necessárias.
-- `src/routes/index.tsx`: continua renderizando o conteúdo de Particular (home = página principal).
-- Cada rota terá `head()` próprio com title/description/og:title/og:description únicos (sem og:image, conforme regras — só leaf com imagem própria; manteremos imagem só na home/Particular).
-- `/Convenio` referenciado em alguns botões/footer permanece como `<a href>` simples sem rota (404 graceful), pois não foi especificado.
-
-Pronto para implementar quando aprovado.
+Banner cyan, blob, barra amber, 3 steps, 7 badges de convênios, card rose CTA, formulário completo com Select/Checkbox/Textarea, submit cyan + id="negativar", desabilitado até LGPD, ids whatsapp_start, Header/Footer/FAB reaproveitados.

@@ -9,6 +9,7 @@ const NAV = [
   { label: "Quem Somos", href: "/QuemSomos" },
   { label: "Serviços", href: "/Servicos" },
   { label: "Atendimento", href: "/Atendimento" },
+  { label: "Convênio", href: "/Convenio" },
   { label: "Contato", href: "/Contato" },
 ];
 
