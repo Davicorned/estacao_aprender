@@ -8,7 +8,7 @@ import { OurApproach } from "@/components/site/sections/OurApproach";
 import { Testimonials } from "@/components/site/sections/Testimonials";
 import { Contact } from "@/components/site/sections/Contact";
 
-export const Route = createFileRoute("/")({
+export const Route = createFileRoute("/Particular")({
   head: () => ({
     meta: [
       { title: "Espaço IDE Psicologia — Morumbi" },
@@ -30,10 +30,10 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  component: Index,
+  component: ParticularPage,
 });
 
-function Index() {
+function ParticularPage() {
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
       <Header />

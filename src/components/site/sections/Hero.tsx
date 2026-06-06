@@ -1,0 +1,80 @@
+import { Calendar, ArrowRight, CheckCircle2 } from "lucide-react";
+import { FadeUp } from "../FadeUp";
+
+const WA_LINK =
+  "https://wa.me/5511966654857?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Espa%C3%A7o%20IDE.";
+const HERO_IMG =
+  "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/81d826ca8_home.png";
+
+export function Hero() {
+  return (
+    <section className="relative overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50 to-white">
+      {/* Decorative blobs */}
+      <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-rose-200/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-pink-200/30 blur-3xl" />
+
+      <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
+          <FadeUp>
+            <span className="inline-flex items-center gap-2 rounded-full bg-rose-100 px-4 py-1.5 text-xs font-semibold text-rose-600">
+              <span className="h-2 w-2 rounded-full bg-rose-500" />
+              Agendamento em até 24h
+            </span>
+
+            <h1 className="mt-6 text-4xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+              Cuidamos de cada fase de desenvolvimento do{" "}
+              <span className="bg-gradient-to-r from-rose-500 to-pink-500 bg-clip-text text-transparent">
+                seu filho(a)
+              </span>
+              !
+            </h1>
+
+            <p className="mt-6 max-w-xl text-lg leading-relaxed text-gray-600">
+              Equipe multiprofissional especializada no cuidado integral de crianças e adolescentes.
+              Acolhimento, diagnóstico e tratamento personalizados.
+            </p>
+
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+              <a
+                id="whatsapp_start"
+                href={WA_LINK}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-rose-500 to-pink-500 px-7 text-sm font-medium text-white shadow-lg shadow-rose-500/25 transition-all hover:from-rose-600 hover:to-pink-600"
+              >
+                <Calendar className="h-4 w-4" />
+                Agendar atendimento
+              </a>
+              <a
+                href="/Servicos"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-medium text-gray-700 transition-colors hover:border-rose-200 hover:text-rose-500"
+              >
+                Conhecer serviços
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
+          </FadeUp>
+
+          <FadeUp delay={0.15} className="relative hidden lg:block">
+            <div className="relative overflow-hidden rounded-3xl shadow-2xl shadow-rose-500/10">
+              <img
+                src={HERO_IMG}
+                alt="Atendimento infantojuvenil"
+                className="h-full w-full object-cover"
+              />
+            </div>
+            <div className="absolute -bottom-6 -left-6 flex items-center gap-3 rounded-2xl bg-white p-4 shadow-xl">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-green-100">
+                <CheckCircle2 className="h-6 w-6 text-green-500" />
+              </div>
+              <div>
+                <p className="text-base font-bold text-gray-900">+500 famílias</p>
+                <p className="text-xs text-gray-500">atendidas com sucesso</p>
+              </div>
+            </div>
+          </FadeUp>
+        </div>
+      </div>
+    </section>
+  );
+}
