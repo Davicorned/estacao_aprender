@@ -62,13 +62,17 @@ export function Footer() {
           <h4 className="text-sm font-semibold uppercase tracking-wider">Serviços</h4>
           <ul className="mt-4 space-y-3 text-sm">
             {[
-              ["Psicoterapia", "/Servicos?servico=psicoterapia"],
-              ["Avaliação Neuropsicológica", "/Servicos?servico=neuropsicologia"],
-              ["Fonoaudiologia", "/Servicos?servico=fonoaudiologia"],
-              ["Psicopedagogia", "/Servicos?servico=psicopedagogia"],
-            ].map(([label, href]) => (
-              <li key={href}>
-                <Link to={href} className="text-gray-400 transition-colors hover:text-white">
+              ["Psicoterapia", "psicoterapia"],
+              ["Avaliação Neuropsicológica", "neuropsicologia"],
+              ["Fonoaudiologia", "fonoaudiologia"],
+              ["Psicopedagogia", "psicopedagogia"],
+            ].map(([label, servico]) => (
+              <li key={servico}>
+                <Link
+                  to="/Servicos"
+                  search={{ servico }}
+                  className="text-gray-400 transition-colors hover:text-white"
+                >
                   {label}
                 </Link>
               </li>
