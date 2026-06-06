@@ -147,9 +147,6 @@ function AdminEquipe() {
     if (idx < 0 || swap < 0 || swap >= items.length) return;
     const a = items[idx];
     const b = items[swap];
-    const { error } = await supabase.rpc;
-    void error;
-    // simple: swap orders via two updates
     const r1 = await supabase
       .from("team_members")
       .update({ order: b.order })
