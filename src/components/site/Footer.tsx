@@ -105,15 +105,8 @@ export function Footer() {
             <li className="flex items-start gap-3">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D67F43]" />
               <span>
-                <strong className="block text-gray-300">Taboão da Serra</strong>
-                Estr. São Francisco, 2008 / Jardim Wanda - Sala 1303 e 1304 / Taboão da Serra - SP, 06765-904
-              </span>
-            </li>
-            <li className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D67F43]" />
-              <span>
-                <strong className="block text-gray-300">Morumbi</strong>
-                Rua Doutor Luís Migliano, 1986 / Jardim Caboré - Conjunto 1419 / Morumbi - SP, 05711-001
+                <strong className="block text-gray-300">Unidade Engenheiro Goulart</strong>
+                Praça Gajé, 56 - Eng. Goulart, São Paulo - SP, 03725-040
               </span>
             </li>
           </ul>

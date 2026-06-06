@@ -61,15 +61,9 @@ export function Contact() {
               </div>
               <div className="flex-1 space-y-3">
                 <div>
-                  <p className="text-sm font-semibold text-gray-900">Unidade Taboão da Serra</p>
+                  <p className="text-sm font-semibold text-gray-900">Unidade Engenheiro Goulart</p>
                   <p className="text-sm text-gray-600">
-                    Estr. São Francisco, 2008 / Jardim Wanda - Sala 1303 e 1304 / Taboão da Serra - SP, 06765-904
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-gray-900">Unidade Morumbi</p>
-                  <p className="text-sm text-gray-600">
-                    Rua Doutor Luís Migliano, 1986 / Jardim Caboré - Conjunto 1419 / Morumbi - SP, 05711-001
+                    Praça Gajé, 56 - Eng. Goulart, São Paulo - SP, 03725-040
                   </p>
                 </div>
               </div>
@@ -91,8 +85,8 @@ export function Contact() {
           <FadeUp delay={0.15}>
             <div className="h-[400px] overflow-hidden rounded-2xl shadow-lg lg:h-full">
               <iframe
-                title="Mapa Morumbi"
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3657.494!2d-46.72456!3d-23.61584!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x94ce574b5e2a3d5b%3A0xa1234567890abcde!2sR.+Dr.+Lu%C3%ADs+Migliano%2C+1986+-+Jardim+Cabor%C3%A9%2C+S%C3%A3o+Paulo+-+SP%2C+05711-001!5e0!3m2!1spt-BR!2sbr!4v1700000000001!5m2!1spt-BR!2sbr"
+                title="Mapa Unidade Engenheiro Goulart"
+                src="https://www.google.com/maps?q=Pra%C3%A7a%20Gaj%C3%A9%2C%2056%20-%20Eng.%20Goulart%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2003725-040&output=embed"
                 width="100%"
                 height="100%"
                 loading="lazy"
