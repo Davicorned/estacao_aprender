@@ -16,7 +16,7 @@ export function Founder() {
           </h2>
           <p className="mt-3 text-gray-600">Neuropsicóloga pelo Albert Einstein</p>
 
-          <div className="mx-auto mt-10 h-64 w-64 overflow-hidden rounded-full shadow-xl ring-4 ring-rose-100">
+          <div className="mx-auto mt-10 h-64 w-64 overflow-hidden rounded-full shadow-xl ring-4 ring-[#FEF3E8]">
             <img src={FOUNDER_IMG} alt="Dra Karine Mendes" className="h-full w-full object-cover" />
           </div>
         </FadeUp>

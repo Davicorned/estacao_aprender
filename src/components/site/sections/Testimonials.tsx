@@ -36,7 +36,7 @@ export function Testimonials() {
           {items.map((item, idx) => (
             <FadeUp key={item.name} delay={idx * 0.1}>
               <div className="flex h-full flex-col rounded-xl border-0 bg-white p-6 shadow-lg shadow-gray-200/50 transition-shadow duration-300 hover:shadow-xl">
-                <Quote className="h-8 w-8 text-rose-200" />
+                <Quote className="h-8 w-8 text-[#FBCF9E]" />
                 <p className="mt-4 mb-6 flex-1 leading-relaxed text-gray-700">{item.text}</p>
                 <div className="flex items-center justify-between border-t border-gray-100 pt-4">
                   <div>
