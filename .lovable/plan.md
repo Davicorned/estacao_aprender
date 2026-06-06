@@ -1,46 +1,80 @@
-## Carrossel horizontal para "Nossa Equipe"
+# Admin de conteúdo — /Particular
 
-Transformar a seção `TeamSection` em um **carrossel horizontal com peek** (estilo Netflix/streamers), em vez do grid atual. Comportamento desejado:
+Construir um painel `/admin` onde **você** (admin único) edita todo o conteúdo da página `/Particular` sem mexer em código. Hoje os textos e imagens estão hardcoded nos componentes; vamos movê-los para o banco e os componentes passam a ler de lá.
 
-- Cards lado a lado em uma trilha horizontal com scroll suave.
-- **Peek nas pontas**: o card da extremidade aparece "pela metade" para dar a dica visual de que há mais conteúdo para o lado.
-- **Setinhas discretas** (chevron esquerda/direita) sobrepostas às bordas, semi-transparentes, com hover mais opaco. Aparecem apenas quando há overflow.
-- Swipe nativo no mobile (scroll-snap), setas para desktop.
-- Quando houver apenas 1 profissional → mantém o card único centralizado (sem setas, sem peek).
+## Stack
 
-### Implementação
+- **Lovable Cloud** (Supabase gerenciado) — banco, autenticação, storage de imagens.
+- **Login único** com email/senha. Você cadastra sua conta uma única vez; novos cadastros desativados.
+- **Server functions** do TanStack Start para leitura pública (sem expor service key) e escrita autenticada.
 
-**Editar** `src/components/site/sections/TeamSection.tsx`:
+## O que fica editável na /Particular
 
-1. Trocar o `grid` por uma trilha `flex overflow-x-auto snap-x snap-mandatory` com `scroll-smooth` e `scrollbar` escondida.
-2. Cada `TeamCard` recebe largura responsiva fixa:
-   - mobile: `basis-[80%]` (deixa ~20% do próximo aparecendo)
-   - sm: `basis-[45%]`
-   - lg: `basis-[30%]` (mostra 3 + peek do 4º)
-   - `snap-start shrink-0`
-3. Padding lateral no container interno (`px-8 lg:px-12`) para o peek funcionar nas duas pontas.
-4. Botões de navegação:
-   - `<button>` absolutos à esquerda e direita, `top-1/2 -translate-y-1/2`.
-   - Estilo: círculo branco translúcido (`bg-white/70 backdrop-blur`), borda sutil, sombra, ícone `ChevronLeft`/`ChevronRight` em `#D67F43`.
-   - Hover: `bg-white` opaco.
-   - `onClick` faz `scrollBy({ left: ±cardWidth, behavior: "smooth" })` via `useRef`.
-   - Setas desabilitam quando atingem o início/fim (listener de scroll atualiza estado `canScrollLeft`/`canScrollRight`).
-5. Esconder scrollbar via classe utilitária inline (`[&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]`).
+| Seção | Campos editáveis |
+|---|---|
+| Hero | Título (com trecho destacado), subtítulo, botão CTA (texto + link/WhatsApp), imagem, badge ("+500 famílias") |
+| Quando buscar ajuda | Título, parágrafos, imagem, lista de sinais (ícone + label, adicionar/remover/reordenar) |
+| Nossa abordagem | Título, parágrafos, imagem, CTA |
+| Nossa equipe | Profissionais: nome, título, foto, especialidades (tags), bio, registro. Adicionar/editar/remover/**reordenar** (drag handle) |
+| Depoimentos | Nome, texto, fonte (ex: Google). Adicionar/editar/remover/reordenar |
+| Contato | WhatsApp, e-mail, endereço, horários, URL do mapa |
+| **Seções** | Ligar/desligar cada seção e reordená-las na página |
 
-### Profissionais fictícios (para visualização)
+Configurações globais: número de WhatsApp e mensagem padrão (usados em vários CTAs).
 
-Adicionar **5 profissionais fictícios** ao array `equipe` (total 6 com a Érica), todos com `foto: null` para usar o **avatar de iniciais com gradient laranja** (já implementado no card). Conforme pedido, ignoro "Formação" e uso apenas especialidades + bio curta:
+## Estrutura do /admin
 
-1. **Mariana Lopes** — Psicóloga Infantil — Psicologia infantil, TCC, Avaliação psicológica, Orientação parental — "Atua há 10 anos no acompanhamento emocional de crianças e adolescentes, com foco em ansiedade e regulação emocional."
-2. **Camila Ribeiro** — Fonoaudióloga — Fonoaudiologia, Linguagem infantil, Atraso de fala, Comunicação alternativa — "Especialista em desenvolvimento da linguagem e estímulo da comunicação em crianças com atraso de fala e TEA."
-3. **Beatriz Alves** — Terapeuta Ocupacional — Terapia Ocupacional, Integração sensorial, Coordenação motora, AVD's — "Trabalha o desenvolvimento da autonomia e da integração sensorial em crianças com necessidades específicas."
-4. **Rafael Mendes** — Psicólogo ABA — ABA, TEA, Manejo comportamental, Habilidades sociais — "Foco no atendimento de crianças no espectro autista usando os princípios da Análise do Comportamento Aplicada (ABA)."
-5. **Juliana Castro** — Psicopedagoga — Psicopedagogia, Dislexia, TDAH, Reforço escolar, Métodos de estudo — "Apoio a crianças com dificuldades de aprendizagem, com estratégias personalizadas para cada perfil."
+```text
+/admin                → redireciona conforme login
+/admin/login          → email + senha
+/admin (autenticado)  → dashboard com cards das seções
+  ├── /admin/hero
+  ├── /admin/quando-buscar-ajuda
+  ├── /admin/abordagem
+  ├── /admin/equipe         (lista + drag-reorder + modal de edição)
+  ├── /admin/depoimentos    (lista + drag-reorder + modal de edição)
+  ├── /admin/contato
+  ├── /admin/secoes         (toggle + reorder de seções da página)
+  └── /admin/configuracoes  (WhatsApp, e-mail, etc.)
+```
 
-(Esses dados são apenas placeholders para visualizar o carrossel — você pode me passar os reais depois e eu substituo.)
+Layout do admin: sidebar fixa + área de edição, separado totalmente do layout público.
 
-### Nota técnica
+## Modelo de dados (Lovable Cloud)
 
-- Hook simples com `useRef` + `useEffect` para listener de scroll. Sem dependências novas (sem `embla` / `swiper`) — fica leve e suficiente para o caso.
-- `FadeUp` continua envolvendo cada card.
-- Sem mudanças em `/Particular.tsx` nem em outras páginas.
+```text
+site_settings          (singleton: whatsapp, mensagem padrão, e-mail)
+page_sections          (page, section_key, order, enabled)  -- controla ordem/visibilidade
+content_blocks         (section_key, data jsonb)            -- conteúdo livre por seção
+team_members           (nome, titulo, foto_url, especialidades[], bio, registro, order)
+testimonials           (nome, texto, fonte, order)
+help_signals           (icon, label, order)                 -- itens de "Quando buscar ajuda"
+```
+
+- RLS: leitura pública (`anon` + `authenticated`); escrita só para `authenticated` com papel `admin` (tabela `user_roles` + função `has_role`).
+- Storage: bucket público `site-images` para fotos da equipe, hero, etc. Upload pelo admin, render por URL.
+
+## Como o site público passa a ler
+
+- Server fn público `getParticularContent()` retorna todo o conteúdo da página em uma chamada (settings + sections + team + testimonials + signals).
+- `Route /Particular` faz `loader` chamando essa server fn, com TanStack Query.
+- Cada seção (`Hero`, `TeamSection`, etc.) recebe os dados via props em vez de constantes locais.
+- `head()` da rota também consome esses dados (title/description do banco).
+
+## Fluxo de edição
+
+1. Você entra em `/admin/login` → autentica.
+2. Edita uma seção → "Salvar" chama server fn autenticada → grava no banco.
+3. Página `/Particular` é invalidada e mostra a nova versão na próxima visita (TanStack Query refetch).
+4. Upload de imagem: drag-and-drop no formulário → vai para o storage → URL salva no campo.
+
+## Fases de entrega
+
+1. **Cloud + auth + roles** — habilitar Cloud, criar tabela `user_roles`, criar sua conta admin, página de login.
+2. **Schema + seed** — criar todas as tabelas, migrar o conteúdo atual (hardcoded) para o banco como seed.
+3. **Leitura pública** — server fn + loader + refatorar componentes da /Particular para receber props.
+4. **Admin — equipe e depoimentos** — primeiros CRUDs (mais valor imediato), com upload de imagem e drag-reorder.
+5. **Admin — Hero / Quando buscar ajuda / Abordagem / Contato** — formulários estruturados de cada seção.
+6. **Admin — Seções e Configurações globais** — toggle + reorder de seções, settings (WhatsApp etc.).
+
+Podemos começar pela Fase 1+2+3 num primeiro passo (para já mostrar o conteúdo vindo do banco) e depois fazer o admin em si nas fases seguintes. Confirma que quer seguir assim? Ou prefere que eu já entregue tudo de uma vez?
