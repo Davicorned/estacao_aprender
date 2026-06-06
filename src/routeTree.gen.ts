@@ -18,6 +18,8 @@ import { Route as AtendimentoRouteImport } from './routes/Atendimento'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
+import { Route as AdminEquipeRouteImport } from './routes/admin.equipe'
+import { Route as AdminDepoimentosRouteImport } from './routes/admin.depoimentos'
 
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
@@ -64,6 +66,16 @@ const AdminLoginRoute = AdminLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminEquipeRoute = AdminEquipeRouteImport.update({
+  id: '/equipe',
+  path: '/equipe',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDepoimentosRoute = AdminDepoimentosRouteImport.update({
+  id: '/depoimentos',
+  path: '/depoimentos',
+  getParentRoute: () => AdminRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -73,6 +85,8 @@ export interface FileRoutesByFullPath {
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/depoimentos': typeof AdminDepoimentosRoute
+  '/admin/equipe': typeof AdminEquipeRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -83,6 +97,8 @@ export interface FileRoutesByTo {
   '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
+  '/admin/depoimentos': typeof AdminDepoimentosRoute
+  '/admin/equipe': typeof AdminEquipeRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin': typeof AdminIndexRoute
 }
@@ -95,6 +111,8 @@ export interface FileRoutesById {
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
   '/admin': typeof AdminRouteWithChildren
+  '/admin/depoimentos': typeof AdminDepoimentosRoute
+  '/admin/equipe': typeof AdminEquipeRoute
   '/admin/login': typeof AdminLoginRoute
   '/admin/': typeof AdminIndexRoute
 }
@@ -108,6 +126,8 @@ export interface FileRouteTypes {
     | '/QuemSomos'
     | '/Servicos'
     | '/admin'
+    | '/admin/depoimentos'
+    | '/admin/equipe'
     | '/admin/login'
     | '/admin/'
   fileRoutesByTo: FileRoutesByTo
@@ -118,6 +138,8 @@ export interface FileRouteTypes {
     | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
+    | '/admin/depoimentos'
+    | '/admin/equipe'
     | '/admin/login'
     | '/admin'
   id:
@@ -129,6 +151,8 @@ export interface FileRouteTypes {
     | '/QuemSomos'
     | '/Servicos'
     | '/admin'
+    | '/admin/depoimentos'
+    | '/admin/equipe'
     | '/admin/login'
     | '/admin/'
   fileRoutesById: FileRoutesById
@@ -208,15 +232,33 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/equipe': {
+      id: '/admin/equipe'
+      path: '/equipe'
+      fullPath: '/admin/equipe'
+      preLoaderRoute: typeof AdminEquipeRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/depoimentos': {
+      id: '/admin/depoimentos'
+      path: '/depoimentos'
+      fullPath: '/admin/depoimentos'
+      preLoaderRoute: typeof AdminDepoimentosRouteImport
+      parentRoute: typeof AdminRoute
+    }
   }
 }
 
 interface AdminRouteChildren {
+  AdminDepoimentosRoute: typeof AdminDepoimentosRoute
+  AdminEquipeRoute: typeof AdminEquipeRoute
   AdminLoginRoute: typeof AdminLoginRoute
   AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
+  AdminDepoimentosRoute: AdminDepoimentosRoute,
+  AdminEquipeRoute: AdminEquipeRoute,
   AdminLoginRoute: AdminLoginRoute,
   AdminIndexRoute: AdminIndexRoute,
 }
