@@ -68,7 +68,7 @@ export function ConvenioForm() {
         `Melhor horário: ${formData.horario}\n` +
         `Observações: ${formData.observacoes}`,
     );
-    window.open(`https://wa.me/5511966654857?text=${msg}`, "_blank");
+    window.open(`https://wa.me/5511932139815?text=${msg}`, "_blank");
     navigate({ to: "/ConvenioObrigado" });
   };
 

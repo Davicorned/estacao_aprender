@@ -2,7 +2,7 @@ import { Phone, Mail, MapPin, Clock, ArrowRight } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 
 const WA_LINK =
-  "https://wa.me/5511966654857?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Espa%C3%A7o%20IDE.";
+  "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Esta%C3%A7%C3%A3o%20Aprender.";
 
 export function Contact() {
   return (
@@ -35,7 +35,7 @@ export function Contact() {
               </div>
               <div className="flex-1">
                 <p className="text-sm font-semibold text-gray-900">WhatsApp</p>
-                <p className="text-sm text-gray-600">(11) 96665-4857</p>
+                <p className="text-sm text-gray-600">(11) 93213-9815</p>
               </div>
               <ArrowRight className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1" />
             </a>

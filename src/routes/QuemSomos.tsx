@@ -37,7 +37,7 @@ function QuemSomosPage() {
           title="Vamos cuidar da sua família juntos?"
           description="Estamos prontos para ajudar você e seu filho a superar desafios e construir uma vida mais feliz e saudável."
           buttonLabel="Fale conosco"
-          href="https://wa.me/5511966654857?text=Ol%C3%A1!%20Gostaria%20de%20conhecer%20mais%20sobre%20o%20Espa%C3%A7o%20IDE."
+          href="https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20conhecer%20mais%20sobre%20o%20Esta%C3%A7%C3%A3o%20Aprender."
         />
       </main>
       <Footer />

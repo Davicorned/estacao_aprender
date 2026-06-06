@@ -4,7 +4,7 @@ import { FadeUp } from "../FadeUp";
 const IMG =
   "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/89a88ba32_WhatsApp_Image_2023-12-09_at_002649.jpeg";
 const WA_LINK =
-  "https://wa.me/5511966654857?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20atendimento%20no%20Espa%C3%A7o%20IDE.";
+  "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20um%20atendimento%20no%20Esta%C3%A7%C3%A3o%20Aprender.";
 
 export function OurApproach() {
   return (
