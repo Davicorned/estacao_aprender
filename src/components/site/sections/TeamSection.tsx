@@ -1,95 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { FadeUp } from "../FadeUp";
-import ericaAsset from "@/assets/founder-erica.png.asset.json";
+import { fetchTeam, type TeamMember } from "@/lib/cms";
 
-type TeamMember = {
+type CardProps = {
   nome: string;
   titulo: string;
   foto?: string | null;
   especialidades: string[];
-  bio?: string;
-  registro?: string;
+  bio?: string | null;
+  registro?: string | null;
 };
 
-const equipe: TeamMember[] = [
-  {
-    nome: "Érica Cornedi",
-    titulo: "Fundadora",
-    foto: ericaAsset.url,
-    especialidades: [
-      "Psicopedagogia",
-      "Psicomotricidade",
-      "ABA",
-      "Alfabetização",
-      "Reforço escolar",
-    ],
-    bio: "Fundadora da Estação Aprender. Especializada no atendimento de crianças com dificuldades de aprendizagem, transtornos do desenvolvimento e necessidade de olhar diferenciado.",
-  },
-  {
-    nome: "Mariana Lopes",
-    titulo: "Psicóloga Infantil",
-    foto: null,
-    especialidades: [
-      "Psicologia infantil",
-      "TCC",
-      "Avaliação psicológica",
-      "Orientação parental",
-    ],
-    bio: "Atua há 10 anos no acompanhamento emocional de crianças e adolescentes, com foco em ansiedade e regulação emocional.",
-  },
-  {
-    nome: "Camila Ribeiro",
-    titulo: "Fonoaudióloga",
-    foto: null,
-    especialidades: [
-      "Fonoaudiologia",
-      "Linguagem infantil",
-      "Atraso de fala",
-      "Comunicação alternativa",
-    ],
-    bio: "Especialista em desenvolvimento da linguagem e estímulo da comunicação em crianças com atraso de fala e TEA.",
-  },
-  {
-    nome: "Beatriz Alves",
-    titulo: "Terapeuta Ocupacional",
-    foto: null,
-    especialidades: [
-      "Terapia Ocupacional",
-      "Integração sensorial",
-      "Coordenação motora",
-      "AVD's",
-    ],
-    bio: "Trabalha o desenvolvimento da autonomia e da integração sensorial em crianças com necessidades específicas.",
-  },
-  {
-    nome: "Rafael Mendes",
-    titulo: "Psicólogo ABA",
-    foto: null,
-    especialidades: [
-      "ABA",
-      "TEA",
-      "Manejo comportamental",
-      "Habilidades sociais",
-    ],
-    bio: "Foco no atendimento de crianças no espectro autista usando os princípios da Análise do Comportamento Aplicada (ABA).",
-  },
-  {
-    nome: "Juliana Castro",
-    titulo: "Psicopedagoga",
-    foto: null,
-    especialidades: [
-      "Psicopedagogia",
-      "Dislexia",
-      "TDAH",
-      "Reforço escolar",
-      "Métodos de estudo",
-    ],
-    bio: "Apoio a crianças com dificuldades de aprendizagem, com estratégias personalizadas para cada perfil.",
-  },
-];
-
-function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: TeamMember) {
+function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardProps) {
   const [open, setOpen] = useState(false);
   const iniciais = nome
     .split(" ")
@@ -196,6 +119,11 @@ export function TeamSection() {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
+  const [equipe, setEquipe] = useState<TeamMember[]>([]);
+
+  useEffect(() => {
+    void fetchTeam().then(setEquipe);
+  }, []);
 
   const updateArrows = () => {
     const el = scrollerRef.current;
@@ -226,6 +154,10 @@ export function TeamSection() {
 
   const single = equipe.length === 1;
 
+  if (equipe.length === 0) {
+    return null;
+  }
+
   return (
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -244,7 +176,7 @@ export function TeamSection() {
         {single ? (
           <div className="mx-auto max-w-sm">
             <FadeUp>
-              <TeamCard {...equipe[0]} />
+              <TeamCard {...equipe[0]} foto={equipe[0].foto_url} />
             </FadeUp>
           </div>
         ) : (
@@ -255,12 +187,12 @@ export function TeamSection() {
             >
               {equipe.map((profissional, idx) => (
                 <div
-                  key={profissional.nome}
+                  key={profissional.id}
                   data-team-card
                   className="snap-start shrink-0 basis-[85%] sm:basis-[48%] md:basis-[40%] lg:basis-[31%] xl:basis-[24%]"
                 >
                   <FadeUp delay={idx * 0.05}>
-                    <TeamCard {...profissional} />
+                    <TeamCard {...profissional} foto={profissional.foto_url} />
                   </FadeUp>
                 </div>
               ))}
