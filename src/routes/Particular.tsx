@@ -5,6 +5,7 @@ import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { Hero } from "@/components/site/sections/Hero";
 import { WhenToSeekHelp } from "@/components/site/sections/WhenToSeekHelp";
 import { OurApproach } from "@/components/site/sections/OurApproach";
+import { TeamSection } from "@/components/site/sections/TeamSection";
 import { Testimonials } from "@/components/site/sections/Testimonials";
 import { Contact } from "@/components/site/sections/Contact";
 
@@ -41,6 +42,7 @@ function ParticularPage() {
         <Hero />
         <WhenToSeekHelp />
         <OurApproach />
+        <TeamSection />
         <Testimonials />
         <Contact />
       </main>
