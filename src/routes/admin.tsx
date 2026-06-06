@@ -3,7 +3,6 @@ import { AuthProvider } from "@/lib/auth-context";
 import { Toaster } from "@/components/ui/sonner";
 
 export const Route = createFileRoute("/admin")({
-  ssr: false,
   component: AdminLayout,
 });
 
