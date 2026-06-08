@@ -11,6 +11,7 @@ import {
   ExternalLink,
   LogOut,
   Menu,
+  Settings,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -27,6 +28,7 @@ const MAIN: NavItem[] = [
   { to: "/gestao/pacientes", label: "Pacientes", icon: Users },
   { to: "/gestao/contratos", label: "Contratos", icon: FileText },
   { to: "/gestao/financeiro", label: "Financeiro", icon: DollarSign },
+  { to: "/gestao/configuracoes", label: "Configurações", icon: Settings },
 ];
 
 const SITE: NavItem[] = [
