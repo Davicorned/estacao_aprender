@@ -142,13 +142,34 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
 
       const ORANGE = "#E08A3C";
 
+      // Fetch logo SVG and inline it (html2canvas does not reliably render <img src=*.svg>)
+      let logoSvgMarkup = "";
+      try {
+        const res = await fetch(logoAsset.url);
+        if (res.ok) {
+          let svg = await res.text();
+          // strip XML prolog if present
+          svg = svg.replace(/<\?xml[^?]*\?>/, "").trim();
+          // recolor all fills to white so the logo reads on the orange header
+          svg = svg.replace(/#D67F43/gi, "#FFFFFF").replace(/#724B36/gi, "#FFFFFF");
+          // force size on the root <svg>
+          svg = svg.replace(
+            /<svg\b([^>]*)>/i,
+            `<svg$1 style="width:140px;height:auto;display:block;">`,
+          );
+          logoSvgMarkup = svg;
+        }
+      } catch (e) {
+        console.warn("Falha ao carregar logo SVG", e);
+      }
+
       const headerHtml = `
         <div style="position:relative;width:${PAGE_W}px;height:170px;overflow:hidden;">
           <svg viewBox="0 0 794 200" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;display:block;">
             <path d="M0,0 L794,0 L794,140 C680,205 540,180 420,160 C300,140 180,180 80,170 C50,167 20,160 0,150 Z" fill="${ORANGE}"/>
           </svg>
-          <div style="position:absolute;top:24px;left:48px;display:flex;align-items:center;gap:14px;">
-            <img src="${logoAsset.url}" crossorigin="anonymous" style="width:130px;height:auto;display:block;" alt="Estação Aprender" />
+          <div style="position:absolute;top:18px;left:40px;display:flex;align-items:center;gap:14px;color:#fff;">
+            ${logoSvgMarkup || `<div style="font-family:'Brush Script MT',cursive;font-size:32px;color:#fff;line-height:1;">estação<br/><span style="font-size:42px;">aprender</span></div>`}
           </div>
           <div style="position:absolute;top:34px;right:48px;text-align:right;color:#fff;font-size:12px;line-height:1.7;letter-spacing:0.02em;">
             Psicopedagogia · Psicomotricidade<br/>
