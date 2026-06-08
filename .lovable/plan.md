@@ -1,58 +1,38 @@
-## Dois problemas, duas correções
+## Problema
 
-### 1. Erro "Could not find column 'arquivo_assinado_mime'"
-O SQL da Fase 7 (colunas do anexo assinado + bucket) não chegou a rodar no Supabase — a tabela `contratos` ainda não tem as 3 colunas novas.
+O iframe do visualizador carrega `/api/public/file-proxy?url=https%3A%2F%2F...supabase.co%2Fstorage%2F...`. Mesmo sendo um request para o nosso domínio, adblockers e o próprio Chrome inspecionam a query string, encontram `supabase.co/storage` + token assinado e bloqueiam com `ERR_BLOCKED_BY_CLIENT` ("Esta página foi bloqueada pelo Chrome"). Em modo anônimo funciona porque as extensões ficam desativadas.
 
-**Você roda este trecho no SQL Editor do Supabase:**
+## Solução
 
-```sql
--- Colunas para o contrato assinado (scan)
-ALTER TABLE public.contratos
-  ADD COLUMN IF NOT EXISTS arquivo_assinado_path        text,
-  ADD COLUMN IF NOT EXISTS arquivo_assinado_uploaded_at timestamptz,
-  ADD COLUMN IF NOT EXISTS arquivo_assinado_mime        text;
+Trocar o formato do proxy para que o navegador nunca veja a URL da Supabase. O cliente passa apenas o **path interno do storage** (ex.: `contratos-assinados/abc/arquivo.pdf`); o servidor gera a signed URL e faz o fetch.
 
--- Bucket privado
-INSERT INTO storage.buckets (id, name, public)
-VALUES ('contratos-assinados', 'contratos-assinados', false)
-ON CONFLICT (id) DO NOTHING;
+### 1. Nova rota proxy: `src/routes/api/public/file-proxy.$.ts` (splat)
 
--- Policies do bucket (somente authenticated)
-DROP POLICY IF EXISTS "contratos_assinados_select" ON storage.objects;
-DROP POLICY IF EXISTS "contratos_assinados_insert" ON storage.objects;
-DROP POLICY IF EXISTS "contratos_assinados_update" ON storage.objects;
-DROP POLICY IF EXISTS "contratos_assinados_delete" ON storage.objects;
+- URL pública vira `/api/public/file-proxy/contratos-assinados/<uuid>/arquivo.pdf` — limpa, sem nada que dispare filtros.
+- Handler `GET`:
+  - Lê `params._splat` como path no bucket `contratos-assinados`.
+  - Valida que o path está dentro do bucket esperado (sem `..`, sem barras iniciais).
+  - Usa `supabaseAdmin` (`@/integrations/supabase/client.server`) para `storage.from('contratos-assinados').createSignedUrl(path, 60)`.
+  - Faz `fetch` da signed URL no servidor e devolve o body com:
+    - `content-type` do upstream
+    - `content-disposition: inline` (ou `attachment; filename="..."` se `?download=1`)
+    - `cache-control: private, no-store`
+    - `x-content-type-options: nosniff`
+    - **Sem** repassar headers da Supabase para evitar `X-Frame-Options` restritivo do upstream.
+- Deletar a rota antiga `src/routes/api/public/file-proxy.ts`.
 
-CREATE POLICY "contratos_assinados_select" ON storage.objects
-  FOR SELECT TO authenticated USING (bucket_id = 'contratos-assinados');
-CREATE POLICY "contratos_assinados_insert" ON storage.objects
-  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'contratos-assinados');
-CREATE POLICY "contratos_assinados_update" ON storage.objects
-  FOR UPDATE TO authenticated USING (bucket_id = 'contratos-assinados');
-CREATE POLICY "contratos_assinados_delete" ON storage.objects
-  FOR DELETE TO authenticated USING (bucket_id = 'contratos-assinados');
-```
+### 2. `src/components/gestao/contratos/ContratoView.tsx`
 
-Depois disso, o "Anexar contrato assinado" para de dar erro.
+- `handleViewSigned`: setar `viewerUrl = \`/api/public/file-proxy/${localAnexo.path}\`` (sem chamar `getContratoAssinadoUrl`).
+- `handleDownloadSigned`: usar `/api/public/file-proxy/${localAnexo.path}?download=1&filename=...`.
+- Remover o uso de `getContratoAssinadoUrl` nesses dois handlers (continua existindo na lib para outros usos, se houver).
 
-### 2. PDF/preview mostrando `{{NOME_PACIENTE}}`, `{{VALOR}}` etc.
-O template só era aplicado quando o usuário clicava em **"Reaplicar template"** dentro do form. Como o contrato foi salvo sem clicar, ficou com os placeholders crus — e o PDF/preview/WhatsApp apenas mostram o `termos` salvo.
+### 3. Resiliência adicional no viewer
 
-**Correção no código** (`src/components/gestao/contratos/ContratoFormDialog.tsx`):
-- No `handleSubmit`, antes de salvar: se `termos` ainda contém `{{...}}` **ou** é igual ao `TEMPLATE_PADRAO`, aplicar `aplicarTemplate` automaticamente com as variáveis atuais (paciente, serviço, valor, frequência, datas, qtd).
-- Resultado: contratos novos já saem com texto pronto. Quem editou manualmente os termos continua tendo a versão própria preservada.
+- Adicionar fallback no diálogo: se for PDF, mostrar abaixo do `iframe` um link "Abrir em nova aba" apontando para a mesma rota proxy, útil quando o usuário tem política corporativa que bloqueia PDF embutido.
 
-**Contrato existente (Paciente Teste E2E):** abrir o contrato → clicar **"Editar"** → clicar **"Reaplicar template"** → **Salvar**. O PDF passa a sair correto.
+## Resultado esperado
 
----
-
-## Arquivos
-- **SQL no Supabase** (você roda): bloco acima.
-- **Edit** `src/components/gestao/contratos/ContratoFormDialog.tsx`: auto-aplicar template no submit quando o texto ainda tem placeholders.
-
-## Testes
-1. Rodar SQL → anexar PDF assinado funciona.
-2. Criar contrato novo sem mexer nos termos → "Baixar PDF" sai com valores reais.
-3. Reabrir o contrato existente, "Reaplicar template", salvar → PDF correto.
-
-Posso implementar?
+- A URL que aparece no DevTools e que adblockers inspecionam passa a ser apenas `/api/public/file-proxy/...pdf` no nosso próprio domínio — indistinguível de qualquer outro asset.
+- Sem `supabase.co` nem token assinado expostos ao navegador.
+- O Chrome para de exibir "Esta página foi bloqueada".
