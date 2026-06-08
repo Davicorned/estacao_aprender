@@ -478,3 +478,70 @@ exception when duplicate_object then null; end $$;
 ```
 
 Depois disso, `/gestao/agenda` está pronto para uso e recebe atualizações em tempo real.
+
+## 8) Prontuário Eletrônico (Fase 4 do /gestao)
+
+Rode este bloco no SQL Editor:
+
+```sql
+create table if not exists public.evolucoes (
+  id uuid primary key default gen_random_uuid(),
+  paciente_id uuid not null references public.pacientes(id) on delete cascade,
+  profissional_id uuid not null references public.profissionais(id) on delete restrict,
+  agendamento_id uuid references public.agendamentos(id) on delete set null,
+
+  data_sessao date not null default current_date,
+
+  queixa text,
+  observacao text,
+  evolucao text,
+  instrumentos text,
+  plano text,
+  encaminhamentos text,
+
+  privado boolean not null default false,
+
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.evolucoes to authenticated;
+grant all on public.evolucoes to service_role;
+
+alter table public.evolucoes enable row level security;
+
+drop policy if exists "auth read evolucoes" on public.evolucoes;
+create policy "auth read evolucoes" on public.evolucoes
+for select to authenticated
+using (
+  privado = false
+  or created_by = auth.uid()
+  or public.has_role(auth.uid(), 'admin')
+);
+
+drop policy if exists "auth insert evolucoes" on public.evolucoes;
+create policy "auth insert evolucoes" on public.evolucoes
+for insert to authenticated
+with check (created_by = auth.uid());
+
+drop policy if exists "auth update evolucoes" on public.evolucoes;
+create policy "auth update evolucoes" on public.evolucoes
+for update to authenticated
+using (created_by = auth.uid() or public.has_role(auth.uid(), 'admin'))
+with check (created_by = auth.uid() or public.has_role(auth.uid(), 'admin'));
+
+drop policy if exists "auth delete evolucoes" on public.evolucoes;
+create policy "auth delete evolucoes" on public.evolucoes
+for delete to authenticated
+using (created_by = auth.uid() or public.has_role(auth.uid(), 'admin'));
+
+create index if not exists evolucoes_paciente_data_idx
+  on public.evolucoes (paciente_id, data_sessao desc);
+create index if not exists evolucoes_profissional_idx
+  on public.evolucoes (profissional_id);
+create index if not exists evolucoes_agendamento_idx
+  on public.evolucoes (agendamento_id);
+```
+
+Depois disso, a aba **Prontuário** na ficha do paciente está pronta para uso.
