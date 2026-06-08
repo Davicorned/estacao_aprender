@@ -69,7 +69,6 @@ export function ProfissionaisSection() {
       especialidades,
       cor_agenda: editing.cor_agenda,
       ativo: editing.ativo,
-      updated_at: new Date().toISOString(),
     };
     const res = editing.id
       ? await supabase.from("profissionais").update(payload).eq("id", editing.id)
