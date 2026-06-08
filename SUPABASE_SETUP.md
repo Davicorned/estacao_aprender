@@ -420,3 +420,61 @@ create index if not exists pacientes_ativo_idx on public.pacientes (ativo);
 ```
 
 Depois disso, `/gestao/pacientes` está pronto para uso.
+
+## 7) Agendamentos (Fase 3 do /gestao)
+
+Rode este bloco no SQL Editor:
+
+```sql
+-- Enum de status
+do $$ begin
+  create type agendamento_status as enum
+    ('agendado','confirmado','em_atendimento','atendido','faltou','cancelado');
+exception when duplicate_object then null; end $$;
+
+create table if not exists public.agendamentos (
+  id uuid primary key default gen_random_uuid(),
+  paciente_id uuid not null references public.pacientes(id) on delete cascade,
+  profissional_id uuid not null references public.profissionais(id) on delete restrict,
+  servico_id uuid references public.servicos(id) on delete set null,
+
+  data date not null,
+  hora_inicio time not null,
+  hora_fim time not null,
+
+  tipo text not null default 'presencial' check (tipo in ('presencial','online')),
+  status agendamento_status not null default 'agendado',
+
+  observacoes text,
+  motivo_cancelamento text,
+  recorrencia_grupo_id uuid,
+
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.agendamentos to authenticated;
+grant all on public.agendamentos to service_role;
+
+alter table public.agendamentos enable row level security;
+
+drop policy if exists "auth read agendamentos" on public.agendamentos;
+create policy "auth read agendamentos" on public.agendamentos
+for select to authenticated using (true);
+
+drop policy if exists "auth write agendamentos" on public.agendamentos;
+create policy "auth write agendamentos" on public.agendamentos
+for all to authenticated using (true) with check (true);
+
+create index if not exists agendamentos_prof_data_idx on public.agendamentos (profissional_id, data);
+create index if not exists agendamentos_paciente_data_idx on public.agendamentos (paciente_id, data);
+create index if not exists agendamentos_data_idx on public.agendamentos (data);
+
+-- Habilita Realtime (ignora erro se já estiver na publicação)
+do $$ begin
+  alter publication supabase_realtime add table public.agendamentos;
+exception when duplicate_object then null; end $$;
+```
+
+Depois disso, `/gestao/agenda` está pronto para uso e recebe atualizações em tempo real.
