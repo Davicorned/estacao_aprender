@@ -29,6 +29,7 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [localAnexo, setLocalAnexo] = useState<{
     path: string | null;
     uploaded_at: string | null;
@@ -89,6 +90,12 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     doc.save(`Contrato-${nome}-${data}.pdf`);
   }
 
+  const getAnexoFilename = () => {
+    const nome = (contrato.paciente?.nome ?? "contrato").replace(/[^a-zA-Z0-9_-]+/g, "_");
+    const ext = localAnexo.mime === "application/pdf" ? "pdf" : localAnexo.mime === "image/png" ? "png" : "jpg";
+    return `Contrato-assinado-${nome}.${ext}`;
+  };
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -114,10 +121,20 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     if (!localAnexo.path) return;
     try {
       const url = await getContratoAssinadoUrl(localAnexo.path);
-      const proxied = `/api/public/file-proxy?url=${encodeURIComponent(url)}`;
-      window.open(proxied, "_blank");
+      setViewerUrl(`/api/public/file-proxy?url=${encodeURIComponent(url)}`);
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao abrir arquivo");
+    }
+  }
+
+  async function handleDownloadSigned() {
+    if (!localAnexo.path) return;
+    try {
+      const url = await getContratoAssinadoUrl(localAnexo.path);
+      const proxied = `/api/public/file-proxy?url=${encodeURIComponent(url)}&download=1&filename=${encodeURIComponent(getAnexoFilename())}`;
+      window.location.href = proxied;
+    } catch (err: any) {
+      toast.error(err.message ?? "Erro ao baixar arquivo");
     }
   }
 
@@ -233,6 +250,28 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
         <article className="contrato-print mx-auto mt-4 w-full max-w-[210mm] rounded-md border border-amber-100 bg-white p-8 font-serif text-sm leading-relaxed text-gray-800 shadow-sm print:m-0 print:max-w-none print:border-0 print:p-0 print:shadow-none">
           <pre className="whitespace-pre-wrap break-words font-serif">{contrato.termos}</pre>
         </article>
+
+        <Dialog open={!!viewerUrl} onOpenChange={(nextOpen) => !nextOpen && setViewerUrl(null)}>
+          <DialogContent className="h-[92vh] max-w-5xl overflow-hidden p-0">
+            <DialogHeader className="border-b px-4 py-3">
+              <div className="flex flex-wrap items-center justify-between gap-2 pr-8">
+                <DialogTitle>Contrato assinado — {contrato.paciente?.nome}</DialogTitle>
+                <Button size="sm" variant="outline" onClick={handleDownloadSigned}>
+                  <Download className="mr-1 h-4 w-4" /> Baixar
+                </Button>
+              </div>
+            </DialogHeader>
+            {viewerUrl ? (
+              localAnexo.mime?.startsWith("image/") ? (
+                <div className="flex h-[calc(92vh-64px)] items-center justify-center overflow-auto bg-muted p-4">
+                  <img src={viewerUrl} alt="Contrato assinado anexado" className="max-h-full max-w-full object-contain" />
+                </div>
+              ) : (
+                <iframe title="Contrato assinado anexado" src={viewerUrl} className="h-[calc(92vh-64px)] w-full border-0" />
+              )
+            ) : null}
+          </DialogContent>
+        </Dialog>
 
         <style>{`
           @media print {
