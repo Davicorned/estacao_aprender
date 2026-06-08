@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
+import html2canvas from "html2canvas-pro";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import {
   Dialog,
