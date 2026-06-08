@@ -28,6 +28,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PacienteAvatar } from "./PacienteAvatar";
+import { ProntuarioTab } from "@/components/gestao/prontuario/ProntuarioTab";
+import { HistoricoSessoesTab } from "@/components/gestao/prontuario/HistoricoSessoesTab";
 import {
   buscarCep,
   calcularIdade,
@@ -267,7 +269,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           <TabsList>
             <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
             {isEdit && <TabsTrigger value="prontuario">Prontuário</TabsTrigger>}
-            {isEdit && <TabsTrigger value="agendamentos">Agendamentos</TabsTrigger>}
+            {isEdit && <TabsTrigger value="historico">Histórico de Sessões</TabsTrigger>}
             {isEdit && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
           </TabsList>
 
@@ -475,12 +477,12 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
 
           {isEdit && (
             <TabsContent value="prontuario" className="mt-6">
-              <PlaceholderTab text="Prontuário será implementado na Fase 4." />
+              {paciente && <ProntuarioTab paciente={paciente} />}
             </TabsContent>
           )}
           {isEdit && (
-            <TabsContent value="agendamentos" className="mt-6">
-              <PlaceholderTab text="Agendamentos serão implementados na Fase 3." />
+            <TabsContent value="historico" className="mt-6">
+              {paciente && <HistoricoSessoesTab paciente={paciente} />}
             </TabsContent>
           )}
           {isEdit && (
