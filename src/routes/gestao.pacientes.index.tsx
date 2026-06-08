@@ -35,7 +35,7 @@ import {
   PAGE_SIZE,
   type Paciente,
 } from "@/lib/pacientes";
-import { listProfissionais, type Profissional } from "@/lib/configuracoes";
+import { fetchProfissionais, type Profissional } from "@/lib/configuracoes";
 
 export const Route = createFileRoute("/gestao/pacientes/")({
   component: PacientesListPage,
@@ -77,7 +77,7 @@ function PacientesListPage() {
 
   const { data: profissionais } = useQuery<Profissional[]>({
     queryKey: ["profissionais-ativos"],
-    queryFn: () => listProfissionais(true),
+    queryFn: () => fetchProfissionais(false),
   });
 
   const total = data?.count ?? 0;
