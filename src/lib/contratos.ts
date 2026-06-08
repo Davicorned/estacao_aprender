@@ -151,10 +151,9 @@ export async function getContrato(id: string): Promise<ContratoComJoin | null> {
 }
 
 export async function createContrato(input: ContratoInput): Promise<Contrato> {
-  const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
   const { data, error } = await supabase
     .from("contratos")
-    .insert({ ...input, created_by: userId })
+    .insert(input)
     .select("*")
     .single();
   if (error) throw error;
