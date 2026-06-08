@@ -201,6 +201,9 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
                 <Button size="sm" variant="outline" onClick={handleViewSigned}>
                   <Eye className="mr-1 h-4 w-4" /> Ver
                 </Button>
+                <Button size="sm" variant="outline" onClick={handleDownloadSigned}>
+                  <Download className="mr-1 h-4 w-4" /> Baixar
+                </Button>
                 <Button
                   size="sm"
                   variant="outline"
