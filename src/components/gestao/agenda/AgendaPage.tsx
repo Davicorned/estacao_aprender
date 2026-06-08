@@ -395,6 +395,18 @@ function AgendaGrid({
                   >
                     <p className="font-bold">{a.hora_inicio.slice(0, 5)}</p>
                     <p className="truncate">{a.paciente?.nome ?? "—"}</p>
+                    {a.profissional?.nome && (
+                      <span
+                        className="mt-1 inline-block max-w-full truncate rounded-full border px-1.5 py-0.5 text-[9px] font-medium"
+                        style={{
+                          borderColor: a.profissional.cor_agenda,
+                          color: a.profissional.cor_agenda,
+                          backgroundColor: `${a.profissional.cor_agenda}1A`,
+                        }}
+                      >
+                        {a.profissional.nome}
+                      </span>
+                    )}
                     {view === "dia" && (
                       <p className="truncate text-[10px] opacity-80">
                         {a.servico?.nome} • {STATUS_LABEL[a.status]}
