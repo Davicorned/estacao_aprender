@@ -95,10 +95,10 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     if (!file) return;
     setUploading(true);
     try {
-      await uploadContratoAssinado(contrato.id, file);
+      const newPath = await uploadContratoAssinado(contrato.id, file);
       toast.success("Contrato assinado anexado");
       setLocalAnexo({
-        path: `${contrato.id}/uploaded`,
+        path: newPath,
         uploaded_at: new Date().toISOString(),
         mime: file.type,
       });

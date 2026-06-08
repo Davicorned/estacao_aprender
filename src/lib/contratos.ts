@@ -191,7 +191,7 @@ function sanitizeFilename(name: string): string {
   return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
 }
 
-export async function uploadContratoAssinado(contratoId: string, file: File): Promise<void> {
+export async function uploadContratoAssinado(contratoId: string, file: File): Promise<string> {
   if (!ARQUIVO_ASSINADO_MIMES.includes(file.type)) {
     throw new Error("Formato inválido. Use PDF, JPG ou PNG.");
   }
@@ -228,6 +228,7 @@ export async function uploadContratoAssinado(contratoId: string, file: File): Pr
   if (prevPath && prevPath !== path) {
     await supabase.storage.from(CONTRATOS_ASSINADOS_BUCKET).remove([prevPath]);
   }
+  return path;
 }
 
 export async function getContratoAssinadoUrl(path: string): Promise<string> {
