@@ -119,7 +119,7 @@ export function AgendamentoFormDialog({
     }
     setPacienteSearch("");
     setPacienteResults([]);
-    setPacienteOpen(false);
+    setPacienteOpen(!agendamento && !pacienteInicial);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Atualiza horaFim quando troca serviço ou horaInicio
