@@ -123,7 +123,7 @@ export function whatsappLink(numero: string | null, mensagem: string): string {
 }
 
 const SELECT_JOIN =
-  "*, paciente:pacientes(id,nome,telefone_celular,responsaveis), profissional:profissionais(id,nome), servico:servicos(id,nome)";
+  "*, paciente:pacientes!contratos_paciente_id_fkey(id,nome,telefone_celular,responsaveis), profissional:profissionais!contratos_profissional_id_fkey(id,nome), servico:servicos!contratos_servico_id_fkey(id,nome)";
 
 export async function listContratos(params: {
   status?: ContratoStatus | "todos";
