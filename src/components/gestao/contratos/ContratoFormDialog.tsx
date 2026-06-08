@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -30,14 +31,21 @@ import {
 import {
   aplicarTemplate,
   calcularDataTermino,
+  calcularValorMensal,
   createContrato,
+  FORMA_PAGAMENTO_LABEL,
   FREQUENCIA_LABEL,
+  MODALIDADE_LABEL,
+  montarVariaveis,
   STATUS_LABEL,
   TEMPLATE_PADRAO,
   updateContrato,
   type ContratoComJoin,
   type ContratoStatus,
+  type DadosResponsavel,
+  type FormaPagamento,
   type Frequencia,
+  type Modalidade,
 } from "@/lib/contratos";
 
 type PacienteLite = { id: string; nome: string; foto_url: string | null; telefone_celular?: string | null; responsaveis?: any };
@@ -58,10 +66,16 @@ function nomeResponsavel(resp: any): string {
   return "";
 }
 
-function formatData(iso: string): string {
-  if (!iso) return "";
-  const [y, m, d] = iso.split("-");
-  return `${d}/${m}/${y}`;
+function dadosFromPaciente(resp: any): DadosResponsavel {
+  if (!resp) return {};
+  const first = Array.isArray(resp) ? resp[0] : resp;
+  if (!first || typeof first !== "object") return {};
+  return {
+    nome: first.nome ?? "",
+    cpf: first.cpf ?? "",
+    rg: first.rg ?? "",
+    endereco: first.endereco ?? "",
+  };
 }
 
 export function ContratoFormDialog({
@@ -80,7 +94,6 @@ export function ContratoFormDialog({
 
   const [profId, setProfId] = useState("");
   const [servId, setServId] = useState("");
-  const [valorInput, setValorInput] = useState("R$ 0,00");
   const [qtdSessoes, setQtdSessoes] = useState<string>("");
   const [frequencia, setFrequencia] = useState<Frequencia>("semanal");
   const [dataInicio, setDataInicio] = useState(new Date().toISOString().slice(0, 10));
@@ -89,42 +102,93 @@ export function ContratoFormDialog({
   const [termos, setTermos] = useState<string>(TEMPLATE_PADRAO);
   const [saving, setSaving] = useState(false);
 
+  // Novos campos do modelo Estação
+  const [modalidade, setModalidade] = useState<Modalidade>("pacote_mensal");
+  const [aulasPorMes, setAulasPorMes] = useState<string>("4");
+  const [valorComDesc, setValorComDesc] = useState("R$ 0,00");
+  const [valorSemDesc, setValorSemDesc] = useState("R$ 0,00");
+  const [formaPagamento, setFormaPagamento] = useState<FormaPagamento>("pix");
+  const [diaVencimento, setDiaVencimento] = useState<string>("10");
+  const [cidade, setCidade] = useState("São Paulo");
+  const [respNome, setRespNome] = useState("");
+  const [respCpf, setRespCpf] = useState("");
+  const [respRg, setRespRg] = useState("");
+  const [respEndereco, setRespEndereco] = useState("");
+  const [autorizaImagem, setAutorizaImagem] = useState<boolean>(false);
+
   useEffect(() => {
     if (!open) return;
     if (contrato) {
       setPaciente(contrato.paciente as any);
       setProfId(contrato.profissional_id);
       setServId(contrato.servico_id);
-      setValorInput(formatBRL(contrato.valor_centavos));
       setQtdSessoes(contrato.qtd_sessoes ? String(contrato.qtd_sessoes) : "");
       setFrequencia(contrato.frequencia);
       setDataInicio(contrato.data_inicio);
       setDataTermino(contrato.data_termino ?? "");
       setStatus(contrato.status);
       setTermos(contrato.termos || TEMPLATE_PADRAO);
+      setModalidade((contrato.modalidade as Modalidade) ?? "pacote_mensal");
+      setAulasPorMes(contrato.aulas_por_mes ? String(contrato.aulas_por_mes) : "4");
+      setValorComDesc(formatBRL(contrato.valor_com_desconto_centavos ?? contrato.valor_centavos ?? 0));
+      setValorSemDesc(formatBRL(contrato.valor_sem_desconto_centavos ?? 0));
+      setFormaPagamento((contrato.forma_pagamento as FormaPagamento) ?? "pix");
+      setDiaVencimento(contrato.dia_vencimento ? String(contrato.dia_vencimento) : "10");
+      setCidade(contrato.cidade_assinatura ?? "São Paulo");
+      const d = contrato.dados_responsavel ?? {};
+      setRespNome(d.nome ?? "");
+      setRespCpf(d.cpf ?? "");
+      setRespRg(d.rg ?? "");
+      setRespEndereco(d.endereco ?? "");
+      setAutorizaImagem(contrato.autoriza_imagem === true);
     } else {
       setPaciente(null);
       setProfId(profissionais[0]?.id ?? "");
       setServId(servicos[0]?.id ?? "");
-      setValorInput("R$ 0,00");
       setQtdSessoes("");
       setFrequencia("semanal");
       setDataInicio(new Date().toISOString().slice(0, 10));
       setDataTermino("");
       setStatus("rascunho");
       setTermos(TEMPLATE_PADRAO);
+      setModalidade("pacote_mensal");
+      setAulasPorMes("4");
+      setValorComDesc("R$ 0,00");
+      setValorSemDesc("R$ 0,00");
+      setFormaPagamento("pix");
+      setDiaVencimento("10");
+      setCidade("São Paulo");
+      setRespNome("");
+      setRespCpf("");
+      setRespRg("");
+      setRespEndereco("");
+      setAutorizaImagem(false);
     }
     setPacienteSearch("");
     setPacienteResults([]);
     setPacienteOpen(false);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Atualiza valor com base no serviço quando criando novo
+  // Atualiza valores com base no serviço quando criando novo
   useEffect(() => {
     if (isEdit || !open) return;
     const s = servicos.find((x) => x.id === servId);
-    if (s) setValorInput(formatBRL(s.valor_centavos));
+    if (s) {
+      const desconto = Math.max(0, s.valor_centavos - 1500);
+      setValorComDesc(formatBRL(desconto));
+      setValorSemDesc(formatBRL(s.valor_centavos));
+    }
   }, [servId, servicos, isEdit, open]);
+
+  // Pré-preenche dados do responsável a partir do paciente
+  useEffect(() => {
+    if (!paciente || respNome.trim()) return;
+    const d = dadosFromPaciente((paciente as any).responsaveis);
+    if (d.nome) setRespNome(d.nome);
+    if (d.cpf) setRespCpf(d.cpf);
+    if (d.rg) setRespRg(d.rg);
+    if (d.endereco) setRespEndereco(d.endereco);
+  }, [paciente]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Calcula data término
   useEffect(() => {
@@ -151,20 +215,35 @@ export function ContratoFormDialog({
     return () => clearTimeout(t);
   }, [pacienteSearch, pacienteOpen]);
 
-  // Recalcula template ao mudar variáveis (apenas quando texto ainda é o template padrão ou variáveis presentes)
-  function regenerarTemplate() {
+  const valorMensalPreview = calcularValorMensal(
+    parseInt(aulasPorMes, 10) || 0,
+    parseBRLToCents(valorComDesc),
+    formaPagamento,
+  );
+
+  function buildVars() {
     const s = servicos.find((x) => x.id === servId);
-    const vars = {
-      NOME_PACIENTE: paciente?.nome ?? "",
-      NOME_RESPONSAVEL: nomeResponsavel((paciente as any)?.responsaveis),
-      TIPO_SERVICO: s?.nome ?? "",
-      VALOR: formatBRL(parseBRLToCents(valorInput)),
-      FREQUENCIA: FREQUENCIA_LABEL[frequencia],
-      QTD_SESSOES: qtdSessoes || "Indeterminado",
-      DATA_INICIO: formatData(dataInicio),
-      DATA_TERMINO: dataTermino ? formatData(dataTermino) : "—",
-    };
-    setTermos(aplicarTemplate(TEMPLATE_PADRAO, vars));
+    return montarVariaveis({
+      paciente_nome: paciente?.nome ?? "",
+      responsavel: { nome: respNome, cpf: respCpf, rg: respRg, endereco: respEndereco },
+      servico_nome: s?.nome ?? "",
+      modalidade,
+      aulas_por_mes: parseInt(aulasPorMes, 10) || null,
+      valor_com_desconto_centavos: parseBRLToCents(valorComDesc),
+      valor_sem_desconto_centavos: parseBRLToCents(valorSemDesc),
+      forma_pagamento: formaPagamento,
+      dia_vencimento: parseInt(diaVencimento, 10) || null,
+      cidade_assinatura: cidade,
+      autoriza_imagem: autorizaImagem,
+      data_inicio: dataInicio,
+      data_termino: dataTermino || null,
+      frequencia,
+      qtd_sessoes: parseInt(qtdSessoes, 10) || null,
+    });
+  }
+
+  function regenerarTemplate() {
+    setTermos(aplicarTemplate(TEMPLATE_PADRAO, buildVars()));
   }
 
   async function handleSubmit() {
@@ -172,31 +251,26 @@ export function ContratoFormDialog({
     if (!profId) return toast.error("Selecione um profissional");
     if (!servId) return toast.error("Selecione um serviço");
     if (!dataInicio) return toast.error("Informe a data de início");
+    if (!respNome.trim()) return toast.error("Informe o nome do responsável");
+    if (!respCpf.trim()) return toast.error("Informe o CPF do responsável");
 
-    const cents = parseBRLToCents(valorInput);
+    const valorComDescCents = parseBRLToCents(valorComDesc);
+    const valorSemDescCents = parseBRLToCents(valorSemDesc);
     const qtd = parseInt(qtdSessoes, 10);
+    const aulas = parseInt(aulasPorMes, 10) || null;
+    const valorMensal = calcularValorMensal(aulas, valorComDescCents, formaPagamento);
 
     // Auto-aplica template se ainda houver placeholders ou se o texto não foi editado
     let termosFinal = termos;
     if (termos === TEMPLATE_PADRAO || /\{\{\w+\}\}/.test(termos)) {
-      const s = servicos.find((x) => x.id === servId);
-      termosFinal = aplicarTemplate(termos, {
-        NOME_PACIENTE: paciente.nome ?? "",
-        NOME_RESPONSAVEL: nomeResponsavel((paciente as any)?.responsaveis),
-        TIPO_SERVICO: s?.nome ?? "",
-        VALOR: formatBRL(cents),
-        FREQUENCIA: FREQUENCIA_LABEL[frequencia],
-        QTD_SESSOES: qtdSessoes || "Indeterminado",
-        DATA_INICIO: formatData(dataInicio),
-        DATA_TERMINO: dataTermino ? formatData(dataTermino) : "—",
-      });
+      termosFinal = aplicarTemplate(termos, buildVars());
     }
 
     const payload = {
       paciente_id: paciente.id,
       profissional_id: profId,
       servico_id: servId,
-      valor_centavos: cents,
+      valor_centavos: modalidade === "pacote_mensal" ? valorMensal : valorSemDescCents,
       qtd_sessoes: isNaN(qtd) ? null : qtd,
       frequencia,
       data_inicio: dataInicio,
@@ -204,6 +278,20 @@ export function ContratoFormDialog({
       status,
       termos: termosFinal,
       template_origem: "padrao",
+      modalidade,
+      aulas_por_mes: aulas,
+      valor_com_desconto_centavos: valorComDescCents,
+      valor_sem_desconto_centavos: valorSemDescCents,
+      forma_pagamento: formaPagamento,
+      dia_vencimento: parseInt(diaVencimento, 10) || null,
+      cidade_assinatura: cidade.trim() || "São Paulo",
+      dados_responsavel: {
+        nome: respNome.trim(),
+        cpf: respCpf.trim(),
+        rg: respRg.trim(),
+        endereco: respEndereco.trim(),
+      },
+      autoriza_imagem: autorizaImagem,
     };
 
     setSaving(true);
