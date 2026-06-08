@@ -686,3 +686,47 @@ create trigger trg_gerar_lancamento
 ```
 
 Depois disso, `/gestao/contratos`, `/gestao/financeiro` e `/gestao/dashboard` estão prontos para uso.
+
+---
+
+## Fase 7 — Anexo de contrato assinado (scan)
+
+### 1. Colunas em `contratos`
+
+```sql
+alter table public.contratos
+  add column if not exists arquivo_assinado_path text,
+  add column if not exists arquivo_assinado_uploaded_at timestamptz,
+  add column if not exists arquivo_assinado_mime text;
+```
+
+### 2. Bucket privado `contratos-assinados`
+
+No Supabase Dashboard → Storage → **New bucket**:
+- Nome: `contratos-assinados`
+- Public: **OFF** (privado)
+- File size limit: 10 MB
+- Allowed MIME types: `application/pdf, image/jpeg, image/png`
+
+### 3. Policies no bucket (RLS em `storage.objects`)
+
+```sql
+create policy "contratos_assinados_select"
+  on storage.objects for select to authenticated
+  using (bucket_id = 'contratos-assinados');
+
+create policy "contratos_assinados_insert"
+  on storage.objects for insert to authenticated
+  with check (bucket_id = 'contratos-assinados');
+
+create policy "contratos_assinados_update"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'contratos-assinados')
+  with check (bucket_id = 'contratos-assinados');
+
+create policy "contratos_assinados_delete"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'contratos-assinados');
+```
+
+Pronto: o botão **Baixar PDF** e o bloco **Contrato assinado** ficam funcionais em `/gestao/contratos`.
