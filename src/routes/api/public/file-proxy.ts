@@ -9,6 +9,8 @@ export const Route = createFileRoute("/api/public/file-proxy")({
       GET: async ({ request }) => {
         const u = new URL(request.url);
         const target = u.searchParams.get("url");
+        const download = u.searchParams.get("download") === "1";
+        const filename = (u.searchParams.get("filename") || "contrato-assinado").replace(/[^\w.\- ]+/g, "_");
         if (!target || !target.startsWith(ALLOWED_PREFIX)) {
           return new Response("Invalid URL", { status: 400 });
         }
@@ -24,7 +26,10 @@ export const Route = createFileRoute("/api/public/file-proxy")({
         const cl = upstream.headers.get("content-length");
         if (cl) headers.set("content-length", cl);
         headers.set("cache-control", "private, max-age=0, no-store");
-        headers.set("content-disposition", "inline");
+        headers.set(
+          "content-disposition",
+          download ? `attachment; filename="${filename}"` : "inline",
+        );
 
         return new Response(upstream.body, { status: 200, headers });
       },
