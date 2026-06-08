@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, FileText, Eye, Pencil, Trash2 } from "lucide-react";
+import { Plus, FileText, Eye, Pencil, Trash2, Paperclip } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -135,19 +135,22 @@ export function ContratosPage() {
               <th className="px-4 py-3 text-left">Sessões</th>
               <th className="px-4 py-3 text-left">Frequência</th>
               <th className="px-4 py-3 text-left">Status</th>
+              <th className="px-4 py-3 text-center" title="Contrato assinado anexado">
+                <Paperclip className="inline h-4 w-4" />
+              </th>
               <th className="px-4 py-3 text-right">Ações</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
                   Carregando…
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-gray-500">
+                <td colSpan={8} className="px-4 py-10 text-center text-gray-500">
                   <FileText className="mx-auto mb-2 h-8 w-8 opacity-40" />
                   Nenhum contrato encontrado.
                 </td>
@@ -164,6 +167,22 @@ export function ContratosPage() {
                     <span className={`rounded-full px-2 py-0.5 text-xs ${STATUS_STYLES[c.status]}`}>
                       {STATUS_LABEL[c.status]}
                     </span>
+                  </td>
+                  <td className="px-4 py-3 text-center">
+                    {c.arquivo_assinado_path ? (
+                      <Paperclip
+                        className="inline h-4 w-4 text-amber-700"
+                        aria-label="Assinado anexado"
+                      >
+                        <title>
+                          {c.arquivo_assinado_uploaded_at
+                            ? `Anexado em ${new Date(c.arquivo_assinado_uploaded_at).toLocaleDateString("pt-BR")}`
+                            : "Anexado"}
+                        </title>
+                      </Paperclip>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end gap-1">
@@ -218,6 +237,7 @@ export function ContratosPage() {
           contrato={viewing}
           open={!!viewing}
           onOpenChange={(v) => !v && setViewing(null)}
+          onChanged={() => carregar()}
         />
       )}
 
