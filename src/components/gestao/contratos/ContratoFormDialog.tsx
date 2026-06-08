@@ -400,14 +400,86 @@ export function ContratoFormDialog({
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
-            <div>
-              <Label>Valor por sessão *</Label>
-              <Input
-                value={valorInput}
-                onChange={(e) => setValorInput(formatBRL(parseBRLToCents(e.target.value)))}
-              />
+          {/* Dados do responsável */}
+          <fieldset className="rounded-md border border-amber-100 bg-amber-50/30 p-3">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-amber-800">
+              Dados do responsável
+            </legend>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div>
+                <Label>Nome completo *</Label>
+                <Input value={respNome} onChange={(e) => setRespNome(e.target.value)} />
+              </div>
+              <div>
+                <Label>CPF *</Label>
+                <Input value={respCpf} onChange={(e) => setRespCpf(e.target.value)} placeholder="000.000.000-00" />
+              </div>
+              <div>
+                <Label>RG</Label>
+                <Input value={respRg} onChange={(e) => setRespRg(e.target.value)} />
+              </div>
+              <div>
+                <Label>Endereço</Label>
+                <Input value={respEndereco} onChange={(e) => setRespEndereco(e.target.value)} />
+              </div>
             </div>
+          </fieldset>
+
+          {/* Modalidade e pagamento */}
+          <fieldset className="rounded-md border border-amber-100 bg-amber-50/30 p-3">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-amber-800">
+              Modalidade e pagamento
+            </legend>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div>
+                <Label>Modalidade *</Label>
+                <Select value={modalidade} onValueChange={(v) => setModalidade(v as Modalidade)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(MODALIDADE_LABEL) as Modalidade[]).map((m) => (
+                      <SelectItem key={m} value={m}>{MODALIDADE_LABEL[m]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Aulas por mês</Label>
+                <Input type="number" min={1} max={12} value={aulasPorMes} onChange={(e) => setAulasPorMes(e.target.value)} />
+              </div>
+              <div>
+                <Label>Dia de vencimento</Label>
+                <Input type="number" min={1} max={28} value={diaVencimento} onChange={(e) => setDiaVencimento(e.target.value)} />
+              </div>
+              <div>
+                <Label>Valor c/ desconto (aula)</Label>
+                <Input value={valorComDesc} onChange={(e) => setValorComDesc(formatBRL(parseBRLToCents(e.target.value)))} />
+              </div>
+              <div>
+                <Label>Valor s/ desconto (aula)</Label>
+                <Input value={valorSemDesc} onChange={(e) => setValorSemDesc(formatBRL(parseBRLToCents(e.target.value)))} />
+              </div>
+              <div>
+                <Label>Forma de pagamento</Label>
+                <Select value={formaPagamento} onValueChange={(v) => setFormaPagamento(v as FormaPagamento)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {(Object.keys(FORMA_PAGAMENTO_LABEL) as FormaPagamento[]).map((f) => (
+                      <SelectItem key={f} value={f}>{FORMA_PAGAMENTO_LABEL[f]}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="mt-3 rounded-md bg-white px-3 py-2 text-sm">
+              <span className="text-gray-600">Valor mensal do pacote: </span>
+              <span className="font-semibold text-amber-800">{formatBRL(valorMensalPreview)}</span>
+              {formaPagamento === "cartao_credito" && (
+                <span className="ml-2 text-xs text-gray-500">(inclui acréscimo de R$ 10,00 por aula)</span>
+              )}
+            </div>
+          </fieldset>
+
+          <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>Qtd de sessões</Label>
               <Input
