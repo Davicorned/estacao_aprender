@@ -24,6 +24,7 @@ import { Route as GestaoLoginRouteImport } from './routes/gestao.login'
 import { Route as GestaoFinanceiroRouteImport } from './routes/gestao.financeiro'
 import { Route as GestaoDashboardRouteImport } from './routes/gestao.dashboard'
 import { Route as GestaoContratosRouteImport } from './routes/gestao.contratos'
+import { Route as GestaoConfiguracoesRouteImport } from './routes/gestao.configuracoes'
 import { Route as GestaoAgendaRouteImport } from './routes/gestao.agenda'
 import { Route as AdminLoginRouteImport } from './routes/admin.login'
 import { Route as AdminEquipeRouteImport } from './routes/admin.equipe'
@@ -108,6 +109,11 @@ const GestaoContratosRoute = GestaoContratosRouteImport.update({
   path: '/contratos',
   getParentRoute: () => GestaoRoute,
 } as any)
+const GestaoConfiguracoesRoute = GestaoConfiguracoesRouteImport.update({
+  id: '/configuracoes',
+  path: '/configuracoes',
+  getParentRoute: () => GestaoRoute,
+} as any)
 const GestaoAgendaRoute = GestaoAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
@@ -162,6 +168,7 @@ export interface FileRoutesByFullPath {
   '/admin/equipe': typeof AdminEquipeRoute
   '/admin/login': typeof AdminLoginRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
+  '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
   '/gestao/dashboard': typeof GestaoDashboardRoute
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
@@ -185,6 +192,7 @@ export interface FileRoutesByTo {
   '/admin/equipe': typeof AdminEquipeRoute
   '/admin/login': typeof AdminLoginRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
+  '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
   '/gestao/dashboard': typeof GestaoDashboardRoute
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
@@ -210,6 +218,7 @@ export interface FileRoutesById {
   '/admin/equipe': typeof AdminEquipeRoute
   '/admin/login': typeof AdminLoginRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
+  '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
   '/gestao/dashboard': typeof GestaoDashboardRoute
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
@@ -237,6 +246,7 @@ export interface FileRouteTypes {
     | '/admin/equipe'
     | '/admin/login'
     | '/gestao/agenda'
+    | '/gestao/configuracoes'
     | '/gestao/contratos'
     | '/gestao/dashboard'
     | '/gestao/financeiro'
@@ -260,6 +270,7 @@ export interface FileRouteTypes {
     | '/admin/equipe'
     | '/admin/login'
     | '/gestao/agenda'
+    | '/gestao/configuracoes'
     | '/gestao/contratos'
     | '/gestao/dashboard'
     | '/gestao/financeiro'
@@ -284,6 +295,7 @@ export interface FileRouteTypes {
     | '/admin/equipe'
     | '/admin/login'
     | '/gestao/agenda'
+    | '/gestao/configuracoes'
     | '/gestao/contratos'
     | '/gestao/dashboard'
     | '/gestao/financeiro'
@@ -415,6 +427,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoContratosRouteImport
       parentRoute: typeof GestaoRoute
     }
+    '/gestao/configuracoes': {
+      id: '/gestao/configuracoes'
+      path: '/configuracoes'
+      fullPath: '/gestao/configuracoes'
+      preLoaderRoute: typeof GestaoConfiguracoesRouteImport
+      parentRoute: typeof GestaoRoute
+    }
     '/gestao/agenda': {
       id: '/gestao/agenda'
       path: '/agenda'
@@ -506,6 +525,7 @@ const GestaoPacientesRouteWithChildren = GestaoPacientesRoute._addFileChildren(
 
 interface GestaoRouteChildren {
   GestaoAgendaRoute: typeof GestaoAgendaRoute
+  GestaoConfiguracoesRoute: typeof GestaoConfiguracoesRoute
   GestaoContratosRoute: typeof GestaoContratosRoute
   GestaoDashboardRoute: typeof GestaoDashboardRoute
   GestaoFinanceiroRoute: typeof GestaoFinanceiroRoute
@@ -518,6 +538,7 @@ interface GestaoRouteChildren {
 
 const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoAgendaRoute: GestaoAgendaRoute,
+  GestaoConfiguracoesRoute: GestaoConfiguracoesRoute,
   GestaoContratosRoute: GestaoContratosRoute,
   GestaoDashboardRoute: GestaoDashboardRoute,
   GestaoFinanceiroRoute: GestaoFinanceiroRoute,
@@ -544,3 +565,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
