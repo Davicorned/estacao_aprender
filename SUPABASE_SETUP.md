@@ -545,3 +545,144 @@ create index if not exists evolucoes_agendamento_idx
 ```
 
 Depois disso, a aba **Prontuário** na ficha do paciente está pronta para uso.
+
+## 9) Contratos e Financeiro (Fase 5 do /gestao)
+
+Rode este bloco no SQL Editor:
+
+```sql
+-- ================== CONTRATOS ==================
+create table if not exists public.contratos (
+  id uuid primary key default gen_random_uuid(),
+  paciente_id uuid not null references public.pacientes(id) on delete cascade,
+  profissional_id uuid not null references public.profissionais(id) on delete restrict,
+  servico_id uuid not null references public.servicos(id) on delete restrict,
+
+  valor_centavos int not null default 0,
+  qtd_sessoes int,
+  frequencia text not null default 'semanal' check (frequencia in ('semanal','quinzenal','mensal','livre')),
+
+  data_inicio date not null,
+  data_termino date,
+
+  status text not null default 'rascunho' check (status in ('rascunho','ativo','encerrado','cancelado')),
+
+  termos text not null default '',
+  template_origem text,
+
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.contratos to authenticated;
+grant all on public.contratos to service_role;
+alter table public.contratos enable row level security;
+
+drop policy if exists "auth read contratos" on public.contratos;
+create policy "auth read contratos" on public.contratos
+for select to authenticated using (true);
+
+drop policy if exists "auth write contratos" on public.contratos;
+create policy "auth write contratos" on public.contratos
+for all to authenticated using (true) with check (true);
+
+create index if not exists contratos_paciente_idx on public.contratos (paciente_id);
+create index if not exists contratos_status_idx on public.contratos (status);
+create index if not exists contratos_prof_idx on public.contratos (profissional_id);
+
+-- ================== LANÇAMENTOS FINANCEIROS ==================
+create table if not exists public.lancamentos_financeiros (
+  id uuid primary key default gen_random_uuid(),
+  paciente_id uuid references public.pacientes(id) on delete set null,
+  contrato_id uuid references public.contratos(id) on delete set null,
+  agendamento_id uuid references public.agendamentos(id) on delete set null,
+
+  tipo text not null default 'receita' check (tipo in ('receita','despesa')),
+  descricao text not null default '',
+  valor_centavos int not null default 0,
+
+  data_vencimento date not null,
+  data_pagamento date,
+
+  status text not null default 'pendente' check (status in ('pendente','pago','atrasado','cancelado')),
+  forma_pagamento text check (forma_pagamento in ('dinheiro','pix','cartao_credito','cartao_debito','transferencia')),
+
+  created_by uuid references auth.users(id) on delete set null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.lancamentos_financeiros to authenticated;
+grant all on public.lancamentos_financeiros to service_role;
+alter table public.lancamentos_financeiros enable row level security;
+
+drop policy if exists "auth read lancamentos" on public.lancamentos_financeiros;
+create policy "auth read lancamentos" on public.lancamentos_financeiros
+for select to authenticated using (true);
+
+drop policy if exists "auth write lancamentos" on public.lancamentos_financeiros;
+create policy "auth write lancamentos" on public.lancamentos_financeiros
+for all to authenticated using (true) with check (true);
+
+create index if not exists lanc_status_venc_idx on public.lancamentos_financeiros (status, data_vencimento);
+create index if not exists lanc_paciente_idx on public.lancamentos_financeiros (paciente_id);
+create unique index if not exists lanc_agendamento_uidx on public.lancamentos_financeiros (agendamento_id)
+  where agendamento_id is not null;
+
+-- ================== TRIGGER: gerar lançamento ao atender agendamento ==================
+create or replace function public.gerar_lancamento_para_agendamento()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_contrato_id uuid;
+  v_valor int;
+  v_servico_nome text;
+begin
+  if NEW.status = 'atendido' and (OLD is null or OLD.status is distinct from 'atendido') then
+    -- já existe um lançamento para este agendamento?
+    if exists (select 1 from public.lancamentos_financeiros where agendamento_id = NEW.id) then
+      return NEW;
+    end if;
+
+    -- contrato ativo do paciente (mais recente)
+    select c.id, c.valor_centavos into v_contrato_id, v_valor
+    from public.contratos c
+    where c.paciente_id = NEW.paciente_id and c.status = 'ativo'
+    order by c.data_inicio desc
+    limit 1;
+
+    if v_valor is null then
+      select s.valor_centavos into v_valor
+      from public.servicos s where s.id = NEW.servico_id;
+    end if;
+
+    select s.nome into v_servico_nome from public.servicos s where s.id = NEW.servico_id;
+
+    insert into public.lancamentos_financeiros (
+      paciente_id, contrato_id, agendamento_id,
+      tipo, descricao, valor_centavos,
+      data_vencimento, status
+    ) values (
+      NEW.paciente_id, v_contrato_id, NEW.id,
+      'receita',
+      coalesce(v_servico_nome, 'Atendimento') || ' — ' || to_char(NEW.data, 'DD/MM/YYYY'),
+      coalesce(v_valor, 0),
+      NEW.data,
+      'pendente'
+    );
+  end if;
+  return NEW;
+end;
+$$;
+
+drop trigger if exists trg_gerar_lancamento on public.agendamentos;
+create trigger trg_gerar_lancamento
+  after insert or update of status on public.agendamentos
+  for each row execute function public.gerar_lancamento_para_agendamento();
+```
+
+Depois disso, `/gestao/contratos`, `/gestao/financeiro` e `/gestao/dashboard` estão prontos para uso.
