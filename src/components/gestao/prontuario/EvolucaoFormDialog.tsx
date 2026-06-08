@@ -145,6 +145,7 @@ export function EvolucaoFormDialog({
       toast.success(evolucao ? "Evolução atualizada" : "Evolução registrada");
       void qc.invalidateQueries({ queryKey: ["evolucoes", pacienteId] });
       void qc.invalidateQueries({ queryKey: ["historico-paciente", pacienteId] });
+      void qc.invalidateQueries({ queryKey: ["evolucoes-map", pacienteId] });
       onOpenChange(false);
     },
     onError: (err) => {
