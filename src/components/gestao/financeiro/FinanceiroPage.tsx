@@ -295,7 +295,7 @@ export function FinanceiroPage() {
       />
       <RegistrarPagamentoDialog
         open={payOpen}
-        onOpenChange={(v) => {
+        onOpenChange={(v: boolean) => {
           setPayOpen(v);
           if (!v) setSelecionados(new Set());
         }}
