@@ -170,16 +170,15 @@ export function ContratosPage() {
                   </td>
                   <td className="px-4 py-3 text-center">
                     {c.arquivo_assinado_path ? (
-                      <Paperclip
-                        className="inline h-4 w-4 text-amber-700"
-                        aria-label="Assinado anexado"
-                      >
-                        <title>
-                          {c.arquivo_assinado_uploaded_at
+                      <span
+                        title={
+                          c.arquivo_assinado_uploaded_at
                             ? `Anexado em ${new Date(c.arquivo_assinado_uploaded_at).toLocaleDateString("pt-BR")}`
-                            : "Anexado"}
-                        </title>
-                      </Paperclip>
+                            : "Anexado"
+                        }
+                      >
+                        <Paperclip className="inline h-4 w-4 text-amber-700" />
+                      </span>
                     ) : (
                       <span className="text-gray-300">—</span>
                     )}
