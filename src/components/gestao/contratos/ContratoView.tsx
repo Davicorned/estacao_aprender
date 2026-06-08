@@ -142,22 +142,38 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
 
       const ORANGE = "#E08A3C";
 
-      // Fetch logo SVG and inline it (html2canvas does not reliably render <img src=*.svg>)
-      let logoSvgMarkup = "";
+      function svgToPngDataUrl(svg: string, width: number, height: number) {
+        return new Promise<string>((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = width * 2;
+            canvas.height = height * 2;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return reject(new Error("Não foi possível preparar o logo"));
+            ctx.scale(2, 2);
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL("image/png"));
+          };
+          img.onerror = () => reject(new Error("Não foi possível carregar o logo"));
+          img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+        });
+      }
+
+      // html2canvas não renderiza SVG externo de forma confiável; convertemos para PNG embutido.
+      let logoMarkup = "";
       try {
         const res = await fetch(logoAsset.url);
         if (res.ok) {
           let svg = await res.text();
-          // strip XML prolog if present
-          svg = svg.replace(/<\?xml[^?]*\?>/, "").trim();
-          // recolor all fills to white so the logo reads on the orange header
-          svg = svg.replace(/#D67F43/gi, "#FFFFFF").replace(/#724B36/gi, "#FFFFFF");
-          // force size on the root <svg>
-          svg = svg.replace(
-            /<svg\b([^>]*)>/i,
-            `<svg$1 style="width:140px;height:auto;display:block;">`,
-          );
-          logoSvgMarkup = svg;
+          svg = svg
+            .replace(/<\?xml[^?]*\?>/, "")
+            .replace(/<!--([\s\S]*?)-->/g, "")
+            .replace(/#D67F43/gi, "#FFFFFF")
+            .replace(/#724B36/gi, "#FFFFFF")
+            .trim();
+          const png = await svgToPngDataUrl(svg, 190, 107);
+          logoMarkup = `<img src="${png}" alt="Estação Aprender" style="width:190px;height:107px;display:block;object-fit:contain;"/>`;
         }
       } catch (e) {
         console.warn("Falha ao carregar logo SVG", e);
@@ -168,8 +184,8 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
           <svg viewBox="0 0 794 200" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;display:block;">
             <path d="M0,0 L794,0 L794,140 C680,205 540,180 420,160 C300,140 180,180 80,170 C50,167 20,160 0,150 Z" fill="${ORANGE}"/>
           </svg>
-          <div style="position:absolute;top:18px;left:40px;display:flex;align-items:center;gap:14px;color:#fff;">
-            ${logoSvgMarkup || `<div style="font-family:'Brush Script MT',cursive;font-size:32px;color:#fff;line-height:1;">estação<br/><span style="font-size:42px;">aprender</span></div>`}
+          <div style="position:absolute;top:20px;left:42px;width:190px;height:107px;display:flex;align-items:center;color:#fff;">
+            ${logoMarkup || `<div style="font-family:Arial,sans-serif;font-size:26px;font-weight:700;color:#fff;line-height:1.05;letter-spacing:0;">estação<br/><span style="font-size:34px;">aprender</span></div>`}
           </div>
           <div style="position:absolute;top:34px;right:48px;text-align:right;color:#fff;font-size:12px;line-height:1.7;letter-spacing:0.02em;">
             Psicopedagogia · Psicomotricidade<br/>
