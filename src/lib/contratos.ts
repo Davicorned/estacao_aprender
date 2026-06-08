@@ -19,6 +19,9 @@ export type Contrato = {
   template_origem: string | null;
   created_at: string;
   updated_at: string;
+  arquivo_assinado_path: string | null;
+  arquivo_assinado_uploaded_at: string | null;
+  arquivo_assinado_mime: string | null;
 };
 
 export type ContratoComJoin = Contrato & {
