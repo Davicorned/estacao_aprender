@@ -3,7 +3,7 @@ import { createFileRoute } from "@tanstack/react-router";
 const ALLOWED_HOST = "iscgrqldjytzhhvtgcmy.supabase.co";
 const ALLOWED_PREFIX = `https://${ALLOWED_HOST}/storage/v1/object/sign/`;
 
-export const Route = createFileRoute("/api/file-proxy")({
+export const Route = createFileRoute("/api/public/file-proxy")({
   server: {
     handlers: {
       GET: async ({ request }) => {
