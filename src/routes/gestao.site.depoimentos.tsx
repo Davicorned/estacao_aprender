@@ -1,11 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { AdminShell } from "@/components/admin/AdminShell";
+import { GestaoShell } from "@/components/gestao/GestaoShell";
 import { DepoimentosManager } from "@/components/gestao/DepoimentosManager";
 
-export const Route = createFileRoute("/admin/depoimentos")({
+export const Route = createFileRoute("/gestao/site/depoimentos")({
   component: () => (
-    <AdminShell title="Depoimentos">
+    <GestaoShell title="Depoimentos (site)">
       <DepoimentosManager />
-    </AdminShell>
+    </GestaoShell>
   ),
 });
