@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,7 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [localAnexo, setLocalAnexo] = useState<{
     path: string | null;
