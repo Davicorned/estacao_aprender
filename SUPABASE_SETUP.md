@@ -352,3 +352,71 @@ on conflict do nothing;
 ```
 
 Depois disso, `/gestao/configuracoes` está pronto para uso.
+
+## 6) Pacientes (Fase 2 do /gestao)
+
+Rode este bloco no SQL Editor:
+
+```sql
+-- =========================================
+-- PACIENTES
+-- =========================================
+create table if not exists public.pacientes (
+  id uuid primary key default gen_random_uuid(),
+
+  -- pessoais
+  nome text not null check (char_length(nome) between 1 and 150),
+  data_nascimento date not null,
+  sexo text not null check (sexo in ('M','F','O')),
+  cpf text unique,
+  rg text,
+  email text,
+
+  -- responsável (menores)
+  responsavel_nome text,
+  responsavel_parentesco text,
+
+  -- telefones
+  telefone_celular text not null,
+  telefone_residencial text,
+
+  -- endereço
+  cep text,
+  endereco text,
+  numero text,
+  complemento text,
+  bairro text,
+  cidade text,
+  estado text,
+
+  -- outros
+  como_conheceu text,
+  observacoes text,
+  foto_url text,
+  ativo boolean not null default true,
+  profissional_responsavel_id uuid references public.profissionais(id) on delete set null,
+
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.pacientes to authenticated;
+grant all on public.pacientes to service_role;
+
+alter table public.pacientes enable row level security;
+
+drop policy if exists "auth read pacientes" on public.pacientes;
+create policy "auth read pacientes" on public.pacientes
+for select to authenticated using (true);
+
+drop policy if exists "auth write pacientes" on public.pacientes;
+create policy "auth write pacientes" on public.pacientes
+for all to authenticated using (true) with check (true);
+
+create index if not exists pacientes_nome_idx on public.pacientes (lower(nome));
+create index if not exists pacientes_cpf_idx on public.pacientes (cpf);
+create index if not exists pacientes_telefone_idx on public.pacientes (telefone_celular);
+create index if not exists pacientes_ativo_idx on public.pacientes (ativo);
+```
+
+Depois disso, `/gestao/pacientes` está pronto para uso.
