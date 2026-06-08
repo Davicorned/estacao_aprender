@@ -78,7 +78,7 @@ export function AgendamentoFormDialog({
   const [paciente, setPaciente] = useState<PacienteLite | null>(null);
   const [pacienteSearch, setPacienteSearch] = useState("");
   const [pacienteResults, setPacienteResults] = useState<PacienteLite[]>([]);
-  const [pacienteOpen, setPacienteOpen] = useState(false);
+  const [pacienteOpen, setPacienteOpen] = useState(true);
 
   const [profissionalId, setProfissionalId] = useState("");
   const [servicoId, setServicoId] = useState<string>("");
