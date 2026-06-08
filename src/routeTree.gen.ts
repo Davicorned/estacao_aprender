@@ -27,6 +27,7 @@ import { Route as GestaoAgendaRouteImport } from './routes/gestao.agenda'
 import { Route as GestaoPacientesIndexRouteImport } from './routes/gestao.pacientes.index'
 import { Route as GestaoSiteEquipeRouteImport } from './routes/gestao.site.equipe'
 import { Route as GestaoSiteDepoimentosRouteImport } from './routes/gestao.site.depoimentos'
+import { Route as GestaoPacientesNovoRouteImport } from './routes/gestao.pacientes.novo'
 import { Route as GestaoPacientesIdRouteImport } from './routes/gestao.pacientes.$id'
 
 const GestaoRoute = GestaoRouteImport.update({
@@ -119,6 +120,11 @@ const GestaoSiteDepoimentosRoute = GestaoSiteDepoimentosRouteImport.update({
   path: '/site/depoimentos',
   getParentRoute: () => GestaoRoute,
 } as any)
+const GestaoPacientesNovoRoute = GestaoPacientesNovoRouteImport.update({
+  id: '/novo',
+  path: '/novo',
+  getParentRoute: () => GestaoPacientesRoute,
+} as any)
 const GestaoPacientesIdRoute = GestaoPacientesIdRouteImport.update({
   id: '/$id',
   path: '/$id',
@@ -142,6 +148,7 @@ export interface FileRoutesByFullPath {
   '/gestao/pacientes': typeof GestaoPacientesRouteWithChildren
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
+  '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/pacientes/': typeof GestaoPacientesIndexRoute
@@ -161,6 +168,7 @@ export interface FileRoutesByTo {
   '/gestao/login': typeof GestaoLoginRoute
   '/gestao': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
+  '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/pacientes': typeof GestaoPacientesIndexRoute
@@ -183,6 +191,7 @@ export interface FileRoutesById {
   '/gestao/pacientes': typeof GestaoPacientesRouteWithChildren
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
+  '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/pacientes/': typeof GestaoPacientesIndexRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/gestao/pacientes'
     | '/gestao/'
     | '/gestao/pacientes/$id'
+    | '/gestao/pacientes/novo'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/pacientes/'
@@ -225,6 +235,7 @@ export interface FileRouteTypes {
     | '/gestao/login'
     | '/gestao'
     | '/gestao/pacientes/$id'
+    | '/gestao/pacientes/novo'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/pacientes'
@@ -246,6 +257,7 @@ export interface FileRouteTypes {
     | '/gestao/pacientes'
     | '/gestao/'
     | '/gestao/pacientes/$id'
+    | '/gestao/pacientes/novo'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/pacientes/'
@@ -389,6 +401,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoSiteDepoimentosRouteImport
       parentRoute: typeof GestaoRoute
     }
+    '/gestao/pacientes/novo': {
+      id: '/gestao/pacientes/novo'
+      path: '/novo'
+      fullPath: '/gestao/pacientes/novo'
+      preLoaderRoute: typeof GestaoPacientesNovoRouteImport
+      parentRoute: typeof GestaoPacientesRoute
+    }
     '/gestao/pacientes/$id': {
       id: '/gestao/pacientes/$id'
       path: '/$id'
@@ -401,11 +420,13 @@ declare module '@tanstack/react-router' {
 
 interface GestaoPacientesRouteChildren {
   GestaoPacientesIdRoute: typeof GestaoPacientesIdRoute
+  GestaoPacientesNovoRoute: typeof GestaoPacientesNovoRoute
   GestaoPacientesIndexRoute: typeof GestaoPacientesIndexRoute
 }
 
 const GestaoPacientesRouteChildren: GestaoPacientesRouteChildren = {
   GestaoPacientesIdRoute: GestaoPacientesIdRoute,
+  GestaoPacientesNovoRoute: GestaoPacientesNovoRoute,
   GestaoPacientesIndexRoute: GestaoPacientesIndexRoute,
 }
 
@@ -454,13 +475,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
