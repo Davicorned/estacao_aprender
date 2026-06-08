@@ -228,3 +228,16 @@ Assim ninguém mais consegue se cadastrar pelo `/admin/login`.
 Normalmente o Supabase já libera qualquer origem. Se aparecer erro de CORS no
 console do navegador, vá em **Project Settings → API → CORS Allowed Origins**
 e adicione a URL do seu site Lovable.
+## 4) Storage bucket: fotos-pacientes (Fase 1 do /gestao)
+
+No SQL Editor, rode:
+
+```sql
+insert into storage.buckets (id, name, public)
+values ('fotos-pacientes', 'fotos-pacientes', true)
+on conflict (id) do update set public = true;
+```
+
+(Ou no Dashboard → Storage → "New bucket" → nome `fotos-pacientes`, marque "Public bucket".)
+
+Esse bucket é usado pelo `/gestao/pacientes` em fases futuras para armazenar fotos dos pacientes. Não precisa de políticas extras agora — qualquer usuário autenticado já pode fazer upload via o cliente Supabase enquanto for público para leitura.
