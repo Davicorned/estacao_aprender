@@ -114,7 +114,8 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     if (!localAnexo.path) return;
     try {
       const url = await getContratoAssinadoUrl(localAnexo.path);
-      window.open(url, "_blank");
+      const proxied = `/api/file-proxy?url=${encodeURIComponent(url)}`;
+      window.open(proxied, "_blank");
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao abrir arquivo");
     }
