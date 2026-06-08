@@ -150,6 +150,8 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
           let svg = await res.text();
           // strip XML prolog if present
           svg = svg.replace(/<\?xml[^?]*\?>/, "").trim();
+          // recolor all fills to white so the logo reads on the orange header
+          svg = svg.replace(/#D67F43/gi, "#FFFFFF").replace(/#724B36/gi, "#FFFFFF");
           // force size on the root <svg>
           svg = svg.replace(
             /<svg\b([^>]*)>/i,
