@@ -540,6 +540,22 @@ export function ContratoFormDialog({
             </div>
           </div>
 
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label>Cidade da assinatura</Label>
+              <Input value={cidade} onChange={(e) => setCidade(e.target.value)} />
+            </div>
+            <div className="flex items-end gap-3">
+              <div className="flex flex-1 items-center justify-between rounded-md border border-amber-100 bg-amber-50/30 px-3 py-2">
+                <div>
+                  <Label className="text-sm">Autoriza uso de imagem</Label>
+                  <p className="text-xs text-gray-500">Em mídias sociais da Estação Aprender</p>
+                </div>
+                <Switch checked={autorizaImagem} onCheckedChange={setAutorizaImagem} />
+              </div>
+            </div>
+          </div>
+
           <div>
             <div className="mb-1 flex items-center justify-between">
               <Label>Termos do contrato</Label>
