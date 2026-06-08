@@ -1,57 +1,69 @@
-## Fase 4 — Prontuário Eletrônico
+## Fase 5 — Contratos, Financeiro e Dashboard
 
-Integrar prontuário à ficha do paciente em `/gestao/pacientes/:id`, com tabs **Dados**, **Prontuário** e **Histórico de Sessões**.
+### 1. Banco — nova seção 9 em `SUPABASE_SETUP.md`
 
-### 1. Banco (nova seção 8 em `SUPABASE_SETUP.md`)
+**`contratos`**
+- `id`, `paciente_id → pacientes`, `profissional_id → profissionais`, `servico_id → servicos`
+- `valor_centavos int`, `qtd_sessoes int null` (null = indeterminado)
+- `frequencia text check in ('semanal','quinzenal','mensal','livre')`
+- `data_inicio date`, `data_termino date null`
+- `status text check in ('rascunho','ativo','encerrado','cancelado') default 'rascunho'`
+- `termos text` (corpo do contrato pós-substituição), `template_origem text null`
+- `created_by`, timestamps. GRANTs + RLS (autenticado lê/escreve).
 
-Tabela `public.evolucoes`:
-- `id uuid pk`, `paciente_id uuid → pacientes`, `profissional_id uuid → team_members`
-- `agendamento_id uuid → agendamentos null` (vínculo opcional, `on delete set null`)
-- `data_sessao date not null`
-- `queixa text`, `observacao text`, `evolucao text`, `instrumentos text`, `plano text`, `encaminhamentos text`
-- `privado boolean default false`
-- `created_by uuid → auth.users`, `created_at`, `updated_at` (+ trigger)
-- Índices: `(paciente_id, data_sessao desc)`, `(profissional_id)`, `(agendamento_id)`
+**`lancamentos_financeiros`**
+- `id`, `paciente_id`, `contrato_id null`, `agendamento_id null` (unique parcial p/ evitar duplicar do mesmo agendamento)
+- `tipo text check in ('receita','despesa') default 'receita'`
+- `descricao text`, `valor_centavos int`
+- `data_vencimento date`, `data_pagamento date null`
+- `status text check in ('pendente','pago','atrasado','cancelado') default 'pendente'`
+- `forma_pagamento text null check in ('dinheiro','pix','cartao_credito','cartao_debito','transferencia')`
+- `created_by`, timestamps. RLS auth.
+- Índices: `(status, data_vencimento)`, `(paciente_id)`, `(agendamento_id) unique where agendamento_id is not null`.
 
-GRANTs + RLS (auth only, sem `anon`):
-- SELECT autenticado: `privado = false OR created_by = auth.uid() OR has_role(auth.uid(),'admin')`
-- INSERT autenticado: `created_by = auth.uid()`
-- UPDATE/DELETE: `created_by = auth.uid() OR has_role(auth.uid(),'admin')`
+**Trigger automático**: ao um `agendamentos.status` mudar para `'atendido'`, criar (se já não existir) um `lancamentos_financeiros` com:
+- contrato ativo do paciente (último por `data_inicio`) se houver → `valor_centavos = contrato.valor_centavos`, `contrato_id = ...`
+- senão → `valor_centavos = servico.valor_centavos`
+- `descricao = nome do servico + data`, `data_vencimento = data do agendamento`, `status='pendente'`.
 
-### 2. Data layer — `src/lib/evolucoes.ts`
+**Marcação de atrasados**: SELECT computa `atrasado` dinamicamente (`status='pendente' AND data_vencimento < current_date`) — sem cron. Os cards e badges usam essa lógica derivada para evitar depender de job.
 
-- Tipos `Evolucao`, `EvolucaoInput`
-- `listEvolucoes(pacienteId, { profissionalId?, desde?, busca? })` — filtro por período (30d / 3m / 6m / 1a / tudo) e busca via `ilike` em queixa/observacao/evolucao/plano
-- `getEvolucao(id)`, `createEvolucao`, `updateEvolucao`, `deleteEvolucao`
-- `evolucaoByAgendamento(agendamentoId)` (para tab Histórico)
-- `listAgendamentosDoDia(pacienteId, data)` para o select "Vincular a agendamento"
-- Default `profissional_id` = team_member do usuário logado (lookup via `team_members.user_id` se existir; senão select manual)
+### 2. Data layer
 
-### 3. UI — `src/components/gestao/prontuario/`
+- `src/lib/contratos.ts` — tipos, `listContratos({status,profissionalId})`, `getContrato`, `createContrato`, `updateContrato`, `deleteContrato`, helpers `aplicarTemplate(template, vars)`, `TEMPLATE_PADRAO`, `calcularDataTermino(inicio, qtd, freq)`, `formatBRL`, link `whatsappLink(numero, mensagem)`.
+- `src/lib/financeiro.ts` — tipos, `listLancamentos({mes,status,pacienteId,tipo})`, `createLancamento`, `registrarPagamento(id,{data,forma})`, `resumoMes(mes)` (receita_paga, a_receber, atrasados, sessoes_atendidas), `helpers` de status efetivo.
+- `src/lib/dashboard.ts` — `kpis({periodo,profissionalId})`, `atendimentosPorDia(range,profId)`, `pacientesNovosVsRecorrentes(range)`, `proximosAgendamentos(limit)`, `proximosLancamentosAReceber(limit)`.
 
-- `ProntuarioTab.tsx` — header com nome + idade calculada, botão **Nova Evolução** (gradiente laranja), filtros (profissional, período, busca), lista de `EvolucaoCard`s
-- `EvolucaoCard.tsx` — colapsado mostra data • profissional • especialidade + preview da evolução; expandido mostra Queixa / Observação / Evolução / Instrumentos / Plano / Encaminhamentos + botões **Editar** / **Imprimir** (esta imprime só a evolução)
-- `EvolucaoFormDialog.tsx` — modal com todos os campos descritos, select de agendamento do dia, checkbox **Privado**, validações, salvar/cancelar
-- `HistoricoSessoesTab.tsx` — tabela de agendamentos do paciente (passados + futuros) com filtros por status e período; coluna Evolução com ✓ ou botão **Registrar** que abre o form pré-preenchido
-- `PrintProntuario.tsx` — rota/print view com `@media print`: header (logo Estação Aprender + dados do paciente + "CONFIDENCIAL"), todas as evoluções não-privadas (ou só do user logado), footer "Documento confidencial — Estação Aprender"
+### 3. UI
 
-### 4. Integração na ficha
+**`/gestao/contratos`** (`src/components/gestao/contratos/`):
+- `ContratosPage.tsx` — tabela + filtros (status, profissional) + botão **Novo Contrato** (gradiente laranja).
+- `ContratoFormDialog.tsx` — typeahead paciente (reusa `searchPacientesQuick`), select profissional/serviço, valor (máscara BRL), qtd sessões, frequência, data início/término (auto-calculada se qtd+freq preenchidos), status, textarea grande pré-preenchida com `TEMPLATE_PADRAO` e substituição de variáveis ao abrir/recalcular.
+- `ContratoView.tsx` — modal/sheet ou rota separada renderizando o contrato em formato A4 com CSS `@media print`. Botões **Imprimir** (`window.print`) e **Enviar por WhatsApp** (abre `https://wa.me/<numero>?text=<msg>` com mensagem padronizada).
 
-Refatorar `src/routes/gestao.pacientes.$id.tsx` para usar `Tabs` (shadcn):
-- **Dados** → `PacienteForm` atual
-- **Prontuário** → `ProntuarioTab`
-- **Histórico de Sessões** → `HistoricoSessoesTab`
+**`/gestao/financeiro`** (`src/components/gestao/financeiro/`):
+- `FinanceiroPage.tsx` — 4 cards de resumo (Receita do mês / A receber / Atrasados / Sessões do mês), filtros (mês via seletor, status, paciente typeahead, tipo), tabela com badges coloridos.
+- `LancamentoFormDialog.tsx` — criar lançamento manual (tipo, paciente opcional, descrição, valor, vencimento).
+- `RegistrarPagamentoDialog.tsx` — data + forma de pagamento; também aceita modo bulk (seleção múltipla na tabela).
+- Status atrasado calculado client-side; o badge muda automaticamente.
 
-Botão **Imprimir prontuário** dentro da tab Prontuário abre `/gestao/pacientes/$id/prontuario/imprimir` em nova janela (rota com layout limpo para `window.print()`).
+**`/gestao/dashboard`** (`src/components/gestao/dashboard/`):
+- `DashboardPage.tsx` — filtro global (período: 30d/este mês/mês passado/personalizado + profissional).
+- **Row 1**: 4 `KpiCard`s com ícone em `bg-[#FEF3E8]`, número, label, e variação % vs período anterior.
+- **Row 2**: `AtendimentosLineChart` (recharts, cor `#D67F43`) + `PacientesDonutChart` (recharts, `#D67F43` recorrentes + `#FBCF9E` novos).
+- **Row 3**: lista dos próximos 5 agendamentos (hoje/amanhã) com link "Ver agenda completa →".
+- **Row 4**: lista dos 5 lançamentos pendentes/atrasados com vermelho para atrasado e link "Ver financeiro completo →".
 
-### 5. Integração com Fase 3
+Recharts já está no `chart.tsx`; não precisa instalar.
 
-No `AgendamentoDetalhesDialog`, ao mudar status para **atendido**, o prompt "Deseja registrar a evolução?" agora navega para a ficha do paciente abrindo o `EvolucaoFormDialog` com `agendamento_id` pré-vinculado.
+### 4. Wiring
+
+- Substituir os placeholders nas rotas `gestao.contratos.tsx`, `gestao.financeiro.tsx`, `gestao.dashboard.tsx` para renderizar os novos page components.
 
 ### Fora de escopo
-- Editor rico (usar `Textarea` simples — pode ser trocado depois)
-- Exportação PDF server-side (impressão usa `window.print()`)
-- Notificações
+- Cron job de marcar `atrasado` no banco (cálculo derivado é suficiente)
+- Exportação PDF server-side (impressão usa `window.print`)
+- Geração de boleto/integração de pagamento real
 
-### Ação necessária após implementação
-Rodar a **seção 8** do `SUPABASE_SETUP.md` no SQL Editor para criar a tabela `evolucoes` com RLS.
+### Ação necessária
+Rodar a **seção 9** do `SUPABASE_SETUP.md` (que vou criar) no SQL Editor para criar `contratos`, `lancamentos_financeiros`, e o trigger de geração automática.
