@@ -96,6 +96,21 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     return `Contrato-assinado-${nome}.${ext}`;
   };
 
+  function buildProxyUrl(signedUrl: string, opts?: { download?: boolean }) {
+    // base64url-encode the signed URL so adblockers/Chrome filters don't see
+    // the literal "supabase.co" host or storage token in the request URL.
+    const b64 = btoa(signedUrl)
+      .replace(/\+/g, "-")
+      .replace(/\//g, "_")
+      .replace(/=+$/, "");
+    const filename = getAnexoFilename();
+    let url = `/api/public/file-proxy/${b64}/${encodeURIComponent(filename)}`;
+    if (opts?.download) {
+      url += `?download=1&filename=${encodeURIComponent(filename)}`;
+    }
+    return url;
+  }
+
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     e.target.value = "";
@@ -121,7 +136,7 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     if (!localAnexo.path) return;
     try {
       const url = await getContratoAssinadoUrl(localAnexo.path);
-      setViewerUrl(`/api/public/file-proxy?url=${encodeURIComponent(url)}`);
+      setViewerUrl(buildProxyUrl(url));
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao abrir arquivo");
     }
@@ -131,8 +146,7 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     if (!localAnexo.path) return;
     try {
       const url = await getContratoAssinadoUrl(localAnexo.path);
-      const proxied = `/api/public/file-proxy?url=${encodeURIComponent(url)}&download=1&filename=${encodeURIComponent(getAnexoFilename())}`;
-      window.location.href = proxied;
+      window.location.href = buildProxyUrl(url, { download: true });
     } catch (err: any) {
       toast.error(err.message ?? "Erro ao baixar arquivo");
     }
