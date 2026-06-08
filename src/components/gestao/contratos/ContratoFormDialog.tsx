@@ -59,13 +59,6 @@ type Props = {
   onSaved?: () => void;
 };
 
-function nomeResponsavel(resp: any): string {
-  if (!resp) return "";
-  if (Array.isArray(resp) && resp[0]?.nome) return resp[0].nome;
-  if (typeof resp === "object" && resp.nome) return resp.nome;
-  return "";
-}
-
 function dadosFromPaciente(resp: any): DadosResponsavel {
   if (!resp) return {};
   const first = Array.isArray(resp) ? resp[0] : resp;
