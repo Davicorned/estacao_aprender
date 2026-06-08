@@ -176,6 +176,22 @@ export function ContratoFormDialog({
     const cents = parseBRLToCents(valorInput);
     const qtd = parseInt(qtdSessoes, 10);
 
+    // Auto-aplica template se ainda houver placeholders ou se o texto não foi editado
+    let termosFinal = termos;
+    if (termos === TEMPLATE_PADRAO || /\{\{\w+\}\}/.test(termos)) {
+      const s = servicos.find((x) => x.id === servId);
+      termosFinal = aplicarTemplate(termos, {
+        NOME_PACIENTE: paciente.nome ?? "",
+        NOME_RESPONSAVEL: nomeResponsavel((paciente as any)?.responsaveis),
+        TIPO_SERVICO: s?.nome ?? "",
+        VALOR: formatBRL(cents),
+        FREQUENCIA: FREQUENCIA_LABEL[frequencia],
+        QTD_SESSOES: qtdSessoes || "Indeterminado",
+        DATA_INICIO: formatData(dataInicio),
+        DATA_TERMINO: dataTermino ? formatData(dataTermino) : "—",
+      });
+    }
+
     const payload = {
       paciente_id: paciente.id,
       profissional_id: profId,
@@ -186,7 +202,7 @@ export function ContratoFormDialog({
       data_inicio: dataInicio,
       data_termino: dataTermino || null,
       status,
-      termos,
+      termos: termosFinal,
       template_origem: "padrao",
     };
 
