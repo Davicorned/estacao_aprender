@@ -241,3 +241,114 @@ on conflict (id) do update set public = true;
 (Ou no Dashboard → Storage → "New bucket" → nome `fotos-pacientes`, marque "Public bucket".)
 
 Esse bucket é usado pelo `/gestao/pacientes` em fases futuras para armazenar fotos dos pacientes. Não precisa de políticas extras agora — qualquer usuário autenticado já pode fazer upload via o cliente Supabase enquanto for público para leitura.
+
+## 5) Configurações: serviços, profissionais e dados da clínica
+
+Rode este bloco no SQL Editor:
+
+```sql
+-- =========================================
+-- SERVICOS / PROCEDIMENTOS
+-- =========================================
+create table if not exists public.servicos (
+  id uuid primary key default gen_random_uuid(),
+  nome text not null check (char_length(nome) between 1 and 100),
+  duracao_min int not null default 50 check (duracao_min in (30,40,50,60,90,120)),
+  valor_centavos int not null default 0 check (valor_centavos >= 0),
+  ativo boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.servicos to authenticated;
+grant all on public.servicos to service_role;
+
+alter table public.servicos enable row level security;
+
+drop policy if exists "auth read servicos" on public.servicos;
+create policy "auth read servicos" on public.servicos
+for select to authenticated using (true);
+
+drop policy if exists "admin write servicos" on public.servicos;
+create policy "admin write servicos" on public.servicos
+for all to authenticated
+using (public.has_role(auth.uid(), 'admin'))
+with check (public.has_role(auth.uid(), 'admin'));
+
+-- =========================================
+-- PROFISSIONAIS (operacional, separado de team_members do site)
+-- =========================================
+create table if not exists public.profissionais (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references auth.users(id) on delete set null,
+  nome text not null check (char_length(nome) between 1 and 100),
+  titulo text check (titulo is null or char_length(titulo) <= 80),
+  especialidades text[] not null default '{}',
+  cor_agenda text not null default '#D67F43' check (cor_agenda ~ '^#[0-9a-fA-F]{6}$'),
+  ativo boolean not null default true,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update, delete on public.profissionais to authenticated;
+grant all on public.profissionais to service_role;
+
+alter table public.profissionais enable row level security;
+
+drop policy if exists "auth read profissionais" on public.profissionais;
+create policy "auth read profissionais" on public.profissionais
+for select to authenticated using (true);
+
+drop policy if exists "admin write profissionais" on public.profissionais;
+create policy "admin write profissionais" on public.profissionais
+for all to authenticated
+using (public.has_role(auth.uid(), 'admin'))
+with check (public.has_role(auth.uid(), 'admin'));
+
+-- =========================================
+-- CONFIGURACOES DA CLINICA (singleton: sempre id = 1)
+-- =========================================
+create table if not exists public.configuracoes_clinica (
+  id int primary key default 1 check (id = 1),
+  nome text not null default 'Estação Aprender',
+  telefone text,
+  email text,
+  endereco text,
+  horario_seg_sex_inicio time,
+  horario_seg_sex_fim time,
+  horario_sab_inicio time,
+  horario_sab_fim time,
+  horario_almoco_inicio time,
+  horario_almoco_fim time,
+  updated_at timestamptz not null default now()
+);
+
+grant select, insert, update on public.configuracoes_clinica to authenticated;
+grant all on public.configuracoes_clinica to service_role;
+
+alter table public.configuracoes_clinica enable row level security;
+
+drop policy if exists "auth read clinica" on public.configuracoes_clinica;
+create policy "auth read clinica" on public.configuracoes_clinica
+for select to authenticated using (true);
+
+drop policy if exists "admin write clinica" on public.configuracoes_clinica;
+create policy "admin write clinica" on public.configuracoes_clinica
+for all to authenticated
+using (public.has_role(auth.uid(), 'admin'))
+with check (public.has_role(auth.uid(), 'admin'));
+
+-- Linha singleton inicial
+insert into public.configuracoes_clinica (id, nome)
+values (1, 'Estação Aprender')
+on conflict (id) do nothing;
+
+-- Seed opcional de serviços
+insert into public.servicos (nome, duracao_min, valor_centavos) values
+  ('Sessão de Psicopedagogia', 50, 18000),
+  ('Sessão de Psicomotricidade', 50, 18000),
+  ('Atendimento ABA', 50, 20000)
+on conflict do nothing;
+```
+
+Depois disso, `/gestao/configuracoes` está pronto para uso.
