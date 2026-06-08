@@ -315,6 +315,12 @@ export async function updateStatus(
   }
   const { error } = await supabase.from("agendamentos").update(patch).eq("id", id);
   if (error) throw error;
+  try {
+    const { sincronizarLancamentoDeAgendamento } = await import("@/lib/financeiro");
+    await sincronizarLancamentoDeAgendamento(id, status);
+  } catch (e) {
+    console.error("sincronizarLancamentoDeAgendamento falhou", e);
+  }
 }
 
 export async function deleteAgendamento(id: string): Promise<void> {

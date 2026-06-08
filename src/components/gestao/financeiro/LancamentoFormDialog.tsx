@@ -26,11 +26,12 @@ type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onSaved?: () => void;
+  pacienteFixo?: { id: string; nome: string } | null;
 };
 
 type PacienteLite = { id: string; nome: string };
 
-export function LancamentoFormDialog({ open, onOpenChange, onSaved }: Props) {
+export function LancamentoFormDialog({ open, onOpenChange, onSaved, pacienteFixo }: Props) {
   const [tipo, setTipo] = useState<LancamentoTipo>("receita");
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("R$ 0,00");
@@ -47,11 +48,11 @@ export function LancamentoFormDialog({ open, onOpenChange, onSaved }: Props) {
     setDescricao("");
     setValor("R$ 0,00");
     setVenc(new Date().toISOString().slice(0, 10));
-    setPaciente(null);
+    setPaciente(pacienteFixo ?? null);
     setPacienteSearch("");
     setPacienteResults([]);
     setPacienteOpen(false);
-  }, [open]);
+  }, [open, pacienteFixo]);
 
   useEffect(() => {
     if (!pacienteOpen) return;
@@ -135,7 +136,9 @@ export function LancamentoFormDialog({ open, onOpenChange, onSaved }: Props) {
             {paciente ? (
               <div className="flex items-center justify-between rounded-md border bg-amber-50/50 px-3 py-2">
                 <span>{paciente.nome}</span>
-                <Button variant="ghost" size="sm" onClick={() => setPaciente(null)}>Trocar</Button>
+                {!pacienteFixo && (
+                  <Button variant="ghost" size="sm" onClick={() => setPaciente(null)}>Trocar</Button>
+                )}
               </div>
             ) : (
               <div className="relative">
