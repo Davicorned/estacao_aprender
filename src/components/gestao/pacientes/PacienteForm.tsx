@@ -30,6 +30,7 @@ import {
 import { PacienteAvatar } from "./PacienteAvatar";
 import { ProntuarioTab } from "@/components/gestao/prontuario/ProntuarioTab";
 import { HistoricoSessoesTab } from "@/components/gestao/prontuario/HistoricoSessoesTab";
+import { FinanceiroPacienteTab } from "@/components/gestao/financeiro/FinanceiroPacienteTab";
 import {
   buscarCep,
   calcularIdade,
@@ -487,7 +488,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           )}
           {isEdit && (
             <TabsContent value="financeiro" className="mt-6">
-              <PlaceholderTab text="Financeiro será implementado na Fase 6." />
+              {paciente && <FinanceiroPacienteTab paciente={paciente} />}
             </TabsContent>
           )}
         </Tabs>
