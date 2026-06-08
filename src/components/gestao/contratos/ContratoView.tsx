@@ -15,6 +15,13 @@ import {
   getContratoAssinadoUrl,
   removeContratoAssinado,
   ARQUIVO_ASSINADO_MIMES,
+  aplicarTemplate,
+  montarVariaveis,
+  TEMPLATE_ASSINATURA,
+  TEMPLATE_AUTORIZACAO_IMAGEM,
+  type DadosResponsavel,
+  type FormaPagamento,
+  type Modalidade,
   type ContratoComJoin,
 } from "@/lib/contratos";
 
@@ -62,27 +69,130 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     const doc = new jsPDF({ unit: "mm", format: "a4" });
     const pageW = doc.internal.pageSize.getWidth();
     const pageH = doc.internal.pageSize.getHeight();
-    const margin = 20;
+    const margin = 18;
+    const topY = 28;
+    const bottomY = pageH - 18;
     const maxW = pageW - margin * 2;
 
-    doc.setFont("times", "normal");
-    doc.setFontSize(10);
-    doc.setTextColor(120);
-    doc.text("Estação Aprender", margin, 12);
-    doc.text(new Date().toLocaleDateString("pt-BR"), pageW - margin, 12, { align: "right" });
+    function drawHeader() {
+      // Faixa decorativa
+      doc.setFillColor(214, 127, 67); // #D67F43
+      doc.rect(0, 0, pageW, 14, "F");
+      doc.setTextColor(255, 255, 255);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(13);
+      doc.text("estação aprender", margin, 9.5);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text(
+        "Psicopedagogia · Psicomotricidade · Psicologia · Neuropsicologia · Alfabetização",
+        pageW - margin,
+        9.5,
+        { align: "right" },
+      );
+      doc.setTextColor(20, 20, 20);
+    }
 
-    doc.setTextColor(20);
-    doc.setFontSize(11);
-    const lines = doc.splitTextToSize(contrato.termos ?? "", maxW);
-    let y = margin;
-    const lineH = 5.2;
-    for (const ln of lines) {
-      if (y + lineH > pageH - margin) {
+    function drawFooter(pageNum: number, total: number) {
+      doc.setDrawColor(214, 127, 67);
+      doc.setLineWidth(0.3);
+      doc.line(margin, pageH - 14, pageW - margin, pageH - 14);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.setTextColor(110, 110, 110);
+      doc.text("(11) 2621-9800 · (11) 9 3213-9800 · @estacaoaprender_", margin, pageH - 9);
+      doc.text("Praça Gajé n° 56 — Conj. 1, Engenheiro Goulart, São Paulo", margin, pageH - 5);
+      doc.text(`${pageNum} / ${total}`, pageW - margin, pageH - 5, { align: "right" });
+      doc.setTextColor(20, 20, 20);
+    }
+
+    // Monta variáveis e textos
+    const vars = montarVariaveis({
+      paciente_nome: contrato.paciente?.nome ?? "",
+      responsavel: (contrato.dados_responsavel as DadosResponsavel | null) ?? null,
+      servico_nome: contrato.servico?.nome ?? "",
+      modalidade: (contrato.modalidade as Modalidade | null) ?? null,
+      aulas_por_mes: contrato.aulas_por_mes,
+      valor_com_desconto_centavos: contrato.valor_com_desconto_centavos,
+      valor_sem_desconto_centavos: contrato.valor_sem_desconto_centavos,
+      forma_pagamento: (contrato.forma_pagamento as FormaPagamento | null) ?? null,
+      dia_vencimento: contrato.dia_vencimento,
+      cidade_assinatura: contrato.cidade_assinatura,
+      autoriza_imagem: contrato.autoriza_imagem,
+      data_inicio: contrato.data_inicio,
+      data_termino: contrato.data_termino,
+      frequencia: contrato.frequencia,
+      qtd_sessoes: contrato.qtd_sessoes,
+    });
+
+    const corpo = aplicarTemplate(contrato.termos ?? "", vars);
+    const assinatura = aplicarTemplate(TEMPLATE_ASSINATURA, vars);
+    const autorizacao = aplicarTemplate(TEMPLATE_AUTORIZACAO_IMAGEM, vars);
+
+    // Renderiza blocos com cabeçalhos detectados
+    const lineH = 5.0;
+    let y = topY;
+
+    function ensureSpace(h: number) {
+      if (y + h > bottomY) {
         doc.addPage();
-        y = margin;
+        drawHeader();
+        y = topY;
       }
-      doc.text(ln, margin, y);
-      y += lineH;
+    }
+
+    function writeBlock(text: string, opts?: { bold?: boolean; size?: number; gapAfter?: number }) {
+      doc.setFont("helvetica", opts?.bold ? "bold" : "normal");
+      doc.setFontSize(opts?.size ?? 10);
+      const lines = doc.splitTextToSize(text, maxW);
+      for (const ln of lines) {
+        ensureSpace(lineH);
+        doc.text(ln, margin, y);
+        y += lineH;
+      }
+      y += opts?.gapAfter ?? 1.5;
+    }
+
+    drawHeader();
+
+    // Título principal
+    const paragrafos = corpo.split(/\n\s*\n/);
+    for (const p of paragrafos) {
+      const trimmed = p.trim();
+      if (!trimmed) continue;
+      // Heurística: parágrafos curtos em CAIXA ALTA ou que começam com número+ponto viram negrito
+      const isHeading =
+        /^[0-9]+\.\s*[A-ZÀ-Ú]/.test(trimmed) ||
+        (trimmed === trimmed.toUpperCase() && trimmed.length < 90);
+      writeBlock(trimmed, { bold: isHeading, size: isHeading ? 11 : 10, gapAfter: isHeading ? 1 : 3 });
+    }
+
+    // Página de assinatura
+    doc.addPage();
+    drawHeader();
+    y = topY;
+    writeBlock("TERMO DE CIÊNCIA E ASSINATURA", { bold: true, size: 12, gapAfter: 5 });
+    for (const p of assinatura.split(/\n\s*\n/)) {
+      writeBlock(p.trim(), { gapAfter: 3 });
+    }
+
+    // Anexo: autorização de imagem
+    doc.addPage();
+    drawHeader();
+    y = topY;
+    const parsAuto = autorizacao.split(/\n\s*\n/);
+    for (let i = 0; i < parsAuto.length; i++) {
+      const t = parsAuto[i].trim();
+      if (!t) continue;
+      const isTitle = i === 0;
+      writeBlock(t, { bold: isTitle, size: isTitle ? 12 : 10, gapAfter: isTitle ? 5 : 3 });
+    }
+
+    // Rodapés em todas as páginas
+    const total = doc.getNumberOfPages();
+    for (let p = 1; p <= total; p++) {
+      doc.setPage(p);
+      drawFooter(p, total);
     }
 
     const nome = (contrato.paciente?.nome ?? "contrato").replace(/[^a-zA-Z0-9_-]+/g, "_");
