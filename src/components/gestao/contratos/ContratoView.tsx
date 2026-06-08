@@ -2,6 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
+import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import {
   Dialog,
   DialogContent,
@@ -36,6 +38,7 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
+  const [generatingPdf, setGeneratingPdf] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [localAnexo, setLocalAnexo] = useState<{
     path: string | null;
@@ -65,139 +68,236 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     window.open(whatsappLink(tel, msg), "_blank");
   }
 
-  function handleDownloadPdf() {
-    const doc = new jsPDF({ unit: "mm", format: "a4" });
-    const pageW = doc.internal.pageSize.getWidth();
-    const pageH = doc.internal.pageSize.getHeight();
-    const margin = 18;
-    const topY = 28;
-    const bottomY = pageH - 18;
-    const maxW = pageW - margin * 2;
+  async function handleDownloadPdf() {
+    setGeneratingPdf(true);
+    try {
+      const vars = montarVariaveis({
+        paciente_nome: contrato.paciente?.nome ?? "",
+        responsavel: (contrato.dados_responsavel as DadosResponsavel | null) ?? null,
+        servico_nome: contrato.servico?.nome ?? "",
+        modalidade: (contrato.modalidade as Modalidade | null) ?? null,
+        aulas_por_mes: contrato.aulas_por_mes,
+        valor_com_desconto_centavos: contrato.valor_com_desconto_centavos,
+        valor_sem_desconto_centavos: contrato.valor_sem_desconto_centavos,
+        forma_pagamento: (contrato.forma_pagamento as FormaPagamento | null) ?? null,
+        dia_vencimento: contrato.dia_vencimento,
+        cidade_assinatura: contrato.cidade_assinatura,
+        autoriza_imagem: contrato.autoriza_imagem,
+        data_inicio: contrato.data_inicio,
+        data_termino: contrato.data_termino,
+        frequencia: contrato.frequencia,
+        qtd_sessoes: contrato.qtd_sessoes,
+      });
 
-    function drawHeader() {
-      // Faixa decorativa
-      doc.setFillColor(214, 127, 67); // #D67F43
-      doc.rect(0, 0, pageW, 14, "F");
-      doc.setTextColor(255, 255, 255);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.text("estação aprender", margin, 9.5);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.text(
-        "Psicopedagogia · Psicomotricidade · Psicologia · Neuropsicologia · Alfabetização",
-        pageW - margin,
-        9.5,
-        { align: "right" },
+      const corpo = aplicarTemplate(contrato.termos ?? "", vars);
+      const assinatura = aplicarTemplate(TEMPLATE_ASSINATURA, vars);
+      const autorizacao = aplicarTemplate(TEMPLATE_AUTORIZACAO_IMAGEM, vars);
+
+      // Sections (each is a sequence of paragraphs flowed across pages independently)
+      type Block = { text: string; heading?: boolean; title?: boolean };
+      const corpoBlocks: Block[] = corpo
+        .split(/\n\s*\n/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .map((t) => {
+          const isHeading =
+            /^[0-9]+\.\s*[A-ZÀ-Ú]/.test(t) ||
+            (t === t.toUpperCase() && t.length < 90);
+          return { text: t, heading: isHeading };
+        });
+
+      const assinaturaBlocks: Block[] = [
+        { text: "TERMO DE CIÊNCIA E ASSINATURA", title: true },
+        ...assinatura.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean).map((t) => ({ text: t })),
+      ];
+
+      const autorizacaoParts = autorizacao.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+      const autorizacaoBlocks: Block[] = autorizacaoParts.map((t, i) => ({
+        text: t,
+        title: i === 0,
+      }));
+
+      const sections: Block[][] = [corpoBlocks, assinaturaBlocks, autorizacaoBlocks];
+
+      // Build off-screen container with all pages
+      const PAGE_W = 794; // 210mm @ 96dpi
+      const PAGE_H = 1123; // 297mm @ 96dpi
+      const CONTENT_TOP = 170; // below blob header
+      const CONTENT_BOTTOM = PAGE_H - 90; // above footer
+      const CONTENT_MAX_H = CONTENT_BOTTOM - CONTENT_TOP;
+
+      const root = document.createElement("div");
+      root.setAttribute("data-pdf-root", "");
+      Object.assign(root.style, {
+        position: "fixed",
+        left: "-10000px",
+        top: "0",
+        width: `${PAGE_W}px`,
+        background: "#ffffff",
+        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        color: "#1f1f1f",
+        zIndex: "-1",
+      } as CSSStyleDeclaration);
+      document.body.appendChild(root);
+
+      const ORANGE = "#E08A3C";
+
+      const headerHtml = `
+        <div style="position:relative;width:${PAGE_W}px;height:170px;overflow:hidden;">
+          <svg viewBox="0 0 794 200" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;display:block;">
+            <path d="M0,0 L794,0 L794,140 C680,205 540,180 420,160 C300,140 180,180 80,170 C50,167 20,160 0,150 Z" fill="${ORANGE}"/>
+          </svg>
+          <div style="position:absolute;top:24px;left:48px;display:flex;align-items:center;gap:14px;">
+            <img src="${logoAsset.url}" crossorigin="anonymous" style="width:130px;height:auto;display:block;" alt="Estação Aprender" />
+          </div>
+          <div style="position:absolute;top:34px;right:48px;text-align:right;color:#fff;font-size:12px;line-height:1.7;letter-spacing:0.02em;">
+            Psicopedagogia · Psicomotricidade<br/>
+            Psicologia · Neuropsicologia · Alfabetização<br/>
+            Educação Neuroparental
+          </div>
+        </div>
+      `;
+
+      const footerHtml = (pageNum: number, total: number) => `
+        <div style="position:absolute;left:48px;right:48px;bottom:32px;">
+          <div style="height:2px;background:${ORANGE};margin-bottom:12px;border-radius:2px;"></div>
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#666;">
+            <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${ORANGE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
+                (11) 2621-9800 · (11) 9 3213-9800
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${ORANGE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
+                @estacaoaprender_
+              </span>
+              <span style="display:inline-flex;align-items:center;gap:6px;">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${ORANGE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                Praça Gajé n° 56 — Conj. 1, Engenheiro Goulart
+              </span>
+            </div>
+            <span style="color:#999;">${pageNum} / ${total}</span>
+          </div>
+        </div>
+      `;
+
+      function createPage(): HTMLDivElement {
+        const page = document.createElement("div");
+        Object.assign(page.style, {
+          position: "relative",
+          width: `${PAGE_W}px`,
+          height: `${PAGE_H}px`,
+          background: "#fff",
+          overflow: "hidden",
+          pageBreakAfter: "always",
+        } as CSSStyleDeclaration);
+        page.innerHTML = headerHtml;
+        const content = document.createElement("div");
+        Object.assign(content.style, {
+          position: "absolute",
+          top: `${CONTENT_TOP}px`,
+          left: "48px",
+          right: "48px",
+          maxHeight: `${CONTENT_MAX_H}px`,
+          overflow: "hidden",
+          fontSize: "12.5px",
+          lineHeight: "1.65",
+          textAlign: "justify",
+          color: "#222",
+        } as CSSStyleDeclaration);
+        content.setAttribute("data-content", "");
+        page.appendChild(content);
+        return page;
+      }
+
+      function renderBlock(block: Block): HTMLDivElement {
+        const el = document.createElement("div");
+        if (block.title) {
+          el.style.cssText =
+            "font-size:16px;font-weight:700;margin:0 0 16px 0;color:#1a1a1a;text-align:left;letter-spacing:0.01em;";
+        } else if (block.heading) {
+          el.style.cssText =
+            "font-size:13px;font-weight:700;margin:14px 0 6px 0;color:#1a1a1a;text-align:left;";
+        } else {
+          el.style.cssText = "margin:0 0 10px 0;";
+        }
+        el.textContent = block.text;
+        return el;
+      }
+
+      // Layout sections page-by-page
+      const pages: HTMLDivElement[] = [];
+      for (const section of sections) {
+        let page = createPage();
+        root.appendChild(page);
+        pages.push(page);
+        let content = page.querySelector("[data-content]") as HTMLDivElement;
+
+        for (const block of section) {
+          const el = renderBlock(block);
+          content.appendChild(el);
+          if (content.scrollHeight > CONTENT_MAX_H) {
+            // overflow → move block to new page
+            content.removeChild(el);
+            page = createPage();
+            root.appendChild(page);
+            pages.push(page);
+            content = page.querySelector("[data-content]") as HTMLDivElement;
+            content.appendChild(el);
+          }
+        }
+      }
+
+      // Append footers with final pagination
+      const total = pages.length;
+      pages.forEach((page, i) => {
+        const footer = document.createElement("div");
+        footer.innerHTML = footerHtml(i + 1, total);
+        page.appendChild(footer.firstElementChild as HTMLElement);
+      });
+
+      // Wait for logo + fonts
+      await (document as any).fonts?.ready;
+      const imgs = Array.from(root.querySelectorAll("img"));
+      await Promise.all(
+        imgs.map(
+          (img) =>
+            new Promise<void>((res) => {
+              if ((img as HTMLImageElement).complete) return res();
+              img.addEventListener("load", () => res(), { once: true });
+              img.addEventListener("error", () => res(), { once: true });
+            }),
+        ),
       );
-      doc.setTextColor(20, 20, 20);
-    }
 
-    function drawFooter(pageNum: number, total: number) {
-      doc.setDrawColor(214, 127, 67);
-      doc.setLineWidth(0.3);
-      doc.line(margin, pageH - 14, pageW - margin, pageH - 14);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8);
-      doc.setTextColor(110, 110, 110);
-      doc.text("(11) 2621-9800 · (11) 9 3213-9800 · @estacaoaprender_", margin, pageH - 9);
-      doc.text("Praça Gajé n° 56 — Conj. 1, Engenheiro Goulart, São Paulo", margin, pageH - 5);
-      doc.text(`${pageNum} / ${total}`, pageW - margin, pageH - 5, { align: "right" });
-      doc.setTextColor(20, 20, 20);
-    }
+      // Render each page to PDF
+      const doc = new jsPDF({ unit: "mm", format: "a4" });
+      const pageWmm = doc.internal.pageSize.getWidth();
+      const pageHmm = doc.internal.pageSize.getHeight();
 
-    // Monta variáveis e textos
-    const vars = montarVariaveis({
-      paciente_nome: contrato.paciente?.nome ?? "",
-      responsavel: (contrato.dados_responsavel as DadosResponsavel | null) ?? null,
-      servico_nome: contrato.servico?.nome ?? "",
-      modalidade: (contrato.modalidade as Modalidade | null) ?? null,
-      aulas_por_mes: contrato.aulas_por_mes,
-      valor_com_desconto_centavos: contrato.valor_com_desconto_centavos,
-      valor_sem_desconto_centavos: contrato.valor_sem_desconto_centavos,
-      forma_pagamento: (contrato.forma_pagamento as FormaPagamento | null) ?? null,
-      dia_vencimento: contrato.dia_vencimento,
-      cidade_assinatura: contrato.cidade_assinatura,
-      autoriza_imagem: contrato.autoriza_imagem,
-      data_inicio: contrato.data_inicio,
-      data_termino: contrato.data_termino,
-      frequencia: contrato.frequencia,
-      qtd_sessoes: contrato.qtd_sessoes,
-    });
-
-    const corpo = aplicarTemplate(contrato.termos ?? "", vars);
-    const assinatura = aplicarTemplate(TEMPLATE_ASSINATURA, vars);
-    const autorizacao = aplicarTemplate(TEMPLATE_AUTORIZACAO_IMAGEM, vars);
-
-    // Renderiza blocos com cabeçalhos detectados
-    const lineH = 5.0;
-    let y = topY;
-
-    function ensureSpace(h: number) {
-      if (y + h > bottomY) {
-        doc.addPage();
-        drawHeader();
-        y = topY;
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i], {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          windowWidth: PAGE_W,
+        });
+        const img = canvas.toDataURL("image/jpeg", 0.95);
+        if (i > 0) doc.addPage();
+        doc.addImage(img, "JPEG", 0, 0, pageWmm, pageHmm, undefined, "FAST");
       }
+
+      document.body.removeChild(root);
+
+      const nome = (contrato.paciente?.nome ?? "contrato").replace(/[^a-zA-Z0-9_-]+/g, "_");
+      const data = contrato.data_inicio ?? "";
+      doc.save(`Contrato-${nome}-${data}.pdf`);
+    } catch (err: any) {
+      console.error("PDF generation error", err);
+      toast.error(err?.message ?? "Erro ao gerar PDF");
+    } finally {
+      setGeneratingPdf(false);
     }
-
-    function writeBlock(text: string, opts?: { bold?: boolean; size?: number; gapAfter?: number }) {
-      doc.setFont("helvetica", opts?.bold ? "bold" : "normal");
-      doc.setFontSize(opts?.size ?? 10);
-      const lines = doc.splitTextToSize(text, maxW);
-      for (const ln of lines) {
-        ensureSpace(lineH);
-        doc.text(ln, margin, y);
-        y += lineH;
-      }
-      y += opts?.gapAfter ?? 1.5;
-    }
-
-    drawHeader();
-
-    // Título principal
-    const paragrafos = corpo.split(/\n\s*\n/);
-    for (const p of paragrafos) {
-      const trimmed = p.trim();
-      if (!trimmed) continue;
-      // Heurística: parágrafos curtos em CAIXA ALTA ou que começam com número+ponto viram negrito
-      const isHeading =
-        /^[0-9]+\.\s*[A-ZÀ-Ú]/.test(trimmed) ||
-        (trimmed === trimmed.toUpperCase() && trimmed.length < 90);
-      writeBlock(trimmed, { bold: isHeading, size: isHeading ? 11 : 10, gapAfter: isHeading ? 1 : 3 });
-    }
-
-    // Página de assinatura
-    doc.addPage();
-    drawHeader();
-    y = topY;
-    writeBlock("TERMO DE CIÊNCIA E ASSINATURA", { bold: true, size: 12, gapAfter: 5 });
-    for (const p of assinatura.split(/\n\s*\n/)) {
-      writeBlock(p.trim(), { gapAfter: 3 });
-    }
-
-    // Anexo: autorização de imagem
-    doc.addPage();
-    drawHeader();
-    y = topY;
-    const parsAuto = autorizacao.split(/\n\s*\n/);
-    for (let i = 0; i < parsAuto.length; i++) {
-      const t = parsAuto[i].trim();
-      if (!t) continue;
-      const isTitle = i === 0;
-      writeBlock(t, { bold: isTitle, size: isTitle ? 12 : 10, gapAfter: isTitle ? 5 : 3 });
-    }
-
-    // Rodapés em todas as páginas
-    const total = doc.getNumberOfPages();
-    for (let p = 1; p <= total; p++) {
-      doc.setPage(p);
-      drawFooter(p, total);
-    }
-
-    const nome = (contrato.paciente?.nome ?? "contrato").replace(/[^a-zA-Z0-9_-]+/g, "_");
-    const data = contrato.data_inicio ?? "";
-    doc.save(`Contrato-${nome}-${data}.pdf`);
   }
 
   const getAnexoFilename = () => {
@@ -293,8 +393,13 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
           <Button variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" /> Imprimir
           </Button>
-          <Button variant="outline" onClick={handleDownloadPdf}>
-            <Download className="mr-2 h-4 w-4" /> Baixar PDF
+          <Button variant="outline" onClick={handleDownloadPdf} disabled={generatingPdf}>
+            {generatingPdf ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="mr-2 h-4 w-4" />
+            )}
+            {generatingPdf ? "Gerando..." : "Baixar PDF"}
           </Button>
           <Button onClick={handleWhatsapp} className="bg-green-600 text-white hover:bg-green-700">
             <MessageCircle className="mr-2 h-4 w-4" /> Enviar por WhatsApp

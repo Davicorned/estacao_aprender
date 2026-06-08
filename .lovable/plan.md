@@ -1,75 +1,65 @@
-# Novo modelo de contrato — Estação Aprender
+# Redesign do PDF do contrato
 
-## Resumo do que muda
-O modelo atual é um texto único com 6 cláusulas genéricas. O contrato real tem estrutura mais rica:
+Hoje o PDF é montado com `jsPDF` "puro": faixa laranja retangular + texto helvetica. O modelo original tem logotipo (borboleta + "estação aprender" em script), um blob laranja com curva orgânica no topo, e um rodapé com ícones (telefone, Instagram, localização). Vamos reproduzir isso.
 
-- **Partes**: nome / CPF / RG / endereço do responsável + nome do beneficiário (paciente).
-- **Pagamento**: quantidade de aulas mensais, valor com desconto (pacote) e sem desconto (avulso), modalidade escolhida, forma de pagamento (pix/transferência/boleto/débito = desconto; cartão = +R$10/aula), dia de vencimento.
-- **Cláusulas fixas** (texto padronizado): objeto, desistência, férias/recesso, faltas e reagendamentos.
-- **Página de assinatura**: cidade + data + nome do responsável.
-- **Anexo separado**: Autorização de Uso de Imagem (autoriza / não autoriza), assinada à parte.
+## Abordagem
 
-Decisões já tomadas: armazenamento **híbrido** (colunas tipadas para o que importa em listagem/relatório + JSONB para o resto) e **geração de PDF visual** no sistema (cabeçalho, rodapé com contato/endereço, página de assinatura e anexo de autorização de imagem).
+Trocar a geração "linha por linha" do jsPDF por **render HTML → imagem → PDF** usando `html2canvas` + `jsPDF`. Isso permite reproduzir fielmente o blob laranja, a tipografia e o rodapé com ícones via HTML/CSS, sem precisar desenhar curvas Bézier manualmente.
 
-## O que vai ser feito
+Por que essa abordagem:
+- Logo SVG é renderizado nativamente pelo browser (fiel ao original).
+- Blob laranja vira `border-radius` + `clip-path` ou um SVG inline — controle visual total.
+- Tipografia, espaçamentos e ícones (lucide ou inline SVG) funcionam direto do CSS.
+- Cada "página" é um `<section>` A4 capturado separadamente e adicionado ao PDF.
 
-### 1. Banco (migration nova)
-Acrescentar à tabela `contratos`:
+## Passos
 
-- `modalidade` text — `"pacote_mensal" | "avulso"`
-- `aulas_por_mes` int — ex.: 4
-- `valor_com_desconto_centavos` int — preço por aula no pacote
-- `valor_sem_desconto_centavos` int — preço por aula avulso
-- `forma_pagamento` text — `"pix" | "transferencia" | "boleto" | "debito" | "cartao_credito"`
-- `dia_vencimento` int — 1–28
-- `cidade_assinatura` text default `'São Paulo'`
-- `dados_responsavel` jsonb — `{ nome, cpf, rg, endereco }`
-- `autoriza_imagem` bool nullable — null = não preencheu ainda
-- `observacoes` text nullable
+1. **Dependência**
+   - `bun add html2canvas` (jspdf já está instalado).
 
-(Campos antigos `valor_centavos`, `qtd_sessoes`, `frequencia`, `data_inicio`, `data_termino` continuam — `valor_centavos` passa a ser “valor mensal do pacote” calculado.)
+2. **Componente de template (offscreen)** — `src/components/gestao/contratos/ContratoPdfTemplate.tsx`
+   - Container fixo `210mm × 297mm`, posicionado fora da tela (`position: fixed; left: -10000px`) para o html2canvas conseguir capturar.
+   - Header: SVG inline com o blob laranja orgânico + `<img src={logoAsset.url} />` à esquerda + bloco de especialidades à direita ("Psicopedagogia · Psicomotricidade · Psicologia · Neuropsicologia · Alfabetização · Educação Neuroparental").
+   - Body: parágrafos do contrato com a mesma heurística atual (títulos numerados em negrito).
+   - Footer fixo no rodapé de cada página: linha laranja + ícones (telefone, Instagram, pin de localização) + textos `(11) 2621-9800 · (11) 9 3213-9800`, `@estacaoaprender_`, `Praça Gajé n° 56 — Conj. 1, Engenheiro Goulart`.
+   - Páginas: corpo do contrato → página de assinatura → anexo de autorização de imagem (mesma estrutura atual).
 
-Migration roda no Supabase próprio do projeto (`iscgrqldjytzhhvtgcmy`), portanto será fornecida como SQL para você executar manualmente no SQL Editor (mesma forma que o `updated_at` foi tratado).
+3. **Paginação inteligente**
+   - Dividir o texto em blocos (parágrafos) e empilhá-los em `<section className="page">`; quebrar para nova página quando o conteúdo passar da altura útil (medido via `offsetHeight`).
+   - Alternativa mais simples (recomendada no primeiro corte): renderizar tudo numa coluna A4 com `page-break-inside: avoid` por parágrafo e deixar o `html2canvas` capturar uma imagem alta; depois fatiar em páginas A4 no `jspdf` (`addImage` com `y` offset negativo por página). Este é o padrão "html2pdf".
 
-### 2. `src/lib/contratos.ts`
-- Adicionar os novos tipos (`Modalidade`, `FormaPagamento`, `DadosResponsavel`).
-- Substituir `TEMPLATE_PADRAO` pelo texto do contrato real (5 seções: Partes, Objeto, Pagamento, Desistência, Férias/Recesso, Faltas/Atrasos/Reagendamentos) com placeholders `{{...}}`.
-- Adicionar `TEMPLATE_AUTORIZACAO_IMAGEM` (texto da página de autorização).
-- Função `montarVariaveis(contrato)` centralizando substituição.
-- Helper `calcularValorMensal(aulas, valorPorAula, formaPagamento)` que aplica +R$10 para cartão.
+4. **Refatorar `ContratoView.handleDownloadPdf`**
+   - Montar `vars` (mesma função `montarVariaveis` já existente).
+   - Renderizar o template offscreen (state booleano + ref).
+   - Aguardar fontes (`document.fonts.ready`) e a `<img>` do logo (`onload`).
+   - `html2canvas(ref, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })` → `addImage` no jsPDF fatiando por página A4.
+   - `doc.save(...)` com o nome atual.
 
-### 3. Formulário (`ContratoFormDialog.tsx`)
-Reorganizar em seções com o `Tabs` (UI já presente no projeto) ou blocos visuais:
+5. **Fontes**
+   - Para se aproximar do original (script no logo + sans no corpo), usar:
+     - Logo: imagem (já tem o script desenhado).
+     - Corpo: `Inter` ou `Manrope` via Google Fonts (já carregados? confirmar `index.html`); fallback `system-ui`.
+   - Sem necessidade de embed de fonte no jsPDF — o rasterizador resolve.
 
-- **Partes**: paciente (já existe) + bloco “Dados do responsável” (nome, CPF, RG, endereço). Pré-preencher a partir do `responsaveis` do paciente quando existir.
-- **Serviço & Modalidade**: profissional, serviço, modalidade (radio: Pacote Mensal / Avulso), aulas por mês, dia de vencimento, forma de pagamento.
-- **Valores**: valor por aula (com desconto) e valor por aula (sem desconto) — pré-preenchidos a partir do serviço, editáveis. Mostra preview do valor mensal calculado (com regra do cartão).
-- **Período**: data início, data término, status.
-- **Autorização de imagem**: switch “Autoriza uso de imagem em mídias sociais”.
-- **Termos**: textarea com o template aplicado (igual hoje, mas com o template novo).
+6. **Ajustes finais**
+   - Manter `aplicarTemplate(contrato.termos, vars)` para o corpo.
+   - Manter páginas de assinatura e autorização de imagem como `<section>` separadas (cada uma com header/footer próprios).
+   - Marca d'água/numeração `1 / N` no rodapé direito.
 
-### 4. Geração de PDF (`ContratoView.tsx`)
-Substituir o `handleDownloadPdf` atual (texto puro) por um PDF estruturado com `jsPDF`:
+## Arquivos afetados
 
-- **Cabeçalho** em todas as páginas: logo + nome “Estação Aprender” + subtítulo (Psicopedagogia, Psicomotricidade, etc.).
-- **Rodapé** em todas as páginas: telefones, @estacaoaprender_, endereço (Praça Gajé n° 56 – Conj. 1 – Engenheiro Goulart).
-- **Páginas 1–3**: texto do contrato renderizado a partir dos termos (já com variáveis substituídas), com numeração de seção em negrito.
-- **Página de assinatura**: “Eu, [nome], CPF [cpf], responsável por [paciente] li e concordo… São Paulo, [data]. ____ Responsável”.
-- **Anexo (página separada)**: Autorização de Uso de Imagem, com checkboxes marcados conforme `autoriza_imagem` e linha de assinatura.
+- `package.json` / lockfile — adicionar `html2canvas`.
+- `src/components/gestao/contratos/ContratoPdfTemplate.tsx` (novo) — JSX do contrato pronto para renderização.
+- `src/components/gestao/contratos/ContratoView.tsx` — substituir `handleDownloadPdf` pela versão html2canvas + jsPDF; montar o template offscreen via ref.
 
-Mantém os botões existentes (Imprimir, WhatsApp, Anexar/Ver PDF assinado).
+## Fora do escopo
 
-### 5. Detalhes que NÃO mudam
-- Fluxo de upload do PDF assinado (rota proxy `/api/public/file-proxy/...`) e bucket `contratos-assinados` ficam exatamente como estão.
-- Tabela `contratos`, RLS, integrações com Financeiro/Pacientes.
+- Texto/cláusulas do contrato (já estão corretas).
+- Schema do banco e formulário (sem mudanças).
+- Visual do diálogo na tela (somente o PDF baixado muda).
 
-## Arquivos tocados
-- `supabase/migrations/<nova>.sql` (e SQL espelhado para o Supabase externo)
-- `src/lib/contratos.ts` — tipos + templates novos + helpers
-- `src/components/gestao/contratos/ContratoFormDialog.tsx` — novos campos
-- `src/components/gestao/contratos/ContratoView.tsx` — gerador de PDF visual
+## Riscos
 
-## Pontos em aberto / suposições
-- A logo no PDF: usarei o SVG já presente em `src/assets/logo-estacao-aprender.svg.asset.json`. Se preferir outra imagem (a do PDF é mais elaborada), me avise.
-- Vou manter o campo livre `termos` (editável) — útil quando precisar de cláusula especial num contrato pontual sem mudar o template global.
-- Migração de contratos existentes: os contratos atuais continuam funcionando; novos campos ficam `null` neles e o PDF cai num modo “simples” (sem dados do responsável estruturados) se o usuário não editar.
+- `html2canvas` aumenta um pouco o tamanho do bundle (~50 KB gz) — aceitável.
+- Renderização do logo SVG remoto: garantir `crossOrigin="anonymous"` na `<img>` e `useCORS: true` no html2canvas; o CDN da Lovable já envia CORS permissivo.
+- Tempo de geração sobe de instantâneo para ~1-2 s — adicionar um spinner no botão "Baixar PDF".
