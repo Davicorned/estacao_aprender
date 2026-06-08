@@ -24,6 +24,7 @@ import { Route as GestaoDashboardRouteImport } from './routes/gestao.dashboard'
 import { Route as GestaoContratosRouteImport } from './routes/gestao.contratos'
 import { Route as GestaoConfiguracoesRouteImport } from './routes/gestao.configuracoes'
 import { Route as GestaoAgendaRouteImport } from './routes/gestao.agenda'
+import { Route as ApiFileProxyRouteImport } from './routes/api/file-proxy'
 import { Route as GestaoPacientesIndexRouteImport } from './routes/gestao.pacientes.index'
 import { Route as GestaoSiteEquipeRouteImport } from './routes/gestao.site.equipe'
 import { Route as GestaoSiteDepoimentosRouteImport } from './routes/gestao.site.depoimentos'
@@ -105,6 +106,11 @@ const GestaoAgendaRoute = GestaoAgendaRouteImport.update({
   path: '/agenda',
   getParentRoute: () => GestaoRoute,
 } as any)
+const ApiFileProxyRoute = ApiFileProxyRouteImport.update({
+  id: '/api/file-proxy',
+  path: '/api/file-proxy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GestaoPacientesIndexRoute = GestaoPacientesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
   '/gestao': typeof GestaoRouteWithChildren
+  '/api/file-proxy': typeof ApiFileProxyRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -160,6 +167,7 @@ export interface FileRoutesByTo {
   '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
+  '/api/file-proxy': typeof ApiFileProxyRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -182,6 +190,7 @@ export interface FileRoutesById {
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
   '/gestao': typeof GestaoRouteWithChildren
+  '/api/file-proxy': typeof ApiFileProxyRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -206,6 +215,7 @@ export interface FileRouteTypes {
     | '/QuemSomos'
     | '/Servicos'
     | '/gestao'
+    | '/api/file-proxy'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -227,6 +237,7 @@ export interface FileRouteTypes {
     | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
+    | '/api/file-proxy'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -248,6 +259,7 @@ export interface FileRouteTypes {
     | '/QuemSomos'
     | '/Servicos'
     | '/gestao'
+    | '/api/file-proxy'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   QuemSomosRoute: typeof QuemSomosRoute
   ServicosRoute: typeof ServicosRoute
   GestaoRoute: typeof GestaoRouteWithChildren
+  ApiFileProxyRoute: typeof ApiFileProxyRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -380,6 +393,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoAgendaRouteImport
       parentRoute: typeof GestaoRoute
     }
+    '/api/file-proxy': {
+      id: '/api/file-proxy'
+      path: '/api/file-proxy'
+      fullPath: '/api/file-proxy'
+      preLoaderRoute: typeof ApiFileProxyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/gestao/pacientes/': {
       id: '/gestao/pacientes/'
       path: '/'
@@ -471,7 +491,18 @@ const rootRouteChildren: RootRouteChildren = {
   QuemSomosRoute: QuemSomosRoute,
   ServicosRoute: ServicosRoute,
   GestaoRoute: GestaoRouteWithChildren,
+  ApiFileProxyRoute: ApiFileProxyRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
