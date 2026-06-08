@@ -1,69 +1,72 @@
-## Fase 5 — Contratos, Financeiro e Dashboard
+## Plano de Testes Completos — Estação Aprender
 
-### 1. Banco — nova seção 9 em `SUPABASE_SETUP.md`
+Vou executar os testes em 3 camadas no preview já logado, criando dados rotulados com prefixo `TESTE -` para limpar ao final.
 
-**`contratos`**
-- `id`, `paciente_id → pacientes`, `profissional_id → profissionais`, `servico_id → servicos`
-- `valor_centavos int`, `qtd_sessoes int null` (null = indeterminado)
-- `frequencia text check in ('semanal','quinzenal','mensal','livre')`
-- `data_inicio date`, `data_termino date null`
-- `status text check in ('rascunho','ativo','encerrado','cancelado') default 'rascunho'`
-- `termos text` (corpo do contrato pós-substituição), `template_origem text null`
-- `created_by`, timestamps. GRANTs + RLS (autenticado lê/escreve).
+### Camada 1 — Smoke test (todas as rotas)
 
-**`lancamentos_financeiros`**
-- `id`, `paciente_id`, `contrato_id null`, `agendamento_id null` (unique parcial p/ evitar duplicar do mesmo agendamento)
-- `tipo text check in ('receita','despesa') default 'receita'`
-- `descricao text`, `valor_centavos int`
-- `data_vencimento date`, `data_pagamento date null`
-- `status text check in ('pendente','pago','atrasado','cancelado') default 'pendente'`
-- `forma_pagamento text null check in ('dinheiro','pix','cartao_credito','cartao_debito','transferencia')`
-- `created_by`, timestamps. RLS auth.
-- Índices: `(status, data_vencimento)`, `(paciente_id)`, `(agendamento_id) unique where agendamento_id is not null`.
+Abro cada página, capturo screenshot, leio console/network. Marcar OK / ERRO:
 
-**Trigger automático**: ao um `agendamentos.status` mudar para `'atendido'`, criar (se já não existir) um `lancamentos_financeiros` com:
-- contrato ativo do paciente (último por `data_inicio`) se houver → `valor_centavos = contrato.valor_centavos`, `contrato_id = ...`
-- senão → `valor_centavos = servico.valor_centavos`
-- `descricao = nome do servico + data`, `data_vencimento = data do agendamento`, `status='pendente'`.
+**Site público**
+- `/` (index), `/quem-somos`, `/servicos`, `/atendimento`, `/particular`, `/contato`
 
-**Marcação de atrasados**: SELECT computa `atrasado` dinamicamente (`status='pendente' AND data_vencimento < current_date`) — sem cron. Os cards e badges usam essa lógica derivada para evitar depender de job.
+**Gestão**
+- `/gestao` (redirect/index), `/gestao/dashboard`
+- `/gestao/pacientes`, `/gestao/agenda`
+- `/gestao/contratos`, `/gestao/financeiro`
+- `/gestao/configuracoes` (serviços, profissionais, usuários)
+- `/gestao/site/depoimentos`, `/gestao/site/equipe`
 
-### 2. Data layer
+Critério: página renderiza, sem erro no console, sem 4xx/5xx em network.
 
-- `src/lib/contratos.ts` — tipos, `listContratos({status,profissionalId})`, `getContrato`, `createContrato`, `updateContrato`, `deleteContrato`, helpers `aplicarTemplate(template, vars)`, `TEMPLATE_PADRAO`, `calcularDataTermino(inicio, qtd, freq)`, `formatBRL`, link `whatsappLink(numero, mensagem)`.
-- `src/lib/financeiro.ts` — tipos, `listLancamentos({mes,status,pacienteId,tipo})`, `createLancamento`, `registrarPagamento(id,{data,forma})`, `resumoMes(mes)` (receita_paga, a_receber, atrasados, sessoes_atendidas), `helpers` de status efetivo.
-- `src/lib/dashboard.ts` — `kpis({periodo,profissionalId})`, `atendimentosPorDia(range,profId)`, `pacientesNovosVsRecorrentes(range)`, `proximosAgendamentos(limit)`, `proximosLancamentosAReceber(limit)`.
+### Camada 2 — CRUD por página
 
-### 3. UI
+Em cada módulo: **Create → Read (listar/buscar/filtrar) → Update → Delete**.
 
-**`/gestao/contratos`** (`src/components/gestao/contratos/`):
-- `ContratosPage.tsx` — tabela + filtros (status, profissional) + botão **Novo Contrato** (gradiente laranja).
-- `ContratoFormDialog.tsx` — typeahead paciente (reusa `searchPacientesQuick`), select profissional/serviço, valor (máscara BRL), qtd sessões, frequência, data início/término (auto-calculada se qtd+freq preenchidos), status, textarea grande pré-preenchida com `TEMPLATE_PADRAO` e substituição de variáveis ao abrir/recalcular.
-- `ContratoView.tsx` — modal/sheet ou rota separada renderizando o contrato em formato A4 com CSS `@media print`. Botões **Imprimir** (`window.print`) e **Enviar por WhatsApp** (abre `https://wa.me/<numero>?text=<msg>` com mensagem padronizada).
+| Módulo | Operações testadas |
+|---|---|
+| Profissionais (config) | Criar "TESTE - Dr. Plan", editar telefone, listar, excluir |
+| Serviços (config) | Criar "TESTE - Avaliação", editar valor, excluir |
+| Pacientes | Criar "TESTE - Paciente A" (com responsável), abrir ficha, editar, listar/buscar |
+| Agenda | Criar agendamento para o paciente, mover status (agendado→confirmado→atendido), cancelar outro |
+| Prontuário (tab da ficha) | Criar evolução, editar, marcar privada, excluir; verificar aba "Histórico de sessões" |
+| Contratos | Criar contrato (template, cálculo de data término), editar, alterar status, imprimir/WhatsApp link, excluir |
+| Financeiro | Verificar lançamento auto-gerado pelo trigger após "atendido", registrar pagamento, criar despesa manual, filtrar por período/status, excluir |
+| Dashboard | Conferir KPIs, gráficos (linha + donut), próximos agendamentos, contas a receber, filtros de período/profissional |
+| Site / Depoimentos & Equipe | Criar item, reordenar/editar, excluir |
 
-**`/gestao/financeiro`** (`src/components/gestao/financeiro/`):
-- `FinanceiroPage.tsx` — 4 cards de resumo (Receita do mês / A receber / Atrasados / Sessões do mês), filtros (mês via seletor, status, paciente typeahead, tipo), tabela com badges coloridos.
-- `LancamentoFormDialog.tsx` — criar lançamento manual (tipo, paciente opcional, descrição, valor, vencimento).
-- `RegistrarPagamentoDialog.tsx` — data + forma de pagamento; também aceita modo bulk (seleção múltipla na tabela).
-- Status atrasado calculado client-side; o badge muda automaticamente.
+### Camada 3 — Fluxo E2E real
 
-**`/gestao/dashboard`** (`src/components/gestao/dashboard/`):
-- `DashboardPage.tsx` — filtro global (período: 30d/este mês/mês passado/personalizado + profissional).
-- **Row 1**: 4 `KpiCard`s com ícone em `bg-[#FEF3E8]`, número, label, e variação % vs período anterior.
-- **Row 2**: `AtendimentosLineChart` (recharts, cor `#D67F43`) + `PacientesDonutChart` (recharts, `#D67F43` recorrentes + `#FBCF9E` novos).
-- **Row 3**: lista dos próximos 5 agendamentos (hoje/amanhã) com link "Ver agenda completa →".
-- **Row 4**: lista dos 5 lançamentos pendentes/atrasados com vermelho para atrasado e link "Ver financeiro completo →".
+Sequência única ligando tudo:
+1. Criar paciente `TESTE - E2E Paciente`
+2. Criar contrato ativo para esse paciente (valor R$ 200, semanal, 4 sessões)
+3. Criar agendamento para hoje vinculado ao paciente/serviço
+4. Mudar status do agendamento para `atendido`
+5. Verificar que **trigger criou lançamento financeiro** automaticamente (R$ 200 pendente)
+6. Registrar evolução vinculada à sessão no prontuário
+7. Registrar pagamento do lançamento
+8. Conferir Dashboard: KPI "receita paga" subiu, gráfico de atendimentos reflete a sessão, contas a receber diminuiu
 
-Recharts já está no `chart.tsx`; não precisa instalar.
+### Verificações transversais
 
-### 4. Wiring
+- **Auth/RLS**: deslogar e tentar acessar `/gestao/*` → deve redirecionar para `/gestao/login`
+- **Privacidade prontuário**: evolução marcada como privada não aparece para outro usuário (se houver mais de um profissional cadastrado)
+- **Console**: zero erros vermelhos durante todo o fluxo
+- **Network**: zero 4xx/5xx (exceto 401 esperados pós-logout)
+- **Responsivo**: revisar Dashboard e Agenda em viewport mobile (375px)
 
-- Substituir os placeholders nas rotas `gestao.contratos.tsx`, `gestao.financeiro.tsx`, `gestao.dashboard.tsx` para renderizar os novos page components.
+### Entregável
 
-### Fora de escopo
-- Cron job de marcar `atrasado` no banco (cálculo derivado é suficiente)
-- Exportação PDF server-side (impressão usa `window.print`)
-- Geração de boleto/integração de pagamento real
+Relatório consolidado por módulo:
+- ✅ **OK** — funcionando, com print de evidência
+- ⚠️ **Aviso** — funciona mas com ressalva (UX, validação, etc.)
+- ❌ **Bug** — descrição, passos para reproduzir, console/network, e proposta de correção
 
-### Ação necessária
-Rodar a **seção 9** do `SUPABASE_SETUP.md` (que vou criar) no SQL Editor para criar `contratos`, `lancamentos_financeiros`, e o trigger de geração automática.
+Bugs encontrados **não serão corrigidos automaticamente** — eu listo tudo e você decide o que priorizar (ou já me autoriza a corrigir todos).
+
+### Limpeza final
+
+Excluir todos os registros `TESTE -*` criados, na ordem: lançamentos → agendamentos → evoluções → contratos → pacientes → serviço/profissional de teste.
+
+### Tempo estimado
+
+~30-45 min de execução em sequência (várias chamadas de browser).
