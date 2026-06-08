@@ -1,70 +1,57 @@
-## Fase 3 — Sistema de Agendamento
+## Fase 4 — Prontuário Eletrônico
 
-### 1. Schema (SUPABASE_SETUP.md — nova seção 7)
+Integrar prontuário à ficha do paciente em `/gestao/pacientes/:id`, com tabs **Dados**, **Prontuário** e **Histórico de Sessões**.
 
-```sql
-create type agendamento_status as enum
-  ('agendado','confirmado','em_atendimento','atendido','faltou','cancelado');
+### 1. Banco (nova seção 8 em `SUPABASE_SETUP.md`)
 
-create table public.agendamentos (
-  id uuid primary key default gen_random_uuid(),
-  paciente_id uuid not null references public.pacientes(id) on delete cascade,
-  profissional_id uuid not null references public.profissionais(id) on delete restrict,
-  servico_id uuid references public.servicos(id) on delete set null,
-  data date not null,
-  hora_inicio time not null,
-  hora_fim time not null,
-  tipo text not null default 'presencial' check (tipo in ('presencial','online')),
-  status agendamento_status not null default 'agendado',
-  observacoes text,
-  motivo_cancelamento text,
-  recorrencia_grupo_id uuid,
-  created_by uuid references auth.users(id),
-  created_at timestamptz default now(),
-  updated_at timestamptz default now()
-);
--- índices: (profissional_id, data), (paciente_id, data)
--- grants + RLS authenticated read/write
--- habilitar realtime: alter publication supabase_realtime add table public.agendamentos
-```
+Tabela `public.evolucoes`:
+- `id uuid pk`, `paciente_id uuid → pacientes`, `profissional_id uuid → team_members`
+- `agendamento_id uuid → agendamentos null` (vínculo opcional, `on delete set null`)
+- `data_sessao date not null`
+- `queixa text`, `observacao text`, `evolucao text`, `instrumentos text`, `plano text`, `encaminhamentos text`
+- `privado boolean default false`
+- `created_by uuid → auth.users`, `created_at`, `updated_at` (+ trigger)
+- Índices: `(paciente_id, data_sessao desc)`, `(profissional_id)`, `(agendamento_id)`
 
-### 2. Camada de dados — `src/lib/agendamentos.ts`
+GRANTs + RLS (auth only, sem `anon`):
+- SELECT autenticado: `privado = false OR created_by = auth.uid() OR has_role(auth.uid(),'admin')`
+- INSERT autenticado: `created_by = auth.uid()`
+- UPDATE/DELETE: `created_by = auth.uid() OR has_role(auth.uid(),'admin')`
 
-- Tipos `Agendamento`, `AgendamentoInput`, `Status`.
-- `listByRange({ profissionalId?, dataInicio, dataFim })` → busca com join leve em pacientes (nome, foto) e servicos (nome, duracao).
-- `getAgendamento(id)`, `createAgendamento(input)`, `createRecorrencia(input, tipo)` → expande para N ocorrências com mesmo `recorrencia_grupo_id`.
-- `updateAgendamento(id, patch)`, `updateStatus(id, status, motivo?)`, `deleteAgendamento(id)`.
-- `checarConflito({ profissionalId, data, horaInicio, horaFim, excludeId? })`.
-- Constantes: `STATUS_STYLES` (cores Tailwind por status), `STATUS_LABEL`, `SLOT_HEIGHT=40`, `SLOT_MIN=15`, `HORA_INICIO='08:00'`, `HORA_FIM='18:00'`.
-- Helpers: `mostrarSemana(date)` → array de 7 datas começando no domingo; `slotsDoDia()` → array de strings "HH:MM"; `addMin(time, n)`.
+### 2. Data layer — `src/lib/evolucoes.ts`
 
-### 3. Realtime
-Hook `useAgendamentosRealtime(range)` que assina `postgres_changes` em `public.agendamentos` e invalida o queryKey `["agendamentos", range]`.
+- Tipos `Evolucao`, `EvolucaoInput`
+- `listEvolucoes(pacienteId, { profissionalId?, desde?, busca? })` — filtro por período (30d / 3m / 6m / 1a / tudo) e busca via `ilike` em queixa/observacao/evolucao/plano
+- `getEvolucao(id)`, `createEvolucao`, `updateEvolucao`, `deleteEvolucao`
+- `evolucaoByAgendamento(agendamentoId)` (para tab Histórico)
+- `listAgendamentosDoDia(pacienteId, data)` para o select "Vincular a agendamento"
+- Default `profissional_id` = team_member do usuário logado (lookup via `team_members.user_id` se existir; senão select manual)
 
-### 4. Rotas / componentes
+### 3. UI — `src/components/gestao/prontuario/`
 
-`src/routes/gestao.agenda.tsx` (substitui placeholder).
+- `ProntuarioTab.tsx` — header com nome + idade calculada, botão **Nova Evolução** (gradiente laranja), filtros (profissional, período, busca), lista de `EvolucaoCard`s
+- `EvolucaoCard.tsx` — colapsado mostra data • profissional • especialidade + preview da evolução; expandido mostra Queixa / Observação / Evolução / Instrumentos / Plano / Encaminhamentos + botões **Editar** / **Imprimir** (esta imprime só a evolução)
+- `EvolucaoFormDialog.tsx` — modal com todos os campos descritos, select de agendamento do dia, checkbox **Privado**, validações, salvar/cancelar
+- `HistoricoSessoesTab.tsx` — tabela de agendamentos do paciente (passados + futuros) com filtros por status e período; coluna Evolução com ✓ ou botão **Registrar** que abre o form pré-preenchido
+- `PrintProntuario.tsx` — rota/print view com `@media print`: header (logo Estação Aprender + dados do paciente + "CONFIDENCIAL"), todas as evoluções não-privadas (ou só do user logado), footer "Documento confidencial — Estação Aprender"
 
-Componentes em `src/components/gestao/agenda/`:
-- `AgendaPage.tsx` — orquestrador (state: data atual, view 'dia'|'semana', profissional selecionado, modais abertos).
-- `AgendaHeader.tsx` — navegação ← HOJE →, toggle DIA/SEMANA, Select profissional, botão Novo Agendamento.
-- `AgendaSidebar.tsx` — sidebar colapsável (lado esquerdo) listando pacientes do dia (horário + nome + ícone status); clique faz scroll para o slot.
-- `SemanaView.tsx` — grid 8 colunas (hora + 7 dias), slots de 15 min × 40px, posicionamento absoluto dos blocos, faixa cinza de almoço lida de `configuracoes_clinica`. Coluna do dia atual recebe borda esquerda azul.
-- `DiaView.tsx` — variação 2 colunas (hora + dia único) com blocos mais detalhados (horário + paciente + procedimento + status).
-- `AgendamentoBloco.tsx` — bloco posicionado; cor por status; clique abre modal de detalhes.
-- `AgendamentoFormDialog.tsx` — modal Novo/Editar:
-  - Typeahead de paciente (busca debounce no Supabase) + botão "Cadastrar novo" → abre `/gestao/pacientes/novo` em nova aba.
-  - Selects profissional/servico (do `configuracoes`), RadioGroup tipo, Date + horários, hora_fim recalcula ao trocar serviço.
-  - Recorrência (Select: Não se repete / Semanal × 4 / Quinzenal × 4 / Mensal × 3) com `AlertDialog` de confirmação "Serão criados X agendamentos".
-  - Validações: campos obrigatórios, não passado, checar conflito antes de salvar.
-- `AgendamentoDetalhesDialog.tsx` — modal de detalhes com botões de status (Confirmar, Iniciar, Finalizar, Faltou, Cancelar c/ motivo, Remarcar, Editar, Excluir). Ao Finalizar abre prompt "Deseja registrar a evolução no prontuário?" (link para fase 4; por ora só fecha).
+### 4. Integração na ficha
 
-### 5. Atualizar lista de pacientes
-Coluna "Próx. agendamento" da lista (`gestao.pacientes.index.tsx`) passa a buscar via nova função `proximoAgendamentoPorPaciente(ids[])` agrupada — leve, só para a página atual.
+Refatorar `src/routes/gestao.pacientes.$id.tsx` para usar `Tabs` (shadcn):
+- **Dados** → `PacienteForm` atual
+- **Prontuário** → `ProntuarioTab`
+- **Histórico de Sessões** → `HistoricoSessoesTab`
 
-### Itens fora de escopo
-- Criação do registro de prontuário ao finalizar (Fase 4).
-- Notificações (futuro).
+Botão **Imprimir prontuário** dentro da tab Prontuário abre `/gestao/pacientes/$id/prontuario/imprimir` em nova janela (rota com layout limpo para `window.print()`).
 
-### Ação do usuário
-Rodar o bloco SQL da seção 7 do `SUPABASE_SETUP.md` e habilitar Realtime para `public.agendamentos` (já incluído no SQL via `alter publication supabase_realtime add table ...`).
+### 5. Integração com Fase 3
+
+No `AgendamentoDetalhesDialog`, ao mudar status para **atendido**, o prompt "Deseja registrar a evolução?" agora navega para a ficha do paciente abrindo o `EvolucaoFormDialog` com `agendamento_id` pré-vinculado.
+
+### Fora de escopo
+- Editor rico (usar `Textarea` simples — pode ser trocado depois)
+- Exportação PDF server-side (impressão usa `window.print()`)
+- Notificações
+
+### Ação necessária após implementação
+Rodar a **seção 8** do `SUPABASE_SETUP.md` no SQL Editor para criar a tabela `evolucoes` com RLS.
