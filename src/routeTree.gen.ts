@@ -29,6 +29,7 @@ import { Route as GestaoSiteEquipeRouteImport } from './routes/gestao.site.equip
 import { Route as GestaoSiteDepoimentosRouteImport } from './routes/gestao.site.depoimentos'
 import { Route as GestaoPacientesNovoRouteImport } from './routes/gestao.pacientes.novo'
 import { Route as GestaoPacientesIdRouteImport } from './routes/gestao.pacientes.$id'
+import { Route as ApiPublicFileProxySplatRouteImport } from './routes/api/public/file-proxy.$'
 
 const GestaoRoute = GestaoRouteImport.update({
   id: '/gestao',
@@ -130,6 +131,11 @@ const GestaoPacientesIdRoute = GestaoPacientesIdRouteImport.update({
   path: '/$id',
   getParentRoute: () => GestaoPacientesRoute,
 } as any)
+const ApiPublicFileProxySplatRoute = ApiPublicFileProxySplatRouteImport.update({
+  id: '/api/public/file-proxy/$',
+  path: '/api/public/file-proxy/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -152,6 +158,7 @@ export interface FileRoutesByFullPath {
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/pacientes/': typeof GestaoPacientesIndexRoute
+  '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/pacientes': typeof GestaoPacientesIndexRoute
+  '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -195,6 +203,7 @@ export interface FileRoutesById {
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/pacientes/': typeof GestaoPacientesIndexRoute
+  '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -219,6 +228,7 @@ export interface FileRouteTypes {
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/pacientes/'
+    | '/api/public/file-proxy/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -239,6 +249,7 @@ export interface FileRouteTypes {
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/pacientes'
+    | '/api/public/file-proxy/$'
   id:
     | '__root__'
     | '/'
@@ -261,6 +272,7 @@ export interface FileRouteTypes {
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/pacientes/'
+    | '/api/public/file-proxy/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -271,6 +283,7 @@ export interface RootRouteChildren {
   QuemSomosRoute: typeof QuemSomosRoute
   ServicosRoute: typeof ServicosRoute
   GestaoRoute: typeof GestaoRouteWithChildren
+  ApiPublicFileProxySplatRoute: typeof ApiPublicFileProxySplatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -415,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoPacientesIdRouteImport
       parentRoute: typeof GestaoPacientesRoute
     }
+    '/api/public/file-proxy/$': {
+      id: '/api/public/file-proxy/$'
+      path: '/api/public/file-proxy/$'
+      fullPath: '/api/public/file-proxy/$'
+      preLoaderRoute: typeof ApiPublicFileProxySplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   QuemSomosRoute: QuemSomosRoute,
   ServicosRoute: ServicosRoute,
   GestaoRoute: GestaoRouteWithChildren,
+  ApiPublicFileProxySplatRoute: ApiPublicFileProxySplatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
