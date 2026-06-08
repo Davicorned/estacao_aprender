@@ -221,7 +221,7 @@ export function ContratosPage() {
         />
       )}
 
-      <AlertDialog open={!!delTarget} onOpenChange={(v) => !v && setDelTarget(null)}>
+      <AlertDialog open={!!delTarget} onOpenChange={(v: boolean) => !v && setDelTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir contrato?</AlertDialogTitle>
