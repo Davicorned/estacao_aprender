@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as GestaoRouteImport } from './routes/gestao'
-import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ServicosRouteImport } from './routes/Servicos'
 import { Route as QuemSomosRouteImport } from './routes/QuemSomos'
 import { Route as ParticularRouteImport } from './routes/Particular'
@@ -18,7 +17,6 @@ import { Route as ContatoRouteImport } from './routes/Contato'
 import { Route as AtendimentoRouteImport } from './routes/Atendimento'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GestaoIndexRouteImport } from './routes/gestao.index'
-import { Route as AdminIndexRouteImport } from './routes/admin.index'
 import { Route as GestaoPacientesRouteImport } from './routes/gestao.pacientes'
 import { Route as GestaoLoginRouteImport } from './routes/gestao.login'
 import { Route as GestaoFinanceiroRouteImport } from './routes/gestao.financeiro'
@@ -26,9 +24,6 @@ import { Route as GestaoDashboardRouteImport } from './routes/gestao.dashboard'
 import { Route as GestaoContratosRouteImport } from './routes/gestao.contratos'
 import { Route as GestaoConfiguracoesRouteImport } from './routes/gestao.configuracoes'
 import { Route as GestaoAgendaRouteImport } from './routes/gestao.agenda'
-import { Route as AdminLoginRouteImport } from './routes/admin.login'
-import { Route as AdminEquipeRouteImport } from './routes/admin.equipe'
-import { Route as AdminDepoimentosRouteImport } from './routes/admin.depoimentos'
 import { Route as GestaoPacientesIndexRouteImport } from './routes/gestao.pacientes.index'
 import { Route as GestaoSiteEquipeRouteImport } from './routes/gestao.site.equipe'
 import { Route as GestaoSiteDepoimentosRouteImport } from './routes/gestao.site.depoimentos'
@@ -37,11 +32,6 @@ import { Route as GestaoPacientesIdRouteImport } from './routes/gestao.pacientes
 const GestaoRoute = GestaoRouteImport.update({
   id: '/gestao',
   path: '/gestao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminRoute = AdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServicosRoute = ServicosRouteImport.update({
@@ -79,11 +69,6 @@ const GestaoIndexRoute = GestaoIndexRouteImport.update({
   path: '/',
   getParentRoute: () => GestaoRoute,
 } as any)
-const AdminIndexRoute = AdminIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AdminRoute,
-} as any)
 const GestaoPacientesRoute = GestaoPacientesRouteImport.update({
   id: '/pacientes',
   path: '/pacientes',
@@ -119,21 +104,6 @@ const GestaoAgendaRoute = GestaoAgendaRouteImport.update({
   path: '/agenda',
   getParentRoute: () => GestaoRoute,
 } as any)
-const AdminLoginRoute = AdminLoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminEquipeRoute = AdminEquipeRouteImport.update({
-  id: '/equipe',
-  path: '/equipe',
-  getParentRoute: () => AdminRoute,
-} as any)
-const AdminDepoimentosRoute = AdminDepoimentosRouteImport.update({
-  id: '/depoimentos',
-  path: '/depoimentos',
-  getParentRoute: () => AdminRoute,
-} as any)
 const GestaoPacientesIndexRoute = GestaoPacientesIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -162,11 +132,7 @@ export interface FileRoutesByFullPath {
   '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
-  '/admin': typeof AdminRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
-  '/admin/depoimentos': typeof AdminDepoimentosRoute
-  '/admin/equipe': typeof AdminEquipeRoute
-  '/admin/login': typeof AdminLoginRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -174,7 +140,6 @@ export interface FileRoutesByFullPath {
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
   '/gestao/login': typeof GestaoLoginRoute
   '/gestao/pacientes': typeof GestaoPacientesRouteWithChildren
-  '/admin/': typeof AdminIndexRoute
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
@@ -188,16 +153,12 @@ export interface FileRoutesByTo {
   '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
-  '/admin/depoimentos': typeof AdminDepoimentosRoute
-  '/admin/equipe': typeof AdminEquipeRoute
-  '/admin/login': typeof AdminLoginRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
   '/gestao/dashboard': typeof GestaoDashboardRoute
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
   '/gestao/login': typeof GestaoLoginRoute
-  '/admin': typeof AdminIndexRoute
   '/gestao': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
@@ -212,11 +173,7 @@ export interface FileRoutesById {
   '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
-  '/admin': typeof AdminRouteWithChildren
   '/gestao': typeof GestaoRouteWithChildren
-  '/admin/depoimentos': typeof AdminDepoimentosRoute
-  '/admin/equipe': typeof AdminEquipeRoute
-  '/admin/login': typeof AdminLoginRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -224,7 +181,6 @@ export interface FileRoutesById {
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
   '/gestao/login': typeof GestaoLoginRoute
   '/gestao/pacientes': typeof GestaoPacientesRouteWithChildren
-  '/admin/': typeof AdminIndexRoute
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
@@ -240,11 +196,7 @@ export interface FileRouteTypes {
     | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
-    | '/admin'
     | '/gestao'
-    | '/admin/depoimentos'
-    | '/admin/equipe'
-    | '/admin/login'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -252,7 +204,6 @@ export interface FileRouteTypes {
     | '/gestao/financeiro'
     | '/gestao/login'
     | '/gestao/pacientes'
-    | '/admin/'
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/site/depoimentos'
@@ -266,16 +217,12 @@ export interface FileRouteTypes {
     | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
-    | '/admin/depoimentos'
-    | '/admin/equipe'
-    | '/admin/login'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
     | '/gestao/dashboard'
     | '/gestao/financeiro'
     | '/gestao/login'
-    | '/admin'
     | '/gestao'
     | '/gestao/pacientes/$id'
     | '/gestao/site/depoimentos'
@@ -289,11 +236,7 @@ export interface FileRouteTypes {
     | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
-    | '/admin'
     | '/gestao'
-    | '/admin/depoimentos'
-    | '/admin/equipe'
-    | '/admin/login'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -301,7 +244,6 @@ export interface FileRouteTypes {
     | '/gestao/financeiro'
     | '/gestao/login'
     | '/gestao/pacientes'
-    | '/admin/'
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/site/depoimentos'
@@ -316,7 +258,6 @@ export interface RootRouteChildren {
   ParticularRoute: typeof ParticularRoute
   QuemSomosRoute: typeof QuemSomosRoute
   ServicosRoute: typeof ServicosRoute
-  AdminRoute: typeof AdminRouteWithChildren
   GestaoRoute: typeof GestaoRouteWithChildren
 }
 
@@ -327,13 +268,6 @@ declare module '@tanstack/react-router' {
       path: '/gestao'
       fullPath: '/gestao'
       preLoaderRoute: typeof GestaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/admin': {
-      id: '/admin'
-      path: '/admin'
-      fullPath: '/admin'
-      preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/Servicos': {
@@ -385,13 +319,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoIndexRouteImport
       parentRoute: typeof GestaoRoute
     }
-    '/admin/': {
-      id: '/admin/'
-      path: '/'
-      fullPath: '/admin/'
-      preLoaderRoute: typeof AdminIndexRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/gestao/pacientes': {
       id: '/gestao/pacientes'
       path: '/pacientes'
@@ -441,27 +368,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoAgendaRouteImport
       parentRoute: typeof GestaoRoute
     }
-    '/admin/login': {
-      id: '/admin/login'
-      path: '/login'
-      fullPath: '/admin/login'
-      preLoaderRoute: typeof AdminLoginRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/equipe': {
-      id: '/admin/equipe'
-      path: '/equipe'
-      fullPath: '/admin/equipe'
-      preLoaderRoute: typeof AdminEquipeRouteImport
-      parentRoute: typeof AdminRoute
-    }
-    '/admin/depoimentos': {
-      id: '/admin/depoimentos'
-      path: '/depoimentos'
-      fullPath: '/admin/depoimentos'
-      preLoaderRoute: typeof AdminDepoimentosRouteImport
-      parentRoute: typeof AdminRoute
-    }
     '/gestao/pacientes/': {
       id: '/gestao/pacientes/'
       path: '/'
@@ -492,22 +398,6 @@ declare module '@tanstack/react-router' {
     }
   }
 }
-
-interface AdminRouteChildren {
-  AdminDepoimentosRoute: typeof AdminDepoimentosRoute
-  AdminEquipeRoute: typeof AdminEquipeRoute
-  AdminLoginRoute: typeof AdminLoginRoute
-  AdminIndexRoute: typeof AdminIndexRoute
-}
-
-const AdminRouteChildren: AdminRouteChildren = {
-  AdminDepoimentosRoute: AdminDepoimentosRoute,
-  AdminEquipeRoute: AdminEquipeRoute,
-  AdminLoginRoute: AdminLoginRoute,
-  AdminIndexRoute: AdminIndexRoute,
-}
-
-const AdminRouteWithChildren = AdminRoute._addFileChildren(AdminRouteChildren)
 
 interface GestaoPacientesRouteChildren {
   GestaoPacientesIdRoute: typeof GestaoPacientesIdRoute
@@ -559,9 +449,18 @@ const rootRouteChildren: RootRouteChildren = {
   ParticularRoute: ParticularRoute,
   QuemSomosRoute: QuemSomosRoute,
   ServicosRoute: ServicosRoute,
-  AdminRoute: AdminRouteWithChildren,
   GestaoRoute: GestaoRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
