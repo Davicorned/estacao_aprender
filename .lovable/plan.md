@@ -1,68 +1,58 @@
-# Fase 7 — PDF do Contrato + Anexo Assinado
+## Dois problemas, duas correções
 
-Duas funcionalidades complementares no módulo de Contratos:
+### 1. Erro "Could not find column 'arquivo_assinado_mime'"
+O SQL da Fase 7 (colunas do anexo assinado + bucket) não chegou a rodar no Supabase — a tabela `contratos` ainda não tem as 3 colunas novas.
 
-1. **Baixar contrato em PDF** (gerado do próprio sistema, para imprimir/assinar).
-2. **Anexar o contrato assinado** (PDF/JPG/PNG do scan presencial).
+**Você roda este trecho no SQL Editor do Supabase:**
 
----
+```sql
+-- Colunas para o contrato assinado (scan)
+ALTER TABLE public.contratos
+  ADD COLUMN IF NOT EXISTS arquivo_assinado_path        text,
+  ADD COLUMN IF NOT EXISTS arquivo_assinado_uploaded_at timestamptz,
+  ADD COLUMN IF NOT EXISTS arquivo_assinado_mime        text;
 
-## 1. Baixar contrato em PDF
+-- Bucket privado
+INSERT INTO storage.buckets (id, name, public)
+VALUES ('contratos-assinados', 'contratos-assinados', false)
+ON CONFLICT (id) DO NOTHING;
 
-- Botão **"Baixar PDF"** em `ContratoView.tsx` (ao lado de Imprimir / WhatsApp).
-- Geração client-side com **jsPDF** (`bun add jspdf`).
-- Conteúdo: o mesmo texto de `contrato.termos` já renderizado, com margens A4 (20mm), fonte serif, quebra automática de páginas.
-- Nome do arquivo: `Contrato-{NomePaciente}-{DataInicio}.pdf`.
-- Cabeçalho discreto com nome da clínica + data de geração no rodapé.
+-- Policies do bucket (somente authenticated)
+DROP POLICY IF EXISTS "contratos_assinados_select" ON storage.objects;
+DROP POLICY IF EXISTS "contratos_assinados_insert" ON storage.objects;
+DROP POLICY IF EXISTS "contratos_assinados_update" ON storage.objects;
+DROP POLICY IF EXISTS "contratos_assinados_delete" ON storage.objects;
 
-## 2. Anexar contrato assinado (scan)
+CREATE POLICY "contratos_assinados_select" ON storage.objects
+  FOR SELECT TO authenticated USING (bucket_id = 'contratos-assinados');
+CREATE POLICY "contratos_assinados_insert" ON storage.objects
+  FOR INSERT TO authenticated WITH CHECK (bucket_id = 'contratos-assinados');
+CREATE POLICY "contratos_assinados_update" ON storage.objects
+  FOR UPDATE TO authenticated USING (bucket_id = 'contratos-assinados');
+CREATE POLICY "contratos_assinados_delete" ON storage.objects
+  FOR DELETE TO authenticated USING (bucket_id = 'contratos-assinados');
+```
 
-### Schema (migration)
-- Novo bucket privado `contratos-assinados` (via `supabase--storage_create_bucket`, public=false).
-- Novas colunas em `contratos`:
-  - `arquivo_assinado_path text` (caminho no bucket; `null` = sem anexo)
-  - `arquivo_assinado_uploaded_at timestamptz`
-  - `arquivo_assinado_mime text`
-- RLS policies em `storage.objects` para o bucket: SELECT/INSERT/UPDATE/DELETE somente para `authenticated`.
+Depois disso, o "Anexar contrato assinado" para de dar erro.
 
-### Defaults assumidos (posso ajustar se preferir)
-- **Aceitar PDF, JPG e PNG** (~10 MB máx).
-- **1 arquivo por contrato** (substituível, sem histórico de versões).
-- **Sem mudança automática de status** — quem decide promover `rascunho` → `ativo` continua sendo o usuário (evita efeito colateral indesejado).
+### 2. PDF/preview mostrando `{{NOME_PACIENTE}}`, `{{VALOR}}` etc.
+O template só era aplicado quando o usuário clicava em **"Reaplicar template"** dentro do form. Como o contrato foi salvo sem clicar, ficou com os placeholders crus — e o PDF/preview/WhatsApp apenas mostram o `termos` salvo.
 
-### UI
+**Correção no código** (`src/components/gestao/contratos/ContratoFormDialog.tsx`):
+- No `handleSubmit`, antes de salvar: se `termos` ainda contém `{{...}}` **ou** é igual ao `TEMPLATE_PADRAO`, aplicar `aplicarTemplate` automaticamente com as variáveis atuais (paciente, serviço, valor, frequência, datas, qtd).
+- Resultado: contratos novos já saem com texto pronto. Quem editou manualmente os termos continua tendo a versão própria preservada.
 
-**Em `ContratoView.tsx`:**
-- Bloco "Contrato assinado" abaixo dos botões de ação:
-  - Sem anexo → botão **"Anexar contrato assinado"** (abre input file).
-  - Com anexo → linha com ícone do tipo de arquivo + data do upload + botões **"Ver assinado"** (abre signed URL nova aba) e **"Substituir"**.
-- Upload via `supabase.storage.from('contratos-assinados').upload(path, file, { upsert: true })`, path = `{contrato_id}/{timestamp}-{filename}`. Atualiza colunas em `contratos`.
-- Validação client-side: mime in `[application/pdf, image/jpeg, image/png]`, size ≤ 10 MB, com `toast.error` em caso de falha.
-
-**Em `ContratosPage.tsx` (lista):**
-- Nova coluna pequena (ícone de clipe 📎) — preenchido se `arquivo_assinado_path` não-nulo, vazio caso contrário, com tooltip "Contrato assinado anexado em DD/MM/AAAA".
-
-### Helpers (em `src/lib/contratos.ts`)
-- `uploadContratoAssinado(contratoId, file): Promise<void>` — faz upload, gera path único, faz `updateContrato` setando as 3 colunas novas, deleta arquivo anterior se houver.
-- `getContratoAssinadoUrl(path): Promise<string>` — gera signed URL (expira em 1h).
-- `removeContratoAssinado(contratoId): Promise<void>` — remove do storage + zera colunas.
+**Contrato existente (Paciente Teste E2E):** abrir o contrato → clicar **"Editar"** → clicar **"Reaplicar template"** → **Salvar**. O PDF passa a sair correto.
 
 ---
 
 ## Arquivos
-- **Migration** nova: colunas em `contratos` + grants.
-- **Bucket** novo via tool: `contratos-assinados` (privado) + policies.
-- **Edit** `src/lib/contratos.ts`: 3 helpers novos + tipo `Contrato` com as 3 colunas.
-- **Edit** `src/components/gestao/contratos/ContratoView.tsx`: botão "Baixar PDF" + bloco "Contrato assinado".
-- **Edit** `src/components/gestao/contratos/ContratosPage.tsx`: coluna 📎.
-- **Dep**: `bun add jspdf`.
+- **SQL no Supabase** (você roda): bloco acima.
+- **Edit** `src/components/gestao/contratos/ContratoFormDialog.tsx`: auto-aplicar template no submit quando o texto ainda tem placeholders.
 
-## Testes manuais
-1. Abrir um contrato → "Baixar PDF" → arquivo abre com termos completos e nome correto.
-2. Anexar PDF assinado → aparece data do upload + botão "Ver" → signed URL abre o arquivo.
-3. Substituir → arquivo antigo some do bucket; novo aparece.
-4. Lista de contratos: 📎 aparece nos contratos com anexo.
-5. Validações: tentar subir .docx ou arquivo > 10MB → toast de erro.
+## Testes
+1. Rodar SQL → anexar PDF assinado funciona.
+2. Criar contrato novo sem mexer nos termos → "Baixar PDF" sai com valores reais.
+3. Reabrir o contrato existente, "Reaplicar template", salvar → PDF correto.
 
-## Confirmação rápida antes de implementar
-Os defaults acima (PDF+JPG+PNG, 10MB, 1 arquivo substituível, sem mudar status) estão OK? Se sim, é só dizer "implementar" — se quiser ajustar algum, me avise.
+Posso implementar?
