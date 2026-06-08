@@ -178,3 +178,76 @@ export async function deleteContrato(id: string): Promise<void> {
   const { error } = await supabase.from("contratos").delete().eq("id", id);
   if (error) throw error;
 }
+
+// ============================================================
+// Contrato assinado (scan) — bucket privado `contratos-assinados`
+// ============================================================
+
+export const CONTRATOS_ASSINADOS_BUCKET = "contratos-assinados";
+export const ARQUIVO_ASSINADO_MIMES = ["application/pdf", "image/jpeg", "image/png"];
+export const ARQUIVO_ASSINADO_MAX_BYTES = 10 * 1024 * 1024;
+
+function sanitizeFilename(name: string): string {
+  return name.replace(/[^a-zA-Z0-9._-]+/g, "_").slice(0, 80);
+}
+
+export async function uploadContratoAssinado(contratoId: string, file: File): Promise<void> {
+  if (!ARQUIVO_ASSINADO_MIMES.includes(file.type)) {
+    throw new Error("Formato inválido. Use PDF, JPG ou PNG.");
+  }
+  if (file.size > ARQUIVO_ASSINADO_MAX_BYTES) {
+    throw new Error("Arquivo maior que 10MB.");
+  }
+
+  // Busca path anterior para remover depois
+  const { data: prev } = await supabase
+    .from("contratos")
+    .select("arquivo_assinado_path")
+    .eq("id", contratoId)
+    .maybeSingle();
+
+  const path = `${contratoId}/${Date.now()}-${sanitizeFilename(file.name)}`;
+  const { error: upErr } = await supabase.storage
+    .from(CONTRATOS_ASSINADOS_BUCKET)
+    .upload(path, file, { upsert: false, contentType: file.type });
+  if (upErr) throw upErr;
+
+  const { error: updErr } = await supabase
+    .from("contratos")
+    .update({
+      arquivo_assinado_path: path,
+      arquivo_assinado_uploaded_at: new Date().toISOString(),
+      arquivo_assinado_mime: file.type,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", contratoId);
+  if (updErr) throw updErr;
+
+  // Remove anterior (best-effort)
+  const prevPath = (prev as any)?.arquivo_assinado_path as string | null | undefined;
+  if (prevPath && prevPath !== path) {
+    await supabase.storage.from(CONTRATOS_ASSINADOS_BUCKET).remove([prevPath]);
+  }
+}
+
+export async function getContratoAssinadoUrl(path: string): Promise<string> {
+  const { data, error } = await supabase.storage
+    .from(CONTRATOS_ASSINADOS_BUCKET)
+    .createSignedUrl(path, 60 * 60);
+  if (error) throw error;
+  return data.signedUrl;
+}
+
+export async function removeContratoAssinado(contratoId: string, path: string): Promise<void> {
+  await supabase.storage.from(CONTRATOS_ASSINADOS_BUCKET).remove([path]);
+  const { error } = await supabase
+    .from("contratos")
+    .update({
+      arquivo_assinado_path: null,
+      arquivo_assinado_uploaded_at: null,
+      arquivo_assinado_mime: null,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", contratoId);
+  if (error) throw error;
+}
