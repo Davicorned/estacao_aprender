@@ -154,37 +154,26 @@ export type ResumoMes = {
   sessoes_atendidas: number;
 };
 
-export async function resumoMes(mes: string): Promise<ResumoMes> {
+export async function resumoMes(mes: string, pacienteId?: string | null): Promise<ResumoMes> {
   const { start, end } = mesRange(mes);
   const hoje = new Date().toISOString().slice(0, 10);
 
+  const baseL = () => {
+    let q = supabase.from("lancamentos_financeiros").select("valor_centavos").eq("tipo", "receita");
+    if (pacienteId) q = q.eq("paciente_id", pacienteId);
+    return q;
+  };
+  const baseA = () => {
+    let q = supabase.from("agendamentos").select("id", { count: "exact", head: true }).eq("status", "atendido");
+    if (pacienteId) q = q.eq("paciente_id", pacienteId);
+    return q;
+  };
+
   const [pagoRes, pendRes, atrasRes, agRes] = await Promise.all([
-    supabase
-      .from("lancamentos_financeiros")
-      .select("valor_centavos")
-      .eq("tipo", "receita")
-      .eq("status", "pago")
-      .gte("data_pagamento", start)
-      .lte("data_pagamento", end),
-    supabase
-      .from("lancamentos_financeiros")
-      .select("valor_centavos,data_vencimento")
-      .eq("tipo", "receita")
-      .eq("status", "pendente")
-      .gte("data_vencimento", start)
-      .lte("data_vencimento", end),
-    supabase
-      .from("lancamentos_financeiros")
-      .select("valor_centavos")
-      .eq("tipo", "receita")
-      .eq("status", "pendente")
-      .lt("data_vencimento", hoje),
-    supabase
-      .from("agendamentos")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "atendido")
-      .gte("data", start)
-      .lte("data", end),
+    baseL().eq("status", "pago").gte("data_pagamento", start).lte("data_pagamento", end),
+    baseL().eq("status", "pendente").gte("data_vencimento", start).lte("data_vencimento", end),
+    baseL().eq("status", "pendente").lt("data_vencimento", hoje),
+    baseA().gte("data", start).lte("data", end),
   ]);
 
   const sum = (rows: { valor_centavos: number }[] | null) =>
@@ -196,4 +185,110 @@ export async function resumoMes(mes: string): Promise<ResumoMes> {
     atrasados_centavos: sum(atrasRes.data as any),
     sessoes_atendidas: agRes.count ?? 0,
   };
+}
+
+// =========== Sincronização agendamento → lançamento ===========
+
+/** Busca o contrato ativo do paciente que cobre a data; opcionalmente filtra por serviço. */
+async function buscarContratoAtivo(
+  pacienteId: string,
+  servicoId: string | null,
+  data: string,
+): Promise<{ id: string; valor_centavos: number } | null> {
+  let q = supabase
+    .from("contratos")
+    .select("id, valor_centavos, data_inicio, data_termino")
+    .eq("paciente_id", pacienteId)
+    .eq("status", "ativo")
+    .lte("data_inicio", data)
+    .order("data_inicio", { ascending: false });
+  if (servicoId) q = q.eq("servico_id", servicoId);
+  const { data: rows, error } = await q;
+  if (error || !rows?.length) return null;
+  const valido = rows.find((r: any) => !r.data_termino || r.data_termino >= data);
+  return valido ? { id: valido.id, valor_centavos: valido.valor_centavos } : null;
+}
+
+/**
+ * Sincroniza lançamento financeiro a partir do status de um agendamento.
+ * - status=atendido → cria lançamento (idempotente).
+ * - outros status → remove lançamento pendente vinculado; preserva pago.
+ */
+export async function sincronizarLancamentoDeAgendamento(
+  agendamentoId: string,
+  novoStatus: string,
+): Promise<{ created?: boolean; removed?: boolean; preservedPago?: boolean }> {
+  const { data: ag } = await supabase
+    .from("agendamentos")
+    .select("id, paciente_id, servico_id, data, servico:servicos(nome)")
+    .eq("id", agendamentoId)
+    .maybeSingle();
+  if (!ag) return {};
+
+  const { data: existente } = await supabase
+    .from("lancamentos_financeiros")
+    .select("id, status")
+    .eq("agendamento_id", agendamentoId)
+    .maybeSingle();
+
+  if (novoStatus === "atendido") {
+    if (existente) return {}; // idempotente
+    const contrato = await buscarContratoAtivo(
+      (ag as any).paciente_id,
+      (ag as any).servico_id,
+      (ag as any).data,
+    );
+    const dataBR = (ag as any).data.split("-").reverse().join("/");
+    const servicoNome = (ag as any).servico?.nome ?? "atendimento";
+    const prefixo = contrato ? "" : "[Sem contrato] ";
+    const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+    const { error } = await supabase.from("lancamentos_financeiros").insert({
+      paciente_id: (ag as any).paciente_id,
+      contrato_id: contrato?.id ?? null,
+      agendamento_id: agendamentoId,
+      tipo: "receita",
+      descricao: `${prefixo}Sessão ${servicoNome} — ${dataBR}`,
+      valor_centavos: contrato?.valor_centavos ?? 0,
+      data_vencimento: (ag as any).data,
+      data_pagamento: null,
+      status: "pendente",
+      forma_pagamento: null,
+      created_by: userId,
+    });
+    if (error) throw error;
+    return { created: true };
+  }
+
+  // Status diferente de atendido
+  if (existente) {
+    if (existente.status === "pago") return { preservedPago: true };
+    const { error } = await supabase
+      .from("lancamentos_financeiros")
+      .delete()
+      .eq("id", existente.id);
+    if (error) throw error;
+    return { removed: true };
+  }
+  return {};
+}
+
+/** Backfill: para todos atendimentos do mês de um paciente, cria lançamento se faltar. */
+export async function backfillLancamentosMes(
+  pacienteId: string,
+  mes: string,
+): Promise<number> {
+  const { start, end } = mesRange(mes);
+  const { data: ags } = await supabase
+    .from("agendamentos")
+    .select("id")
+    .eq("paciente_id", pacienteId)
+    .eq("status", "atendido")
+    .gte("data", start)
+    .lte("data", end);
+  let count = 0;
+  for (const a of ags ?? []) {
+    const r = await sincronizarLancamentoDeAgendamento(a.id, "atendido");
+    if (r.created) count++;
+  }
+  return count;
 }
