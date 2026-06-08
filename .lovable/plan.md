@@ -1,59 +1,68 @@
-## Fase 6 — Financeiro
+# Fase 7 — PDF do Contrato + Anexo Assinado
 
-O módulo global `/gestao/financeiro` já existe (KPIs, lista, filtros, criar lançamento, registrar pagamento — usando a tabela `lancamentos_financeiros`). O que falta para "atendimentos/recebimentos do paciente contabilizarem corretamente no mês" são duas coisas:
+Duas funcionalidades complementares no módulo de Contratos:
 
-1. **Tab Financeiro dentro da ficha do paciente** (hoje é placeholder).
-2. **Contabilização automática**: quando um agendamento vira `atendido`, gerar um lançamento de receita vinculado ao paciente + contrato + agendamento, usando o valor do contrato.
-
----
-
-### 1. Tab Financeiro na ficha do paciente
-Arquivo novo: `src/components/gestao/financeiro/FinanceiroPacienteTab.tsx`, plugado em `PacienteForm.tsx` (substitui o placeholder).
-
-Conteúdo:
-- **KPIs do paciente no mês selecionado**: Recebido, A receber, Atrasado, Sessões atendidas.
-- **Seletor de mês** (default = mês atual).
-- **Tabela de lançamentos do paciente** com colunas: Vencimento | Descrição | Valor | Status (badge) | Forma | Ações (registrar pagamento / excluir).
-- **Botão "Novo lançamento"** (abre `LancamentoFormDialog` já existente, com `paciente_id` pré-preenchido e travado).
-- **Botão "Registrar pagamento"** (abre `RegistrarPagamentoDialog` já existente, escopado aos selecionados).
-- Reaproveita `listLancamentos({ pacienteId, mes })` e `resumoMes` (com extensão — ver abaixo).
-
-### 2. Contabilização automática (agendamento atendido → lançamento)
-Comportamento: ao mudar status do agendamento para `atendido`, criar um lançamento se ainda não existir um vinculado àquele `agendamento_id`.
-
-Regras:
-- Valor: `contratos.valor_centavos` do contrato ativo do paciente+serviço (mais recente com `status='ativo'` e período cobrindo a data). Se não houver contrato, registra com `valor_centavos = 0` e descrição "[Sem contrato] …" para o admin revisar.
-- `data_vencimento` = data do agendamento.
-- `descricao` = `"Sessão {servico.nome} — {dd/mm/aaaa}"`.
-- `tipo='receita'`, `status='pendente'`.
-- Idempotente: antes de inserir, verificar `select id from lancamentos_financeiros where agendamento_id = ?` — se existir, não duplica.
-- Quando agendamento sai de `atendido` para outro status (faltou/cancelado), o lançamento pendente vinculado é deletado; lançamento já `pago` é preservado (e mostra aviso ao usuário).
-
-Implementação:
-- Nova função em `src/lib/financeiro.ts`: `sincronizarLancamentoDeAgendamento(agendamentoId, novoStatus)`.
-- Chamada dentro de `src/lib/agendamentos.ts` (no `updateStatusAgendamento` ou equivalente) — ponto único onde o status é alterado.
-- Também chamada via botão **"Recontabilizar mês"** no FinanceiroPacienteTab, que itera os atendidos do mês sem lançamento e cria os faltantes (backfill).
-
-### 3. Extensão de helpers
-- `resumoMes` ganha parâmetro opcional `pacienteId` para reaproveitamento na tab do paciente.
-- `listLancamentos` já aceita `pacienteId` — sem mudanças.
-
-### 4. Privacidade / RLS
-Sem alteração de schema. As policies existentes em `lancamentos_financeiros` (somente usuários autenticados da gestão) continuam válidas. Tab nunca aparece no site público.
+1. **Baixar contrato em PDF** (gerado do próprio sistema, para imprimir/assinar).
+2. **Anexar o contrato assinado** (PDF/JPG/PNG do scan presencial).
 
 ---
 
-### Arquivos
-- **Novo**: `src/components/gestao/financeiro/FinanceiroPacienteTab.tsx`
-- **Edit**: `src/components/gestao/pacientes/PacienteForm.tsx` (trocar placeholder)
-- **Edit**: `src/lib/financeiro.ts` (add `sincronizarLancamentoDeAgendamento`, `resumoMes(pacienteId)`)
-- **Edit**: `src/lib/agendamentos.ts` (chamar sync no update de status)
+## 1. Baixar contrato em PDF
 
-### Testes manuais após implementação
-1. Marcar um agendamento como `atendido` → aparece lançamento pendente no mês, no global e na tab do paciente.
-2. Registrar pagamento → KPI "Recebido" sobe; "A receber" cai.
-3. Reverter status para `faltou` → lançamento pendente some; lançamento pago permanece.
-4. Backfill: rodar "Recontabilizar mês" em paciente com atendidos antigos sem lançamento.
+- Botão **"Baixar PDF"** em `ContratoView.tsx` (ao lado de Imprimir / WhatsApp).
+- Geração client-side com **jsPDF** (`bun add jspdf`).
+- Conteúdo: o mesmo texto de `contrato.termos` já renderizado, com margens A4 (20mm), fonte serif, quebra automática de páginas.
+- Nome do arquivo: `Contrato-{NomePaciente}-{DataInicio}.pdf`.
+- Cabeçalho discreto com nome da clínica + data de geração no rodapé.
 
-### Pergunta antes de implementar
-Confirma que **o valor da sessão deve vir do contrato ativo** (não de uma tabela de preços do serviço)? Se preferir usar `servicos.preco_centavos`, me avise — ajusto o fallback.
+## 2. Anexar contrato assinado (scan)
+
+### Schema (migration)
+- Novo bucket privado `contratos-assinados` (via `supabase--storage_create_bucket`, public=false).
+- Novas colunas em `contratos`:
+  - `arquivo_assinado_path text` (caminho no bucket; `null` = sem anexo)
+  - `arquivo_assinado_uploaded_at timestamptz`
+  - `arquivo_assinado_mime text`
+- RLS policies em `storage.objects` para o bucket: SELECT/INSERT/UPDATE/DELETE somente para `authenticated`.
+
+### Defaults assumidos (posso ajustar se preferir)
+- **Aceitar PDF, JPG e PNG** (~10 MB máx).
+- **1 arquivo por contrato** (substituível, sem histórico de versões).
+- **Sem mudança automática de status** — quem decide promover `rascunho` → `ativo` continua sendo o usuário (evita efeito colateral indesejado).
+
+### UI
+
+**Em `ContratoView.tsx`:**
+- Bloco "Contrato assinado" abaixo dos botões de ação:
+  - Sem anexo → botão **"Anexar contrato assinado"** (abre input file).
+  - Com anexo → linha com ícone do tipo de arquivo + data do upload + botões **"Ver assinado"** (abre signed URL nova aba) e **"Substituir"**.
+- Upload via `supabase.storage.from('contratos-assinados').upload(path, file, { upsert: true })`, path = `{contrato_id}/{timestamp}-{filename}`. Atualiza colunas em `contratos`.
+- Validação client-side: mime in `[application/pdf, image/jpeg, image/png]`, size ≤ 10 MB, com `toast.error` em caso de falha.
+
+**Em `ContratosPage.tsx` (lista):**
+- Nova coluna pequena (ícone de clipe 📎) — preenchido se `arquivo_assinado_path` não-nulo, vazio caso contrário, com tooltip "Contrato assinado anexado em DD/MM/AAAA".
+
+### Helpers (em `src/lib/contratos.ts`)
+- `uploadContratoAssinado(contratoId, file): Promise<void>` — faz upload, gera path único, faz `updateContrato` setando as 3 colunas novas, deleta arquivo anterior se houver.
+- `getContratoAssinadoUrl(path): Promise<string>` — gera signed URL (expira em 1h).
+- `removeContratoAssinado(contratoId): Promise<void>` — remove do storage + zera colunas.
+
+---
+
+## Arquivos
+- **Migration** nova: colunas em `contratos` + grants.
+- **Bucket** novo via tool: `contratos-assinados` (privado) + policies.
+- **Edit** `src/lib/contratos.ts`: 3 helpers novos + tipo `Contrato` com as 3 colunas.
+- **Edit** `src/components/gestao/contratos/ContratoView.tsx`: botão "Baixar PDF" + bloco "Contrato assinado".
+- **Edit** `src/components/gestao/contratos/ContratosPage.tsx`: coluna 📎.
+- **Dep**: `bun add jspdf`.
+
+## Testes manuais
+1. Abrir um contrato → "Baixar PDF" → arquivo abre com termos completos e nome correto.
+2. Anexar PDF assinado → aparece data do upload + botão "Ver" → signed URL abre o arquivo.
+3. Substituir → arquivo antigo some do bucket; novo aparece.
+4. Lista de contratos: 📎 aparece nos contratos com anexo.
+5. Validações: tentar subir .docx ou arquivo > 10MB → toast de erro.
+
+## Confirmação rápida antes de implementar
+Os defaults acima (PDF+JPG+PNG, 10MB, 1 arquivo substituível, sem mudar status) estão OK? Se sim, é só dizer "implementar" — se quiser ajustar algum, me avise.
