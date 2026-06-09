@@ -136,6 +136,103 @@ export async function deletePaciente(id: string): Promise<void> {
   if (error) throw error;
 }
 
+// ============ Stats de agendamentos ============
+
+export type PacienteAgendamentoStats = {
+  ultima_sessao: string | null; // ISO date yyyy-mm-dd
+  proximo_agendamento: string | null; // ISO date yyyy-mm-dd
+};
+
+function todayIso(): string {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${dd}`;
+}
+
+function nowHora(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}:00`;
+}
+
+/** Busca em batch a última sessão atendida e o próximo agendamento (≠ cancelado) por paciente. */
+export async function getPacientesAgendamentoStats(
+  ids: string[],
+): Promise<Record<string, PacienteAgendamentoStats>> {
+  const result: Record<string, PacienteAgendamentoStats> = {};
+  if (ids.length === 0) return result;
+  for (const id of ids) result[id] = { ultima_sessao: null, proximo_agendamento: null };
+
+  const hoje = todayIso();
+  const agora = nowHora();
+
+  // Última sessão: status = atendido e data <= hoje, ordenada desc
+  const { data: ultimas, error: e1 } = await supabase
+    .from("agendamentos")
+    .select("paciente_id, data, hora_inicio")
+    .in("paciente_id", ids)
+    .eq("status", "atendido")
+    .lte("data", hoje)
+    .order("data", { ascending: false })
+    .order("hora_inicio", { ascending: false });
+  if (e1) throw e1;
+  for (const row of ultimas ?? []) {
+    const r = row as { paciente_id: string; data: string };
+    if (!result[r.paciente_id].ultima_sessao) result[r.paciente_id].ultima_sessao = r.data;
+  }
+
+  // Próximo agendamento: status != cancelado e (data > hoje, ou data = hoje e hora_inicio >= agora)
+  const { data: proximos, error: e2 } = await supabase
+    .from("agendamentos")
+    .select("paciente_id, data, hora_inicio")
+    .in("paciente_id", ids)
+    .neq("status", "cancelado")
+    .or(`data.gt.${hoje},and(data.eq.${hoje},hora_inicio.gte.${agora})`)
+    .order("data", { ascending: true })
+    .order("hora_inicio", { ascending: true });
+  if (e2) throw e2;
+  for (const row of proximos ?? []) {
+    const r = row as { paciente_id: string; data: string };
+    if (!result[r.paciente_id].proximo_agendamento) result[r.paciente_id].proximo_agendamento = r.data;
+  }
+
+  return result;
+}
+
+/** Formata uma data ISO (yyyy-mm-dd) como rótulo relativo em pt-BR. */
+export function formatRelativoData(iso: string | null): string {
+  if (!iso) return "—";
+  const [y, m, d] = iso.split("-").map(Number);
+  const target = new Date(y, (m ?? 1) - 1, d ?? 1);
+  target.setHours(0, 0, 0, 0);
+  const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  const diffDias = Math.round((target.getTime() - hoje.getTime()) / 86_400_000);
+  if (diffDias === 0) return "Hoje";
+  if (diffDias === 1) return "Amanhã";
+  if (diffDias === -1) return "Ontem";
+  const abs = Math.abs(diffDias);
+  const futuro = diffDias > 0;
+  if (abs < 7) return futuro ? `em ${abs} dias` : `há ${abs} dias`;
+  if (abs < 30) {
+    const sem = Math.round(abs / 7);
+    return futuro
+      ? `em ${sem} ${sem === 1 ? "semana" : "semanas"}`
+      : `há ${sem} ${sem === 1 ? "semana" : "semanas"}`;
+  }
+  if (abs < 365) {
+    const mes = Math.round(abs / 30);
+    return futuro
+      ? `em ${mes} ${mes === 1 ? "mês" : "meses"}`
+      : `há ${mes} ${mes === 1 ? "mês" : "meses"}`;
+  }
+  const anos = Math.round(abs / 365);
+  return futuro
+    ? `em ${anos} ${anos === 1 ? "ano" : "anos"}`
+    : `há ${anos} ${anos === 1 ? "ano" : "anos"}`;
+}
+
 export async function checkCpfDisponivel(cpf: string, excludeId?: string): Promise<boolean> {
   if (!cpf) return true;
   let q = supabase.from("pacientes").select("id").eq("cpf", cpf).limit(1);

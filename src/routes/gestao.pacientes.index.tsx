@@ -31,9 +31,12 @@ import {
 } from "@/components/ui/pagination";
 import {
   formatTelefoneDisplay,
+  formatRelativoData,
+  getPacientesAgendamentoStats,
   listPacientes,
   PAGE_SIZE,
   type Paciente,
+  type PacienteAgendamentoStats,
 } from "@/lib/pacientes";
 import { fetchProfissionais, type Profissional } from "@/lib/configuracoes";
 
@@ -83,6 +86,13 @@ function PacientesListPage() {
   const total = data?.count ?? 0;
   const pacientes = data?.data ?? [];
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const ids = useMemo(() => pacientes.map((p) => p.id), [pacientes]);
+  const { data: stats } = useQuery({
+    queryKey: ["pacientes-agendamento-stats", ids],
+    queryFn: () => getPacientesAgendamentoStats(ids),
+    enabled: ids.length > 0,
+  });
 
   return (
     <GestaoShell title="Pacientes">
@@ -179,7 +189,9 @@ function PacientesListPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                pacientes.map((p) => <PacienteRow key={p.id} paciente={p} />)
+                pacientes.map((p) => (
+                  <PacienteRow key={p.id} paciente={p} stats={stats?.[p.id]} />
+                ))
               )}
             </TableBody>
           </Table>
@@ -192,7 +204,9 @@ function PacientesListPage() {
               Nenhum paciente encontrado.
             </div>
           ) : (
-            pacientes.map((p) => <PacienteCard key={p.id} paciente={p} />)
+            pacientes.map((p) => (
+              <PacienteCard key={p.id} paciente={p} stats={stats?.[p.id]} />
+            ))
           )}
         </div>
 
@@ -245,7 +259,13 @@ function PacientesListPage() {
   );
 }
 
-function PacienteRow({ paciente }: { paciente: Paciente }) {
+function PacienteRow({
+  paciente,
+  stats,
+}: {
+  paciente: Paciente;
+  stats?: PacienteAgendamentoStats;
+}) {
   const navigate = useNavigate();
   return (
     <TableRow
@@ -257,8 +277,8 @@ function PacienteRow({ paciente }: { paciente: Paciente }) {
       </TableCell>
       <TableCell className="font-medium text-gray-900">{paciente.nome}</TableCell>
       <TableCell className="text-gray-600">{formatTelefoneDisplay(paciente.telefone_celular)}</TableCell>
-      <TableCell className="text-gray-500">—</TableCell>
-      <TableCell className="text-gray-500">—</TableCell>
+      <TableCell className="text-gray-500">{formatRelativoData(stats?.ultima_sessao ?? null)}</TableCell>
+      <TableCell className="text-gray-500">{formatRelativoData(stats?.proximo_agendamento ?? null)}</TableCell>
       <TableCell className="text-right">
         <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
           <Button
@@ -287,7 +307,13 @@ function PacienteRow({ paciente }: { paciente: Paciente }) {
   );
 }
 
-function PacienteCard({ paciente }: { paciente: Paciente }) {
+function PacienteCard({
+  paciente,
+  stats,
+}: {
+  paciente: Paciente;
+  stats?: PacienteAgendamentoStats;
+}) {
   return (
     <Link
       to="/gestao/pacientes/$id"
@@ -298,7 +324,9 @@ function PacienteCard({ paciente }: { paciente: Paciente }) {
       <div className="min-w-0 flex-1">
         <p className="truncate font-medium text-gray-900">{paciente.nome}</p>
         <p className="text-sm text-gray-500">{formatTelefoneDisplay(paciente.telefone_celular)}</p>
-        <p className="text-xs text-gray-400">Último agendamento: —</p>
+        <p className="text-xs text-gray-400">
+          Última: {formatRelativoData(stats?.ultima_sessao ?? null)} · Próx.: {formatRelativoData(stats?.proximo_agendamento ?? null)}
+        </p>
       </div>
     </Link>
   );

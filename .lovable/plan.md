@@ -1,68 +1,50 @@
-## Objetivo
+# Última sessão e Próx. agendamento na lista de Pacientes
 
-Reduzir trabalho manual no Financeiro:
-1. Quando um contrato **pacote_mensal** for ativado, criar automaticamente o **primeiro lançamento pendente** da mensalidade. Próximas mensalidades continuam manuais (botão).
-2. Avulso continua como hoje (1 lançamento por sessão atendida).
-3. Permitir **editar** o lançamento (valor, vencimento, descrição) e **alterar o status** (pendente / pago / cancelado), além das ações que já existem.
+## Diagnóstico
 
-## 1. Geração automática a partir do contrato
+Hoje as duas colunas mostram sempre `—` porque estão hardcoded em `src/routes/gestao.pacientes.index.tsx` (linhas 260-261) e no card mobile (linha 301). Não há consulta a `agendamentos`.
 
-**Quando dispara**
-- `createContrato` com `status = "ativo"` e `modalidade = "pacote_mensal"`.
-- `updateContrato` quando `status` muda para `"ativo"` (ex.: vinha de `rascunho`).
+## O que vou implementar
 
-**O que cria**
-- 1 lançamento `pendente`, tipo `receita`, vinculado ao `contrato_id` e `paciente_id`.
-- `valor_centavos` = `calcularValorMensal(aulas_por_mes, valor_com_desconto_centavos, forma_pagamento)`.
-- `data_vencimento` = próximo dia `dia_vencimento` ≥ `data_inicio` (no mês de `data_inicio`, ou no mês seguinte se já passou).
-- `descricao` = `"Mensalidade {Serviço} — {mês/ano}"`.
-- `forma_pagamento` = a do contrato.
-- Idempotente: antes de criar, checa se já existe lançamento com mesmo `contrato_id` e mesmo mês de vencimento.
+### 1. Novo serverFn `getPacientesAgendamentoStats`
+Em `src/lib/pacientes.ts` (ou novo `pacientes.functions.ts`), recebe `pacienteIds: string[]` e retorna `Record<id, { ultima_sessao: string|null, proximo_agendamento: string|null }>`.
 
-**Botão "Gerar próxima mensalidade"** (no `ContratoView` e/ou em cada linha de contrato ativo)
-- Cria a próxima mensalidade no mês seguinte ao último lançamento já gerado para aquele contrato. Mesma idempotência.
+Lógica (1 query cada, agregada por paciente):
+- **ultima_sessao**: maior `data + hora_inicio` em `agendamentos` onde `paciente_id IN (...)` e `status = 'atendido'` e `data <= hoje`.
+- **proximo_agendamento**: menor `data + hora_inicio` em `agendamentos` onde `paciente_id IN (...)`, `status != 'cancelado'`, e `(data, hora_inicio) >= agora`.
 
-**Registra evento no histórico** do paciente: `lancamento_gerado` ("Mensalidade de {mês} gerada — {valor}").
+Implementação simples no client: dois `.select("paciente_id, data, hora_inicio").in("paciente_id", ids)` com os filtros acima, ordenados, depois reduzidos em JS para pegar o primeiro/último por paciente. Evita N+1 — sempre 2 queries por página (20 pacientes).
 
-## 2. Edição e mudança de status no Financeiro
+### 2. Hook na página
+Em `gestao.pacientes.index.tsx`, depois do `useQuery` de pacientes:
 
-**Reaproveitar `LancamentoFormDialog`** em modo edição:
-- Recebe `lancamento` opcional; se vier, faz `update` em vez de `insert`.
-- Permite editar `descricao`, `valor_centavos`, `data_vencimento`, `tipo`, `paciente_id`, `forma_pagamento`.
+```ts
+const ids = pacientes.map(p => p.id);
+const { data: stats } = useQuery({
+  queryKey: ["pacientes-stats", ids],
+  queryFn: () => getPacientesAgendamentoStats(ids),
+  enabled: ids.length > 0,
+});
+```
 
-**Novo menu de ações por linha** na tabela `FinanceiroPage` (substitui o lápis-único hoje só lixeira):
-- `DropdownMenu` com:
-  - Editar (abre o form em modo edição)
-  - Marcar como pago (já existe; passa a viver no menu também)
-  - Marcar como pendente (`status=pendente`, limpa `data_pagamento`/`forma_pagamento`)
-  - Cancelar lançamento (`status=cancelado`)
-  - Excluir (lixeira atual)
-- Visível também para lançamentos já `pago`/`cancelado` (para reabrir como `pendente`).
+### 3. Renderização
+Substituir os `—` por uma função `formatRelativo(date)`:
+- hoje → "Hoje"
+- ontem / amanhã → "Ontem" / "Amanhã"
+- passado: "há N dias", "há N semanas", "há N meses"
+- futuro: "em N dias", "em N semanas", "em N meses"
+- vazio → `—`
 
-**Backend (`src/lib/financeiro.ts`)**
-- `updateLancamento(id, patch)` — update genérico.
-- `alterarStatusLancamento(id, novoStatus)` — encapsula transições (limpa `data_pagamento` quando volta a pendente; registra evento no histórico).
-
-## 3. Histórico
-Eventos novos no `paciente_historico`:
-- `lancamento_gerado` (ao criar automático ou via botão).
-- `lancamento_status_alterado` (quando muda manualmente — não duplicar com `lancamento_pago` que já existe).
-
-## Fora de escopo
-- Geração em lote retroativa de mensalidades antigas.
-- Cron/agendamento automático mês a mês (decidimos manual).
-- Mudanças no fluxo de avulso (continua via `sincronizarLancamentoDeAgendamento` no atendimento).
+Aplicar tanto na `PacienteRow` (desktop) quanto no `PacienteCard` (mobile, trocando "Último agendamento: —" por duas linhas: última/próxima).
 
 ## Detalhes técnicos
 
-**Arquivos editados**
-- `src/lib/contratos.ts` — após `createContrato`/`updateContrato`, se virou `ativo` e é `pacote_mensal`, chama `gerarMensalidadeContrato(contrato, { primeira: true })`.
-- `src/lib/financeiro.ts`:
-  - `gerarMensalidadeContrato(contrato, opts)` — calcula vencimento, idempotência, insert.
-  - `updateLancamento(id, patch)`.
-  - `alterarStatusLancamento(id, novoStatus)`.
-- `src/components/gestao/financeiro/LancamentoFormDialog.tsx` — aceitar `lancamento?: Lancamento` para edição.
-- `src/components/gestao/financeiro/FinanceiroPage.tsx` — substituir botão lixeira/registrar pagamento isolados por `DropdownMenu` com todas as ações; estado para abrir o form em modo edição.
-- `src/components/gestao/contratos/ContratoView.tsx` — botão "Gerar próxima mensalidade" para contratos `pacote_mensal` ativos.
+- Status usado: `'atendido'` (é o nome real no enum `AgendamentoStatus`, não "realizado").
+- "Próximo" inclui `agendado`, `confirmado`, `em_atendimento`, `atendido`, `faltou` — exclui apenas `cancelado`, como você pediu.
+- Tudo via `supabase` browser client (RLS já garante o escopo da clínica).
+- Sem alterações de schema ou migrations.
 
-**Sem migração de schema** — usa colunas já existentes em `lancamentos_financeiros`.
+## Arquivos
+
+- `src/lib/pacientes.ts` — adicionar `getPacientesAgendamentoStats` + helper `formatRelativo`
+- `src/routes/gestao.pacientes.index.tsx` — query de stats e render nas duas colunas (desktop + mobile)
