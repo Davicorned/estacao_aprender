@@ -828,6 +828,70 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     );
   }
 
+  // ===== Modo edição: cards retráteis =====
+  const gridClass = "grid grid-cols-1 gap-4 md:grid-cols-3";
+  const editBlocks: CollapsibleBlock[] = [
+    {
+      key: "dados",
+      title: "Dados pessoais",
+      icon: <UserIcon className="h-4 w-4" />,
+      summary: form.cpf
+        ? `CPF ${form.cpf}${form.email ? ` · ${form.email}` : ""}`
+        : form.email || "—",
+      defaultOpen: true,
+      body: <div className={gridClass}>{fieldsDadosPessoais}</div>,
+    },
+    {
+      key: "telefones",
+      title: "Telefones",
+      icon: <Phone className="h-4 w-4" />,
+      summary: form.telefone_celular || "—",
+      defaultOpen: true,
+      body: <div className={gridClass}>{fieldsTelefones}</div>,
+    },
+    {
+      key: "responsavel",
+      title: "Responsável (menores de idade)",
+      icon: <Users className="h-4 w-4" />,
+      summary: form.responsavel_nome
+        ? `${form.responsavel_nome}${form.responsavel_parentesco ? ` — ${form.responsavel_parentesco}` : ""}`
+        : "—",
+      body: <div className={gridClass}>{fieldsResponsavel}</div>,
+    },
+    {
+      key: "responsavel2",
+      title: "Segundo responsável (opcional)",
+      icon: <Users className="h-4 w-4" />,
+      summary: form.responsavel2_nome
+        ? `${form.responsavel2_nome}${form.responsavel2_parentesco ? ` — ${form.responsavel2_parentesco}` : ""}`
+        : "—",
+      body: <div className={gridClass}>{fieldsResponsavel2}</div>,
+    },
+    {
+      key: "escolaridade",
+      title: "Escolaridade",
+      icon: <GraduationCap className="h-4 w-4" />,
+      summary: form.escolaridade_nivel
+        ? `${form.escolaridade_nivel}${form.escola_nome ? ` · ${form.escola_nome}` : ""}`
+        : "—",
+      body: bodyEscolaridade,
+    },
+    {
+      key: "endereco",
+      title: "Endereço",
+      icon: <MapPin className="h-4 w-4" />,
+      summary: enderecoSummary(form),
+      body: <div className={gridClass}>{fieldsEndereco}</div>,
+    },
+    {
+      key: "outros",
+      title: "Outros",
+      icon: <ClipboardList className="h-4 w-4" />,
+      summary: form.como_conheceu || (form.observacoes ? "Com observações" : "—"),
+      body: <div className={gridClass}>{fieldsOutros}</div>,
+    },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -840,15 +904,65 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             {isEdit && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="dados" className="mt-6 space-y-8">
-            {fotoSection}
-            {sectionDadosPessoais}
-            {sectionResponsavel}
-            {sectionResponsavel2}
-            {sectionEscolaridade}
-            {sectionTelefones}
-            {sectionEndereco}
-            {sectionOutros}
+          <TabsContent value="dados" className="mt-6 space-y-4">
+            <PacienteHeaderCard
+              nome={form.nome || "Sem nome"}
+              fotoUrl={form.foto_url || null}
+              idade={idade}
+              ativo={form.ativo}
+              uploading={uploading}
+              onUploadClick={() => fileRef.current?.click()}
+              onToggleAtivo={(v) => set("ativo", v)}
+              fileRef={fileRef}
+              onFotoChange={handleFotoChange}
+            />
+
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-gray-500">
+                {editBlocks.length} seções · clique para expandir
+              </p>
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => {
+                    setOpenBlocks(Object.fromEntries(editBlocks.map((b) => [b.key, true])));
+                  }}
+                >
+                  Expandir tudo
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => {
+                    setOpenBlocks(Object.fromEntries(editBlocks.map((b) => [b.key, false])));
+                  }}
+                >
+                  Recolher tudo
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {editBlocks.map((b) => (
+                <CollapsibleSection
+                  key={b.key}
+                  icon={b.icon}
+                  title={b.title}
+                  summary={b.summary}
+                  open={openBlocks[b.key] ?? b.defaultOpen ?? false}
+                  onOpenChange={(v) =>
+                    setOpenBlocks((prev) => ({ ...prev, [b.key]: v }))
+                  }
+                >
+                  {b.body}
+                </CollapsibleSection>
+              ))}
+            </div>
           </TabsContent>
 
           {isEdit && (
