@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { registrarEvento } from "@/lib/historico";
 
 export type Evolucao = {
   id: string;
@@ -127,6 +128,12 @@ export async function createEvolucao(input: EvolucaoInput): Promise<Evolucao> {
     .select("*")
     .single();
   if (error) throw error;
+  void registrarEvento(
+    input.paciente_id,
+    "evolucao_registrada",
+    `Evolução registrada (${input.data_sessao.split("-").reverse().join("/")})`,
+    { evolucao_id: (data as Evolucao).id, data_sessao: input.data_sessao },
+  );
   return data as Evolucao;
 }
 
