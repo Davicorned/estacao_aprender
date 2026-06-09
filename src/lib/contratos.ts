@@ -302,6 +302,72 @@ export async function listContratos(params: {
   return (data ?? []) as ContratoComJoin[];
 }
 
+/** Contratos ativos de um paciente + sessões já agendadas (não canceladas) vinculadas. */
+export type ContratoAtivoResumo = {
+  id: string;
+  modalidade: Modalidade | null;
+  aulas_por_mes: number | null;
+  frequencia: Frequencia;
+  qtd_sessoes: number | null;
+  sessoes_agendadas: number;
+  sessoes_restantes: number | null;
+  servico_id: string;
+  profissional_id: string;
+  data_inicio: string;
+  data_termino: string | null;
+  servico_nome: string | null;
+  profissional_nome: string | null;
+};
+
+export async function listarContratosAtivosPorPaciente(
+  pacienteId: string,
+): Promise<ContratoAtivoResumo[]> {
+  const { data, error } = await supabase
+    .from("contratos")
+    .select(
+      "id, modalidade, aulas_por_mes, frequencia, qtd_sessoes, servico_id, profissional_id, data_inicio, data_termino, servico:servicos!contratos_servico_id_fkey(id,nome), profissional:profissionais!contratos_profissional_id_fkey(id,nome)",
+    )
+    .eq("paciente_id", pacienteId)
+    .eq("status", "ativo")
+    .order("created_at", { ascending: false });
+  if (error) {
+    console.error("listarContratosAtivosPorPaciente", error);
+    return [];
+  }
+  const rows = (data ?? []) as any[];
+  if (rows.length === 0) return [];
+  const ids = rows.map((r) => r.id);
+  const { data: agend, error: e2 } = await supabase
+    .from("agendamentos")
+    .select("contrato_id, status")
+    .in("contrato_id", ids)
+    .neq("status", "cancelado");
+  if (e2) console.error("contar agendamentos por contrato", e2);
+  const counts = new Map<string, number>();
+  for (const a of agend ?? []) {
+    const k = (a as any).contrato_id as string;
+    counts.set(k, (counts.get(k) ?? 0) + 1);
+  }
+  return rows.map((r) => {
+    const usado = counts.get(r.id) ?? 0;
+    return {
+      id: r.id,
+      modalidade: r.modalidade,
+      aulas_por_mes: r.aulas_por_mes,
+      frequencia: r.frequencia,
+      qtd_sessoes: r.qtd_sessoes,
+      sessoes_agendadas: usado,
+      sessoes_restantes: r.qtd_sessoes ? Math.max(0, r.qtd_sessoes - usado) : null,
+      servico_id: r.servico_id,
+      profissional_id: r.profissional_id,
+      data_inicio: r.data_inicio,
+      data_termino: r.data_termino,
+      servico_nome: r.servico?.nome ?? null,
+      profissional_nome: r.profissional?.nome ?? null,
+    } satisfies ContratoAtivoResumo;
+  });
+}
+
 export async function getContrato(id: string): Promise<ContratoComJoin | null> {
   const { data, error } = await supabase.from("contratos").select(SELECT_JOIN).eq("id", id).maybeSingle();
   if (error) {
