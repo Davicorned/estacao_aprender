@@ -344,40 +344,6 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
 
   // ===== Conteúdo dos blocos (apenas campos, reutilizados pelo wizard e pelos
   // cards retráteis do modo edição). =====
-  const fotoSection = (
-    <div className="flex items-center gap-4">
-      <PacienteAvatar nome={form.nome || "?"} fotoUrl={form.foto_url || null} size={96} />
-      <div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFotoChange}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={uploading || !isEdit}
-          onClick={() => fileRef.current?.click()}
-        >
-          {uploading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Upload className="mr-2 h-4 w-4" />
-          )}
-          Alterar foto
-        </Button>
-        {!isEdit && (
-          <p className="mt-1 text-xs text-gray-400">
-            Disponível após salvar o paciente.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-
   const fieldsDadosPessoais = (
     <>
       <Field label="Nome completo *" className="md:col-span-2">
