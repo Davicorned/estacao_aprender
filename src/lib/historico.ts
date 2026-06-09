@@ -12,6 +12,8 @@ export type HistoricoTipo =
   | "contrato_encerrado"
   | "evolucao_registrada"
   | "lancamento_pago"
+  | "lancamento_gerado"
+  | "lancamento_status_alterado"
   | "comentario";
 
 export type HistoricoCategoria =
@@ -44,6 +46,8 @@ export const TIPO_LABEL: Record<HistoricoTipo, string> = {
   contrato_encerrado: "Contrato encerrado",
   evolucao_registrada: "Evolução registrada",
   lancamento_pago: "Pagamento registrado",
+  lancamento_gerado: "Lançamento gerado",
+  lancamento_status_alterado: "Status do lançamento alterado",
   comentario: "Comentário",
 };
 
@@ -51,6 +55,7 @@ export function categoriaDoTipo(tipo: HistoricoTipo): HistoricoCategoria {
   if (tipo.startsWith("agendamento_")) return "agendamento";
   if (tipo === "evolucao_registrada") return "clinico";
   if (tipo === "lancamento_pago") return "financeiro";
+  if (tipo === "lancamento_gerado" || tipo === "lancamento_status_alterado") return "financeiro";
   if (tipo === "comentario") return "comentario";
   if (tipo === "contrato_criado" || tipo === "contrato_encerrado") return "financeiro";
   return "cadastro";
