@@ -133,6 +133,8 @@ export function AgendamentoFormDialog({
       setHoraFim(agendamento.hora_fim.slice(0, 5));
       setObservacoes(agendamento.observacoes ?? "");
       setRecTipo("nao");
+      setModoAgendamento("unico");
+      setFreqManual(false);
       setContratoVinculadoId(agendamento.contrato_id ?? null);
     } else {
       setPaciente(pacienteInicial ?? null);
@@ -147,6 +149,8 @@ export function AgendamentoFormDialog({
       setObservacoes("");
       setRecTipo("nao");
       setRecOcorrencias(4);
+      setModoAgendamento("unico");
+      setFreqManual(false);
       setContratoVinculadoId(null);
     }
     setPacienteSearch("");
