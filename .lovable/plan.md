@@ -1,87 +1,53 @@
-# Repensando a recorrência do Novo Agendamento
+## Novo fluxo do "Novo Agendamento"
 
-## Problema
-Hoje o Novo Agendamento oferece "Semanal (4)", "Quinzenal (4)" e "Mensal (3)" — números fixos, sem relação com o contrato. No contrato o pacote é descrito por:
-- **Modalidade**: Pacote Mensal / Avulso
-- **Aulas por mês**: 4 ou 8 (1x ou 2x por semana)
-- **Vigência**: Qtd de sessões + Frequência (Semanal, Quinzenal, Mensal, Livre) + Data início/término
+Inverter a ordem: a escolha de **recorrência vem antes da data**, e a quantidade de sessões determina automaticamente a frequência.
 
-Resultado: o terapeuta precisa "adivinhar" quantas ocorrências criar e o agendamento não conversa com o contrato vigente.
+### Etapas do formulário (nova ordem)
 
-## Proposta — Novo Agendamento orientado ao contrato
+1. **Paciente** (igual hoje, mantém card de contrato vigente)
+2. **Profissional + Serviço**
+3. **Tipo de agendamento** — toggle:
+   - **Sessão única** (não recorrente)
+   - **Pacote recorrente**
+4. **Bloco condicional:**
 
-### 1. Vincular agendamento a um contrato (opcional)
-Após selecionar o paciente, buscar contratos **ativos** dele. Se houver:
-- Mostrar bloco "Contrato vigente" com resumo (modalidade, aulas/mês, frequência, sessões restantes).
-- **Pré-preencher**: profissional, serviço, frequência, e sugerir nº de ocorrências = sessões restantes do contrato (limitado a 12 para não criar demais de uma vez).
-- Marcar os agendamentos criados com `contrato_id` para contagem futura.
+   **Se "Sessão única":**
+   - Campo `Data` + `Horário de início` (duração vem do serviço)
 
-Se o paciente não tiver contrato ativo, o fluxo continua como hoje (manual).
+   **Se "Pacote recorrente":**
+   - `Quantidade de sessões` (default 4; opções rápidas: 4, 8, 12, 16 + livre)
+   - Frequência **derivada automaticamente** da quantidade:
+     - múltiplo de 4 e não-múltiplo de 8 → **1x por semana**
+     - múltiplo de 8 → **2x por semana**
+     - (regra exibida como texto — usuário pode trocar manualmente com um link "alterar frequência" para casos quinzenal/mensal)
+   - Se **1x/semana** → `Dia da semana` + `Horário de início` + `Data de início` (próxima ocorrência desse dia)
+   - Se **2x/semana** → `1º dia da semana` + `2º dia da semana` + `Horário de início` + `Data de início`
+   - Mostra resumo: "8 sessões, terças e quintas às 14:00, de 09/06 a 30/07"
 
-### 2. Novo bloco "Recorrência" mais inteligente
-Substituir o select único por:
+5. **Pré-visualização das ocorrências** (mantém como hoje, com conflitos e toggles)
+6. **Observações** + botões salvar
 
-```text
-[ ] Repetir agendamento
-    Frequência:  ( ) Semanal   ( ) 2x por semana   ( ) Quinzenal   ( ) Mensal   ( ) Livre
-    Quantas sessões: [ 8 ]    Até: [ 04/08/2026 ]  (um calcula o outro)
-    □ Pular feriados / datas indisponíveis
-```
+### Detalhes técnicos
 
-Regras:
-- **Semanal**: mesmo dia da semana, +7 dias.
-- **2x por semana**: pede um segundo dia da semana (ex.: Ter + Qui) e gera nas duas datas.
-- **Quinzenal**: +14 dias.
-- **Mensal**: +1 mês (mesma data).
-- **Livre**: cria só o agendamento atual (sem recorrência automática).
-- "Quantas sessões" e "Até" são sincronizados: alterar um recalcula o outro com base na frequência.
+**Arquivo único afetado:** `src/components/gestao/agenda/AgendamentoFormDialog.tsx`
 
-### 3. Pré-visualização das datas
-Antes de salvar, mostrar uma lista compacta das datas que serão criadas com badges:
-- ✔ ok
-- ⚠ conflito (já tem agendamento nesse horário) — opção "pular" ou "ajustar"
-- 🎉 feriado (se a opção estiver marcada)
+- Adicionar estado `modoAgendamento: "unico" | "recorrente"` no topo, antes de `data`.
+- Reordenar os blocos JSX: mover bloco "Recorrência" para depois de paciente/profissional/serviço e antes do bloco de data.
+- Quando `modoAgendamento === "recorrente"`:
+  - `recTipo` deixa de ser exposto diretamente; é derivado de `ocorrencias` via helper `frequenciaDerivada(n)`:
+    - `n % 8 === 0` → `"duas_por_semana"`
+    - senão → `"semanal"`
+  - Adicionar link "alterar frequência" que abre Select com `quinzenal` / `mensal` / forçar `semanal`.
+- Substituir o atual campo "Data" único por:
+  - Modo único: `Data` + `Hora`
+  - Modo recorrente 1x: `Dia da semana` (Select) + `Data de início` (calculada/ajustada para o próximo dia da semana selecionado) + `Hora`
+  - Modo recorrente 2x: `1º dia da semana` + `2º dia da semana` + `Data de início` (próximo 1º dia) + `Hora`
+- Helper `proximaDataParaDiaSemana(dataRef, diaSemana)` para ajustar a data-base ao dia da semana escolhido.
+- `ocorrenciasParaRecorrencia` em `src/lib/agendamentos.ts` já suporta tudo — **sem mudança em lib**.
+- Card de contrato vigente: quando o usuário clica "preencher a partir do contrato", também define `modoAgendamento = "recorrente"` e `ocorrencias = contrato.sessoes_restantes`.
 
-O botão "Confirmar" só cria as sessões marcadas como ok.
+### Fora do escopo
 
-### 4. Confirmação coerente com o volume
-Trocar o AlertDialog atual ("Serão criados N agendamentos") pela mesma tela de pré-visualização, que já mostra o total real (excluindo conflitos).
-
-## Detalhes técnicos
-
-### `src/lib/agendamentos.ts`
-- Estender `Recorrencia`:
-  ```ts
-  type Recorrencia =
-    | { tipo: "nao" }
-    | { tipo: "semanal"; ocorrencias: number }
-    | { tipo: "duas_por_semana"; ocorrencias: number; segundoDiaSemana: number }
-    | { tipo: "quinzenal"; ocorrencias: number }
-    | { tipo: "mensal"; ocorrencias: number }
-    | { tipo: "livre" };
-  ```
-- `ocorrenciasParaRecorrencia` recebe o objeto e devolve `string[]` (datas ISO) calculadas dinamicamente.
-- `createAgendamentosRecorrentes` aceita `contratoId?: string | null` e grava no campo correspondente.
-
-### Schema
-- Adicionar coluna `contrato_id uuid references contratos(id)` em `agendamentos` (nullable). Migration nova; índice por `contrato_id`.
-- Sem mudança em `contratos`.
-
-### `src/lib/contratos.ts`
-- Helper `listarContratosAtivosPorPaciente(pacienteId)` retornando contratos com `status = 'ativo'` (ou equivalente) com campos: id, modalidade, aulas_por_mes, frequencia, qtd_sessoes, sessoes_realizadas (contagem via agendamentos vinculados).
-
-### `src/components/gestao/agenda/AgendamentoFormDialog.tsx`
-- Após `setPaciente`, carregar contratos ativos e exibir card "Contrato vigente" com botão "Usar dados do contrato" (preenche profissional, serviço, frequência, sessões sugeridas).
-- Substituir o select de Recorrência pelo novo bloco descrito acima.
-- Adicionar componente `PreviewOcorrencias` que lista datas, marca conflitos (usa `checarConflito` em batch) e permite desmarcar.
-- `handleSubmit` envia apenas as datas confirmadas + `contrato_id`.
-
-### Itens fora do escopo desta iteração
-- Recorrência infinita / regras de exceção tipo Google Calendar.
-- Edição em lote de uma série criada (já existe `recorrencia_grupo_id`, basta manter).
-- Calendário de feriados nacionais (a opção fica preparada, mas a primeira versão pode usar uma lista local simples ou ficar desabilitada com tooltip "em breve").
-
-## Perguntas antes de implementar
-1. Confirma que devo adicionar a coluna `contrato_id` em `agendamentos` para fazer o vínculo? (sem ela, não conseguimos contar sessões realizadas do contrato).
-2. "2x por semana" faz sentido como opção própria (ex.: Ter+Qui), ou prefere manter só "Semanal" e o terapeuta cria dois agendamentos separados?
-3. A pré-visualização das datas com checkboxes (item 3) é desejável já nessa iteração, ou prefere manter o AlertDialog simples agora e adicionar depois?
+- Sem mudança em banco de dados.
+- Sem mudança em `src/lib/agendamentos.ts` / `src/lib/contratos.ts`.
+- Lógica de conflitos e pré-visualização permanecem inalteradas.
