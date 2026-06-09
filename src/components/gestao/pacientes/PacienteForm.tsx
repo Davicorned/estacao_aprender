@@ -871,7 +871,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
             {isEdit && <TabsTrigger value="ficha">Ficha Clínica</TabsTrigger>}
             {isEdit && <TabsTrigger value="prontuario">Prontuário</TabsTrigger>}
-            {isEdit && <TabsTrigger value="historico">Histórico de Sessões</TabsTrigger>}
+            {isEdit && <TabsTrigger value="historico">Sessões</TabsTrigger>}
             {isEdit && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
             {isEdit && <TabsTrigger value="atividades">Histórico</TabsTrigger>}
           </TabsList>
