@@ -53,6 +53,7 @@ import { ProntuarioTab } from "@/components/gestao/prontuario/ProntuarioTab";
 import { HistoricoSessoesTab } from "@/components/gestao/prontuario/HistoricoSessoesTab";
 import { FinanceiroPacienteTab } from "@/components/gestao/financeiro/FinanceiroPacienteTab";
 import { FichaClinicaTab } from "@/components/gestao/prontuario/FichaClinicaTab";
+import { HistoricoTab } from "@/components/gestao/pacientes/HistoricoTab";
 import {
   buscarCep,
   calcularIdade,
@@ -872,6 +873,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             {isEdit && <TabsTrigger value="prontuario">Prontuário</TabsTrigger>}
             {isEdit && <TabsTrigger value="historico">Histórico de Sessões</TabsTrigger>}
             {isEdit && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
+            {isEdit && <TabsTrigger value="atividades">Histórico</TabsTrigger>}
           </TabsList>
 
           <TabsContent value="dados" className="mt-6 space-y-4">
@@ -953,6 +955,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           {isEdit && (
             <TabsContent value="financeiro" className="mt-6">
               {paciente && <FinanceiroPacienteTab paciente={paciente} />}
+            </TabsContent>
+          )}
+          {isEdit && (
+            <TabsContent value="atividades" className="mt-6">
+              {paciente && <HistoricoTab paciente={paciente} />}
             </TabsContent>
           )}
         </Tabs>
