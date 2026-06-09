@@ -52,6 +52,14 @@ import {
 
 type PacienteLite = { id: string; nome: string; foto_url: string | null };
 
+function proximaDataParaDiaSemana(dataRef: string, diaSemana: number): string {
+  const base = parseIsoDate(dataRef);
+  const diff = (diaSemana - base.getDay() + 7) % 7;
+  const d = new Date(base);
+  d.setDate(base.getDate() + diff);
+  return toIsoDate(d);
+}
+
 export type FormDialogProps = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
