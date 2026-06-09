@@ -26,6 +26,11 @@ export type Paciente = {
   foto_url: string | null;
   ativo: boolean;
   profissional_responsavel_id: string | null;
+  responsavel2_nome: string | null;
+  responsavel2_parentesco: string | null;
+  responsavel2_celular: string | null;
+  escolaridade_nivel: string | null;
+  escola_nome: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -234,3 +239,12 @@ export const ESTADOS = [
 export const PARENTESCOS = ["Mãe", "Pai", "Avó/Avô", "Tio/Tia", "Irmão/Irmã", "Responsável legal", "Outro"] as const;
 
 export const COMO_CONHECEU = ["Indicação", "Google", "Instagram", "Escola", "Outro"] as const;
+
+export const ESCOLARIDADE_NIVEIS = [
+  "Educação Infantil",
+  "Fundamental I",
+  "Fundamental II",
+  "Ensino Médio",
+  "Superior",
+  "Outro",
+] as const;

@@ -1,65 +1,72 @@
-# Redesign do PDF do contrato
 
-Hoje o PDF é montado com `jsPDF` "puro": faixa laranja retangular + texto helvetica. O modelo original tem logotipo (borboleta + "estação aprender" em script), um blob laranja com curva orgânica no topo, e um rodapé com ícones (telefone, Instagram, localização). Vamos reproduzir isso.
+## Diagnóstico
 
-## Abordagem
+O modelo em papel da clínica é uma **ficha de abertura** (anamnese leve + dados clínicos/escolares/contatos), não um histórico de sessões. Hoje no sistema temos:
 
-Trocar a geração "linha por linha" do jsPDF por **render HTML → imagem → PDF** usando `html2canvas` + `jsPDF`. Isso permite reproduzir fielmente o blob laranja, a tipografia e o rodapé com ícones via HTML/CSS, sem precisar desenhar curvas Bézier manualmente.
+- **Dados Pessoais** (form atual) — dados de identificação, endereço, 1 responsável.
+- **Prontuário** — somente evoluções (sessões).
+- **Histórico de Sessões** e **Financeiro**.
 
-Por que essa abordagem:
-- Logo SVG é renderizado nativamente pelo browser (fiel ao original).
-- Blob laranja vira `border-radius` + `clip-path` ou um SVG inline — controle visual total.
-- Tipografia, espaçamentos e ícones (lucide ou inline SVG) funcionam direto do CSS.
-- Cada "página" é um `<section>` A4 capturado separadamente e adicionado ao PDF.
+O modelo em papel traz informações que **não cabem** em "Dados Pessoais" (ficaria gigante e misturaria identificação com dados clínicos), e **também não cabem** em "Evoluções" (são dados permanentes do paciente, não de uma sessão).
 
-## Passos
+## Proposta: separar em duas camadas
 
-1. **Dependência**
-   - `bun add html2canvas` (jspdf já está instalado).
+### 1. Manter "Dados Pessoais" enxuto
+Continua como hoje (identificação, endereço, 1 responsável, foto). Acrescentar **apenas 2 campos** que são realmente identificação/contato:
 
-2. **Componente de template (offscreen)** — `src/components/gestao/contratos/ContratoPdfTemplate.tsx`
-   - Container fixo `210mm × 297mm`, posicionado fora da tela (`position: fixed; left: -10000px`) para o html2canvas conseguir capturar.
-   - Header: SVG inline com o blob laranja orgânico + `<img src={logoAsset.url} />` à esquerda + bloco de especialidades à direita ("Psicopedagogia · Psicomotricidade · Psicologia · Neuropsicologia · Alfabetização · Educação Neuroparental").
-   - Body: parágrafos do contrato com a mesma heurística atual (títulos numerados em negrito).
-   - Footer fixo no rodapé de cada página: linha laranja + ícones (telefone, Instagram, pin de localização) + textos `(11) 2621-9800 · (11) 9 3213-9800`, `@estacaoaprender_`, `Praça Gajé n° 56 — Conj. 1, Engenheiro Goulart`.
-   - Páginas: corpo do contrato → página de assinatura → anexo de autorização de imagem (mesma estrutura atual).
+- **2º Responsável** (nome + parentesco + celular) — opcional, recolhível "+ adicionar segundo responsável"
+- **Escolaridade resumida**: nível (Educação Infantil / Fund. I / Fund. II / Médio / Outro) + nome da escola
 
-3. **Paginação inteligente**
-   - Dividir o texto em blocos (parágrafos) e empilhá-los em `<section className="page">`; quebrar para nova página quando o conteúdo passar da altura útil (medido via `offsetHeight`).
-   - Alternativa mais simples (recomendada no primeiro corte): renderizar tudo numa coluna A4 com `page-break-inside: avoid` por parágrafo e deixar o `html2canvas` capturar uma imagem alta; depois fatiar em páginas A4 no `jspdf` (`addImage` com `y` offset negativo por página). Este é o padrão "html2pdf".
+Isso resolve o "Dados dos Responsáveis" e "Escolaridade" do papel sem virar formulário gigante.
 
-4. **Refatorar `ContratoView.handleDownloadPdf`**
-   - Montar `vars` (mesma função `montarVariaveis` já existente).
-   - Renderizar o template offscreen (state booleano + ref).
-   - Aguardar fontes (`document.fonts.ready`) e a `<img>` do logo (`onload`).
-   - `html2canvas(ref, { scale: 3, useCORS: true, backgroundColor: '#ffffff' })` → `addImage` no jsPDF fatiando por página A4.
-   - `doc.save(...)` com o nome atual.
+### 2. Nova aba "Ficha Clínica" (entre "Dados Pessoais" e "Prontuário")
+Tudo que é informação clínica/escolar/rede de apoio do paciente — preenchida na abertura e revisada quando muda. Estrutura em blocos colapsáveis para não intimidar:
 
-5. **Fontes**
-   - Para se aproximar do original (script no logo + sans no corpo), usar:
-     - Logo: imagem (já tem o script desenhado).
-     - Corpo: `Inter` ou `Manrope` via Google Fonts (já carregados? confirmar `index.html`); fallback `system-ui`.
-   - Sem necessidade de embed de fonte no jsPDF — o rasterizador resolve.
+**Bloco A — Atendimento na clínica**
+- Data de abertura (auto = created_at, editável)
+- Especialidades de interesse (multi-check): Psicologia, Neuropsicologia, Psicopedagogia, Psicomotricidade, Atendimento Pedagógico, Fonoaudiologia, T.O. *(reaproveita a lista de serviços ativos da clínica)*
+- Queixa inicial / motivo da procura (textarea curto)
 
-6. **Ajustes finais**
-   - Manter `aplicarTemplate(contrato.termos, vars)` para o corpo.
-   - Manter páginas de assinatura e autorização de imagem como `<section>` separadas (cada uma com header/footer próprios).
-   - Marca d'água/numeração `1 / N` no rodapé direito.
+**Bloco B — Saúde**
+- Limitações (multi-check): Cognitiva, Locomoção, Visão, Audição, Outras + campo livre
+- Alergias (texto curto)
+- Medicação em uso (texto curto) *— acréscimo nosso, pediátrico padrão*
+- Diagnósticos / hipótese diagnóstica (texto curto) *— acréscimo nosso*
 
-## Arquivos afetados
+**Bloco C — Médicos / rede externa**
+- Lista dinâmica "Adicionar profissional": nome, especialidade, contato. Até 5 linhas.
 
-- `package.json` / lockfile — adicionar `html2canvas`.
-- `src/components/gestao/contratos/ContratoPdfTemplate.tsx` (novo) — JSX do contrato pronto para renderização.
-- `src/components/gestao/contratos/ContratoView.tsx` — substituir `handleDownloadPdf` pela versão html2canvas + jsPDF; montar o template offscreen via ref.
+**Bloco D — Escola (detalhada)**
+- Telefone da escola, turma, professor(a), coordenação, observações da escola.
+- (Nível e nome já vêm de Dados Pessoais.)
 
-## Fora do escopo
+**Bloco E — Segundo contato familiar**
+- Nome, parentesco, celular, e-mail. Para casos de pais separados / cuidador adicional.
 
-- Texto/cláusulas do contrato (já estão corretas).
-- Schema do banco e formulário (sem mudanças).
-- Visual do diálogo na tela (somente o PDF baixado muda).
+Tudo opcional. A aba mostra um indicador "Ficha preenchida 4/5 blocos" para incentivar completude sem bloquear.
 
-## Riscos
+## Por que assim e não tudo no cadastro
 
-- `html2canvas` aumenta um pouco o tamanho do bundle (~50 KB gz) — aceitável.
-- Renderização do logo SVG remoto: garantir `crossOrigin="anonymous"` na `<img>` e `useCORS: true` no html2canvas; o CDN da Lovable já envia CORS permissivo.
-- Tempo de geração sobe de instantâneo para ~1-2 s — adicionar um spinner no botão "Baixar PDF".
+- **Quem cadastra** geralmente é a recepção (dados básicos rápidos). **Quem completa a ficha clínica** é o profissional na primeira sessão. Separar reflete o fluxo real.
+- Mantém a tela inicial leve (~7 campos obrigatórios) e move o resto para uma aba dedicada que só aparece após salvar.
+- Permite imprimir uma "Ficha do Paciente" idêntica ao modelo em papel (botão Imprimir na aba), preservando o documento que a clínica já usa.
+
+## Modelo de dados
+
+Nova tabela `paciente_ficha_clinica` (1-1 com `pacientes`) com colunas para todos os campos acima (jsonb para `medicos` e arrays para `especialidades_interesse` e `limitacoes`). Mantém `pacientes` enxuta e evita migration pesada na tabela principal.
+
+Adicionar em `pacientes`: `responsavel2_nome`, `responsavel2_parentesco`, `responsavel2_celular`, `escolaridade_nivel`, `escola_nome` (5 colunas opcionais).
+
+## Entregáveis
+
+1. Migration: 5 colunas novas em `pacientes` + tabela `paciente_ficha_clinica` (RLS + grants).
+2. `src/lib/pacientes.ts`: tipos atualizados.
+3. `src/lib/ficha-clinica.ts` (novo): get/upsert da ficha.
+4. `PacienteForm.tsx`: nova seção "Responsável adicional" e "Escolaridade (resumo)" em Dados Pessoais; nova aba `FichaClinicaTab`.
+5. `src/components/gestao/prontuario/FichaClinicaTab.tsx` (novo) com os 5 blocos colapsáveis e botão "Imprimir ficha" (replica o layout do PDF do modelo).
+
+## Pontos para você decidir
+
+- **Especialidades de interesse**: puxar da tabela `servicos` (dinâmico, reflete o que a clínica oferece hoje) ou lista fixa como no papel? Recomendo puxar de `servicos`.
+- **2º responsável**: você quer no cadastro básico (recepção preenche) ou só na Ficha Clínica? Recomendo no básico — é informação de contato, não clínica.
+- **Médicos externos**: limite de 5 está bom, ou prefere ilimitado?

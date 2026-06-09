@@ -31,6 +31,7 @@ import { PacienteAvatar } from "./PacienteAvatar";
 import { ProntuarioTab } from "@/components/gestao/prontuario/ProntuarioTab";
 import { HistoricoSessoesTab } from "@/components/gestao/prontuario/HistoricoSessoesTab";
 import { FinanceiroPacienteTab } from "@/components/gestao/financeiro/FinanceiroPacienteTab";
+import { FichaClinicaTab } from "@/components/gestao/prontuario/FichaClinicaTab";
 import {
   buscarCep,
   calcularIdade,
@@ -39,6 +40,7 @@ import {
   createPaciente,
   deletePaciente,
   ESTADOS,
+  ESCOLARIDADE_NIVEIS,
   maskCelular,
   maskCEP,
   maskCPF,
@@ -73,6 +75,11 @@ type FormState = {
   observacoes: string;
   foto_url: string;
   ativo: boolean;
+  responsavel2_nome: string;
+  responsavel2_parentesco: string;
+  responsavel2_celular: string;
+  escolaridade_nivel: string;
+  escola_nome: string;
 };
 
 function blank(): FormState {
@@ -98,6 +105,11 @@ function blank(): FormState {
     observacoes: "",
     foto_url: "",
     ativo: true,
+    responsavel2_nome: "",
+    responsavel2_parentesco: "",
+    responsavel2_celular: "",
+    escolaridade_nivel: "",
+    escola_nome: "",
   };
 }
 
@@ -124,6 +136,11 @@ function fromPaciente(p: Paciente): FormState {
     observacoes: p.observacoes ?? "",
     foto_url: p.foto_url ?? "",
     ativo: p.ativo,
+    responsavel2_nome: p.responsavel2_nome ?? "",
+    responsavel2_parentesco: p.responsavel2_parentesco ?? "",
+    responsavel2_celular: p.responsavel2_celular ? maskCelular(p.responsavel2_celular) : "",
+    escolaridade_nivel: p.escolaridade_nivel ?? "",
+    escola_nome: p.escola_nome ?? "",
   };
 }
 
@@ -151,6 +168,11 @@ function toInput(s: FormState): PacienteInput {
     foto_url: s.foto_url || null,
     ativo: s.ativo,
     profissional_responsavel_id: null,
+    responsavel2_nome: s.responsavel2_nome.trim() || null,
+    responsavel2_parentesco: s.responsavel2_parentesco || null,
+    responsavel2_celular: s.responsavel2_celular ? s.responsavel2_celular.replace(/\D/g, "") : null,
+    escolaridade_nivel: s.escolaridade_nivel || null,
+    escola_nome: s.escola_nome.trim() || null,
   };
 }
 
@@ -269,6 +291,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
+            {isEdit && <TabsTrigger value="ficha">Ficha Clínica</TabsTrigger>}
             {isEdit && <TabsTrigger value="prontuario">Prontuário</TabsTrigger>}
             {isEdit && <TabsTrigger value="historico">Histórico de Sessões</TabsTrigger>}
             {isEdit && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
@@ -383,6 +406,66 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
               </Field>
             </Section>
 
+            <Section title="Segundo responsável (opcional)">
+              <Field label="Nome">
+                <Input
+                  value={form.responsavel2_nome}
+                  onChange={(e) => set("responsavel2_nome", e.target.value)}
+                />
+              </Field>
+              <Field label="Parentesco">
+                <Select
+                  value={form.responsavel2_parentesco || undefined}
+                  onValueChange={(v) => set("responsavel2_parentesco", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PARENTESCOS.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Celular">
+                <Input
+                  value={form.responsavel2_celular}
+                  onChange={(e) => set("responsavel2_celular", maskCelular(e.target.value))}
+                  placeholder="(11) 91234-5678"
+                  inputMode="numeric"
+                />
+              </Field>
+            </Section>
+
+            <Section title="Escolaridade">
+              <Field label="Nível">
+                <Select
+                  value={form.escolaridade_nivel || undefined}
+                  onValueChange={(v) => set("escolaridade_nivel", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ESCOLARIDADE_NIVEIS.map((n) => (
+                      <SelectItem key={n} value={n}>
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Nome da escola" className="md:col-span-2">
+                <Input
+                  value={form.escola_nome}
+                  onChange={(e) => set("escola_nome", e.target.value)}
+                />
+              </Field>
+            </Section>
+
             <Section title="Telefones">
               <Field label="Celular *">
                 <Input
@@ -476,6 +559,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             </Section>
           </TabsContent>
 
+          {isEdit && (
+            <TabsContent value="ficha" className="mt-6">
+              {paciente && <FichaClinicaTab paciente={paciente} />}
+            </TabsContent>
+          )}
           {isEdit && (
             <TabsContent value="prontuario" className="mt-6">
               {paciente && <ProntuarioTab paciente={paciente} />}
