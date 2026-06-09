@@ -291,6 +291,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList>
             <TabsTrigger value="dados">Dados Pessoais</TabsTrigger>
+            {isEdit && <TabsTrigger value="ficha">Ficha Clínica</TabsTrigger>}
             {isEdit && <TabsTrigger value="prontuario">Prontuário</TabsTrigger>}
             {isEdit && <TabsTrigger value="historico">Histórico de Sessões</TabsTrigger>}
             {isEdit && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
@@ -405,6 +406,66 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
               </Field>
             </Section>
 
+            <Section title="Segundo responsável (opcional)">
+              <Field label="Nome">
+                <Input
+                  value={form.responsavel2_nome}
+                  onChange={(e) => set("responsavel2_nome", e.target.value)}
+                />
+              </Field>
+              <Field label="Parentesco">
+                <Select
+                  value={form.responsavel2_parentesco || undefined}
+                  onValueChange={(v) => set("responsavel2_parentesco", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PARENTESCOS.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Celular">
+                <Input
+                  value={form.responsavel2_celular}
+                  onChange={(e) => set("responsavel2_celular", maskCelular(e.target.value))}
+                  placeholder="(11) 91234-5678"
+                  inputMode="numeric"
+                />
+              </Field>
+            </Section>
+
+            <Section title="Escolaridade">
+              <Field label="Nível">
+                <Select
+                  value={form.escolaridade_nivel || undefined}
+                  onValueChange={(v) => set("escolaridade_nivel", v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {ESCOLARIDADE_NIVEIS.map((n) => (
+                      <SelectItem key={n} value={n}>
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </Field>
+              <Field label="Nome da escola" className="md:col-span-2">
+                <Input
+                  value={form.escola_nome}
+                  onChange={(e) => set("escola_nome", e.target.value)}
+                />
+              </Field>
+            </Section>
+
             <Section title="Telefones">
               <Field label="Celular *">
                 <Input
@@ -498,6 +559,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             </Section>
           </TabsContent>
 
+          {isEdit && (
+            <TabsContent value="ficha" className="mt-6">
+              {paciente && <FichaClinicaTab paciente={paciente} />}
+            </TabsContent>
+          )}
           {isEdit && (
             <TabsContent value="prontuario" className="mt-6">
               {paciente && <ProntuarioTab paciente={paciente} />}
