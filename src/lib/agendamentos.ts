@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { registrarEvento } from "@/lib/historico";
 
 export type AgendamentoStatus =
   | "agendado"
@@ -233,6 +234,12 @@ export async function createAgendamento(input: AgendamentoInput): Promise<Agenda
     .select("*")
     .single();
   if (error) throw error;
+  void registrarEvento(
+    input.paciente_id,
+    "agendamento_criado",
+    `Agendamento criado para ${input.data.split("-").reverse().join("/")} às ${input.hora_inicio.slice(0, 5)}`,
+    { agendamento_id: (data as Agendamento).id, data: input.data, hora_inicio: input.hora_inicio },
+  );
   return data as Agendamento;
 }
 
@@ -361,6 +368,16 @@ export async function createAgendamentosLote(
   }));
   const { error } = await supabase.from("agendamentos").insert(rows);
   if (error) throw error;
+  const primeira = datas[0].split("-").reverse().join("/");
+  const ultima = datas[datas.length - 1].split("-").reverse().join("/");
+  void registrarEvento(
+    baseInput.paciente_id,
+    "agendamento_criado",
+    datas.length === 1
+      ? `Agendamento criado para ${primeira} às ${baseInput.hora_inicio.slice(0, 5)}`
+      : `${datas.length} agendamentos criados (${primeira} a ${ultima}) às ${baseInput.hora_inicio.slice(0, 5)}`,
+    { datas, hora_inicio: baseInput.hora_inicio, grupo },
+  );
   return { criados: rows.length };
 }
 
@@ -394,6 +411,16 @@ export async function updateAgendamento(
   id: string,
   patch: Partial<AgendamentoInput>,
 ): Promise<Agendamento> {
+  // Snapshot anterior para detectar remarcação
+  let anterior: Agendamento | null = null;
+  if (patch.data !== undefined || patch.hora_inicio !== undefined || patch.hora_fim !== undefined) {
+    const { data: prev } = await supabase
+      .from("agendamentos")
+      .select("*")
+      .eq("id", id)
+      .maybeSingle();
+    anterior = (prev as Agendamento) ?? null;
+  }
   const { data, error } = await supabase
     .from("agendamentos")
     .update({ ...patch, updated_at: new Date().toISOString() })
@@ -401,6 +428,28 @@ export async function updateAgendamento(
     .select("*")
     .single();
   if (error) throw error;
+  if (anterior) {
+    const novaData = patch.data ?? anterior.data;
+    const novaHora = patch.hora_inicio ?? anterior.hora_inicio;
+    const mudouData = patch.data !== undefined && patch.data !== anterior.data;
+    const mudouHora =
+      (patch.hora_inicio !== undefined && patch.hora_inicio !== anterior.hora_inicio) ||
+      (patch.hora_fim !== undefined && patch.hora_fim !== anterior.hora_fim);
+    if (mudouData || mudouHora) {
+      const de = `${anterior.data.split("-").reverse().join("/")} ${anterior.hora_inicio.slice(0, 5)}`;
+      const para = `${novaData.split("-").reverse().join("/")} ${novaHora.slice(0, 5)}`;
+      void registrarEvento(
+        anterior.paciente_id,
+        "agendamento_remarcado",
+        `Remarcado de ${de} para ${para}`,
+        {
+          agendamento_id: id,
+          de: { data: anterior.data, hora_inicio: anterior.hora_inicio, hora_fim: anterior.hora_fim },
+          para: { data: novaData, hora_inicio: novaHora, hora_fim: patch.hora_fim ?? anterior.hora_fim },
+        },
+      );
+    }
+  }
   return data as Agendamento;
 }
 
@@ -418,6 +467,37 @@ export async function updateStatus(
   }
   const { error } = await supabase.from("agendamentos").update(patch).eq("id", id);
   if (error) throw error;
+  if (status === "cancelado" || status === "atendido" || status === "faltou") {
+    try {
+      const { data: ag } = await supabase
+        .from("agendamentos")
+        .select("paciente_id, data, hora_inicio")
+        .eq("id", id)
+        .maybeSingle();
+      if (ag) {
+        const dataFmt = (ag as any).data.split("-").reverse().join("/");
+        const hora = ((ag as any).hora_inicio as string).slice(0, 5);
+        const tipo =
+          status === "cancelado"
+            ? "agendamento_cancelado"
+            : status === "atendido"
+              ? "agendamento_atendido"
+              : "agendamento_faltou";
+        const label =
+          status === "cancelado"
+            ? `Cancelado (${dataFmt} ${hora})${motivoCancelamento ? " — " + motivoCancelamento : ""}`
+            : status === "atendido"
+              ? `Sessão atendida em ${dataFmt} às ${hora}`
+              : `Falta registrada em ${dataFmt} às ${hora}`;
+        void registrarEvento((ag as any).paciente_id, tipo as any, label, {
+          agendamento_id: id,
+          motivo: motivoCancelamento ?? null,
+        });
+      }
+    } catch (e) {
+      console.error("registrar historico status", e);
+    }
+  }
   try {
     const { sincronizarLancamentoDeAgendamento } = await import("@/lib/financeiro");
     await sincronizarLancamentoDeAgendamento(id, status);
