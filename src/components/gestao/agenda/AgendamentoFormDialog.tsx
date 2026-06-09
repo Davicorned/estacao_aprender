@@ -759,7 +759,7 @@ export function AgendamentoFormDialog({
             className="bg-gradient-to-r from-[#D67F43] to-[#B85A24] text-white hover:opacity-90"
           >
             {(saving || previewLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {!isEdit && recTipo !== "nao" ? "Pré-visualizar sessões" : "Salvar"}
+            {!isEdit && modoAgendamento === "recorrente" ? "Pré-visualizar sessões" : "Salvar"}
           </Button>
         </DialogFooter>
 
