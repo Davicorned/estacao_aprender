@@ -20,18 +20,20 @@ import {
 } from "@/components/ui/select";
 import { searchPacientesQuick } from "@/lib/agendamentos";
 import { formatBRL, parseBRLToCents } from "@/lib/configuracoes";
-import { createLancamento, type LancamentoTipo } from "@/lib/financeiro";
+import { createLancamento, updateLancamento, type Lancamento, type LancamentoTipo } from "@/lib/financeiro";
 
 type Props = {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   onSaved?: () => void;
   pacienteFixo?: { id: string; nome: string } | null;
+  lancamento?: (Lancamento & { paciente?: { id: string; nome: string } | null }) | null;
 };
 
 type PacienteLite = { id: string; nome: string };
 
-export function LancamentoFormDialog({ open, onOpenChange, onSaved, pacienteFixo }: Props) {
+export function LancamentoFormDialog({ open, onOpenChange, onSaved, pacienteFixo, lancamento }: Props) {
+  const editing = !!lancamento;
   const [tipo, setTipo] = useState<LancamentoTipo>("receita");
   const [descricao, setDescricao] = useState("");
   const [valor, setValor] = useState("R$ 0,00");
@@ -44,15 +46,23 @@ export function LancamentoFormDialog({ open, onOpenChange, onSaved, pacienteFixo
 
   useEffect(() => {
     if (!open) return;
-    setTipo("receita");
-    setDescricao("");
-    setValor("R$ 0,00");
-    setVenc(new Date().toISOString().slice(0, 10));
-    setPaciente(pacienteFixo ?? null);
+    if (lancamento) {
+      setTipo(lancamento.tipo);
+      setDescricao(lancamento.descricao);
+      setValor(formatBRL(lancamento.valor_centavos));
+      setVenc(lancamento.data_vencimento);
+      setPaciente(lancamento.paciente ?? (pacienteFixo ?? null));
+    } else {
+      setTipo("receita");
+      setDescricao("");
+      setValor("R$ 0,00");
+      setVenc(new Date().toISOString().slice(0, 10));
+      setPaciente(pacienteFixo ?? null);
+    }
     setPacienteSearch("");
     setPacienteResults([]);
     setPacienteOpen(false);
-  }, [open, pacienteFixo]);
+  }, [open, pacienteFixo, lancamento]);
 
   useEffect(() => {
     if (!pacienteOpen) return;
@@ -74,19 +84,30 @@ export function LancamentoFormDialog({ open, onOpenChange, onSaved, pacienteFixo
     if (cents <= 0) return toast.error("Informe o valor");
     setSaving(true);
     try {
-      await createLancamento({
-        paciente_id: paciente?.id ?? null,
-        contrato_id: null,
-        agendamento_id: null,
-        tipo,
-        descricao,
-        valor_centavos: cents,
-        data_vencimento: venc,
-        data_pagamento: null,
-        status: "pendente",
-        forma_pagamento: null,
-      });
-      toast.success("Lançamento criado");
+      if (editing && lancamento) {
+        await updateLancamento(lancamento.id, {
+          tipo,
+          descricao,
+          valor_centavos: cents,
+          data_vencimento: venc,
+          paciente_id: paciente?.id ?? null,
+        });
+        toast.success("Lançamento atualizado");
+      } else {
+        await createLancamento({
+          paciente_id: paciente?.id ?? null,
+          contrato_id: null,
+          agendamento_id: null,
+          tipo,
+          descricao,
+          valor_centavos: cents,
+          data_vencimento: venc,
+          data_pagamento: null,
+          status: "pendente",
+          forma_pagamento: null,
+        });
+        toast.success("Lançamento criado");
+      }
       onOpenChange(false);
       onSaved?.();
     } catch (e: any) {
@@ -100,7 +121,7 @@ export function LancamentoFormDialog({ open, onOpenChange, onSaved, pacienteFixo
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Novo Lançamento</DialogTitle>
+          <DialogTitle>{editing ? "Editar Lançamento" : "Novo Lançamento"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-3">
