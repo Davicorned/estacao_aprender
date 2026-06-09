@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2 } from "lucide-react";
+import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2, DollarSign } from "lucide-react";
 import { toast } from "sonner";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas-pro";
@@ -26,6 +26,7 @@ import {
   type Modalidade,
   type ContratoComJoin,
 } from "@/lib/contratos";
+import { gerarMensalidadeContrato } from "@/lib/financeiro";
 
 type Props = {
   contrato: ContratoComJoin;
@@ -39,6 +40,7 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
   const [uploading, setUploading] = useState(false);
   const [removing, setRemoving] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+  const [gerandoMensalidade, setGerandoMensalidade] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
   const [localAnexo, setLocalAnexo] = useState<{
     path: string | null;
@@ -66,6 +68,23 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     const tel = contrato.paciente?.telefone_celular ?? "";
     const msg = `Olá! Segue o contrato de prestação de serviços da Estação Aprender para ${contrato.paciente?.nome ?? "você"}. Qualquer dúvida estamos à disposição.`;
     window.open(whatsappLink(tel, msg), "_blank");
+  }
+
+  async function handleGerarMensalidade() {
+    setGerandoMensalidade(true);
+    try {
+      const r = await gerarMensalidadeContrato(contrato, { primeira: false });
+      if (r.created) toast.success(`Mensalidade ${r.mes} gerada`);
+      else if (r.reason === "ja_existe") toast.info(`Mensalidade ${r.mes} já existe`);
+      else if (r.reason === "not_mensal") toast.error("Disponível só para Pacote Mensal");
+      else if (r.reason === "sem_dia_vencimento") toast.error("Contrato sem dia de vencimento");
+      else if (r.reason === "valor_zero") toast.error("Valor mensal inválido");
+      onChanged?.();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro ao gerar mensalidade");
+    } finally {
+      setGerandoMensalidade(false);
+    }
   }
 
   async function handleDownloadPdf() {
@@ -441,6 +460,21 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
           <Button onClick={handleWhatsapp} className="bg-green-600 text-white hover:bg-green-700">
             <MessageCircle className="mr-2 h-4 w-4" /> Enviar por WhatsApp
           </Button>
+          {contrato.modalidade === "pacote_mensal" && contrato.status === "ativo" && (
+            <Button
+              variant="outline"
+              onClick={handleGerarMensalidade}
+              disabled={gerandoMensalidade}
+              className="border-amber-300 text-amber-800 hover:bg-amber-50"
+            >
+              {gerandoMensalidade ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <DollarSign className="mr-2 h-4 w-4" />
+              )}
+              Gerar próxima mensalidade
+            </Button>
+          )}
         </div>
 
         <div className="rounded-lg border border-amber-100 bg-amber-50/40 p-4 print:hidden">

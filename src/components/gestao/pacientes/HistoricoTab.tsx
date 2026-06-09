@@ -54,6 +54,8 @@ const ICON_MAP: Record<HistoricoTipo, typeof Calendar> = {
   contrato_encerrado: FileText,
   evolucao_registrada: FileText,
   lancamento_pago: DollarSign,
+  lancamento_gerado: DollarSign,
+  lancamento_status_alterado: DollarSign,
   comentario: MessageCircle,
 };
 

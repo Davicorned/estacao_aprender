@@ -1,97 +1,68 @@
-## Duas adições
+## Objetivo
 
-### 1. KPI "Pacientes remarcados" no Dashboard
+Reduzir trabalho manual no Financeiro:
+1. Quando um contrato **pacote_mensal** for ativado, criar automaticamente o **primeiro lançamento pendente** da mensalidade. Próximas mensalidades continuam manuais (botão).
+2. Avulso continua como hoje (1 lançamento por sessão atendida).
+3. Permitir **editar** o lançamento (valor, vencimento, descrição) e **alterar o status** (pendente / pago / cancelado), além das ações que já existem.
 
-Mostrar, no período selecionado, **quantos pacientes distintos tiveram pelo menos um agendamento remarcado** (data ou horário alterado pelo usuário — não confundir com mudança de status).
+## 1. Geração automática a partir do contrato
 
-**Como detectar remarcação:**
-- Toda vez que `updateAgendamento` alterar `data`, `hora_inicio` ou `hora_fim`, registramos um evento no histórico (ver item 2).
-- O KPI conta pacientes distintos com pelo menos 1 evento `tipo='remarcacao'` no período.
+**Quando dispara**
+- `createContrato` com `status = "ativo"` e `modalidade = "pacote_mensal"`.
+- `updateContrato` quando `status` muda para `"ativo"` (ex.: vinha de `rascunho`).
 
-**Novo card no `DashboardPage`:** "Pacientes remarcados" com número + comparativo vs período anterior, ao lado dos outros KPIs.
+**O que cria**
+- 1 lançamento `pendente`, tipo `receita`, vinculado ao `contrato_id` e `paciente_id`.
+- `valor_centavos` = `calcularValorMensal(aulas_por_mes, valor_com_desconto_centavos, forma_pagamento)`.
+- `data_vencimento` = próximo dia `dia_vencimento` ≥ `data_inicio` (no mês de `data_inicio`, ou no mês seguinte se já passou).
+- `descricao` = `"Mensalidade {Serviço} — {mês/ano}"`.
+- `forma_pagamento` = a do contrato.
+- Idempotente: antes de criar, checa se já existe lançamento com mesmo `contrato_id` e mesmo mês de vencimento.
 
-### 2. Histórico do paciente (timeline)
+**Botão "Gerar próxima mensalidade"** (no `ContratoView` e/ou em cada linha de contrato ativo)
+- Cria a próxima mensalidade no mês seguinte ao último lançamento já gerado para aquele contrato. Mesma idempotência.
 
-Nova aba **"Histórico"** dentro da página do paciente (`/gestao/pacientes/$id`), inspirada no print enviado: linha do tempo com ícone + descrição + autor + timestamp.
+**Registra evento no histórico** do paciente: `lancamento_gerado` ("Mensalidade de {mês} gerada — {valor}").
 
-**Eventos registrados automaticamente:**
-- `paciente_criado` — quando o cadastro é criado
-- `paciente_editado` — quando dados pessoais mudam (campos relevantes)
-- `agendamento_criado` — novo agendamento (mostra data/hora/profissional/serviço)
-- `agendamento_remarcado` — data ou hora alterada (mostra "de X para Y")
-- `agendamento_cancelado` — com motivo se houver
-- `agendamento_atendido` / `faltou`
-- `contrato_criado` / `contrato_finalizado`
-- `evolucao_registrada` — nova evolução clínica
-- `lancamento_pago` — pagamento registrado
-- `comentario` — botão "+ Comentário" no topo, autor = usuário logado
+## 2. Edição e mudança de status no Financeiro
 
-**Filtro:** "Todos" / "Agendamentos" / "Financeiro" / "Clínico" / "Comentários".
+**Reaproveitar `LancamentoFormDialog`** em modo edição:
+- Recebe `lancamento` opcional; se vier, faz `update` em vez de `insert`.
+- Permite editar `descricao`, `valor_centavos`, `data_vencimento`, `tipo`, `paciente_id`, `forma_pagamento`.
 
-### Detalhes técnicos
+**Novo menu de ações por linha** na tabela `FinanceiroPage` (substitui o lápis-único hoje só lixeira):
+- `DropdownMenu` com:
+  - Editar (abre o form em modo edição)
+  - Marcar como pago (já existe; passa a viver no menu também)
+  - Marcar como pendente (`status=pendente`, limpa `data_pagamento`/`forma_pagamento`)
+  - Cancelar lançamento (`status=cancelado`)
+  - Excluir (lixeira atual)
+- Visível também para lançamentos já `pago`/`cancelado` (para reabrir como `pendente`).
 
-**Nova tabela `paciente_historico`** (migration nova):
-```
-id uuid pk
-paciente_id uuid → pacientes(id) on delete cascade
-tipo text  -- 'agendamento_criado'|'agendamento_remarcado'|... 'comentario'
-descricao text  -- texto livre/renderizado
-metadata jsonb  -- {de:{data,hora}, para:{data,hora}, agendamento_id, etc}
-autor_id uuid null (auth.users)
-autor_nome text null  -- snapshot
-created_at timestamptz default now()
+**Backend (`src/lib/financeiro.ts`)**
+- `updateLancamento(id, patch)` — update genérico.
+- `alterarStatusLancamento(id, novoStatus)` — encapsula transições (limpa `data_pagamento` quando volta a pendente; registra evento no histórico).
 
-index (paciente_id, created_at desc)
-```
-GRANTs + RLS: `authenticated` SELECT/INSERT, service_role ALL.
+## 3. Histórico
+Eventos novos no `paciente_historico`:
+- `lancamento_gerado` (ao criar automático ou via botão).
+- `lancamento_status_alterado` (quando muda manualmente — não duplicar com `lancamento_pago` que já existe).
 
-**Helper `src/lib/historico.ts`:**
-- `listHistorico(pacienteId, filtro?)`
-- `registrarEvento(pacienteId, tipo, descricao, metadata?)` — pega `auth.user` e nome do profissional.
-- `registrarComentario(pacienteId, texto)`
+## Fora de escopo
+- Geração em lote retroativa de mensalidades antigas.
+- Cron/agendamento automático mês a mês (decidimos manual).
+- Mudanças no fluxo de avulso (continua via `sincronizarLancamentoDeAgendamento` no atendimento).
 
-**Instrumentação (chamadas a `registrarEvento`):**
-- `src/lib/agendamentos.ts`
-  - `createAgendamento` / `createAgendamentosLote` → `agendamento_criado`
-  - `updateAgendamento` → se `data/hora_inicio/hora_fim` mudaram → `agendamento_remarcado` com `{de, para}`
-  - `updateStatus` → `agendamento_cancelado` / `_atendido` / `_faltou`
-- `src/lib/pacientes.ts` → `createPaciente` / `updatePaciente`
-- `src/lib/contratos.ts` → criação/finalização
-- `src/lib/evolucoes.ts` → nova evolução
-- `src/lib/financeiro.ts` → registrar pagamento
+## Detalhes técnicos
 
-Para detectar diff em `updateAgendamento`, ler o registro anterior antes do update (já temos `getAgendamento`).
+**Arquivos editados**
+- `src/lib/contratos.ts` — após `createContrato`/`updateContrato`, se virou `ativo` e é `pacote_mensal`, chama `gerarMensalidadeContrato(contrato, { primeira: true })`.
+- `src/lib/financeiro.ts`:
+  - `gerarMensalidadeContrato(contrato, opts)` — calcula vencimento, idempotência, insert.
+  - `updateLancamento(id, patch)`.
+  - `alterarStatusLancamento(id, novoStatus)`.
+- `src/components/gestao/financeiro/LancamentoFormDialog.tsx` — aceitar `lancamento?: Lancamento` para edição.
+- `src/components/gestao/financeiro/FinanceiroPage.tsx` — substituir botão lixeira/registrar pagamento isolados por `DropdownMenu` com todas as ações; estado para abrir o form em modo edição.
+- `src/components/gestao/contratos/ContratoView.tsx` — botão "Gerar próxima mensalidade" para contratos `pacote_mensal` ativos.
 
-**UI — novo componente `HistoricoTab.tsx`** (em `src/components/gestao/pacientes/` ou `prontuario/`):
-- Timeline vertical com linha + bolinhas coloridas por categoria (verde=agendamento, azul=clínico, amarelo=financeiro, cinza=comentário).
-- Cards com ícone, descrição, autor + timestamp.
-- Botão "+ Comentário" abre dialog simples (textarea + salvar).
-- Filtro "Todos ▾" no topo direito.
-- Adicionar como nova aba em `ProntuarioTab` ou na página do paciente.
-
-**Dashboard — `src/lib/dashboard.ts`:**
-- Nova função `pacientesRemarcadosNoPeriodo(range, profissionalId?)`: conta `count distinct paciente_id` em `paciente_historico` onde `tipo='agendamento_remarcado'` e `created_at` no range. Se `profissionalId` fornecido, faz join com agendamentos via `metadata->>agendamento_id`.
-- Incluir no `fetchKpis` retornando `pacientes_remarcados` + variação.
-- `DashboardPage`: novo `StatCard` "Pacientes remarcados" com ícone `RefreshCw`.
-
-### Arquivos a criar/editar
-
-**Criar:**
-- `supabase/migrations/20260611100000_paciente_historico.sql`
-- `src/lib/historico.ts`
-- `src/components/gestao/pacientes/HistoricoTab.tsx`
-- `src/components/gestao/pacientes/ComentarioDialog.tsx`
-
-**Editar:**
-- `src/lib/agendamentos.ts` (instrumentar create/update/status)
-- `src/lib/pacientes.ts` (create/update)
-- `src/lib/contratos.ts`, `src/lib/evolucoes.ts`, `src/lib/financeiro.ts`
-- `src/lib/dashboard.ts` (KPI remarcados)
-- `src/components/gestao/dashboard/DashboardPage.tsx` (novo card)
-- `src/components/gestao/pacientes/PacienteForm.tsx` ou `prontuario/ProntuarioTab.tsx` (nova aba "Histórico")
-
-### Fora do escopo
-
-- Não vamos retroagir histórico para agendamentos antigos (só registra do momento da implementação em diante).
-- Sem edição/exclusão de comentários nesta versão.
-- Sem export/PDF do histórico.
+**Sem migração de schema** — usa colunas já existentes em `lancamentos_financeiros`.

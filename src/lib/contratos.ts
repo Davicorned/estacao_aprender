@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/configuracoes";
 import { registrarEvento } from "@/lib/historico";
+import { gerarMensalidadeContrato } from "@/lib/financeiro";
 
 export type ContratoStatus = "rascunho" | "ativo" | "encerrado" | "cancelado";
 export type Frequencia = "semanal" | "quinzenal" | "mensal" | "livre";
@@ -391,10 +392,22 @@ export async function createContrato(input: ContratoInput): Promise<Contrato> {
     `Contrato criado — ${formatBRL((data as Contrato).valor_centavos)}`,
     { contrato_id: (data as Contrato).id },
   );
+  if ((data as Contrato).status === "ativo" && (data as Contrato).modalidade === "pacote_mensal") {
+    try {
+      await gerarMensalidadeContrato(data as Contrato, { primeira: true });
+    } catch (e) {
+      console.error("gerarMensalidadeContrato (create)", e);
+    }
+  }
   return data as Contrato;
 }
 
 export async function updateContrato(id: string, patch: Partial<ContratoInput>): Promise<Contrato> {
+  const { data: before } = await supabase
+    .from("contratos")
+    .select("status")
+    .eq("id", id)
+    .maybeSingle();
   const { data, error } = await supabase
     .from("contratos")
     .update({ ...patch, updated_at: new Date().toISOString() })
@@ -409,6 +422,15 @@ export async function updateContrato(id: string, patch: Partial<ContratoInput>):
       patch.status === "cancelado" ? "Contrato cancelado" : "Contrato encerrado",
       { contrato_id: id, status: patch.status },
     );
+  }
+  const becameActive =
+    (data as Contrato).status === "ativo" && (before as any)?.status !== "ativo";
+  if (becameActive && (data as Contrato).modalidade === "pacote_mensal") {
+    try {
+      await gerarMensalidadeContrato(data as Contrato, { primeira: true });
+    } catch (e) {
+      console.error("gerarMensalidadeContrato (update)", e);
+    }
   }
   return data as Contrato;
 }
