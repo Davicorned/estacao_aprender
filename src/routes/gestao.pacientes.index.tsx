@@ -31,6 +31,8 @@ import {
 } from "@/components/ui/pagination";
 import {
   formatTelefoneDisplay,
+  formatRelativoData,
+  getPacientesAgendamentoStats,
   listPacientes,
   PAGE_SIZE,
   type Paciente,
@@ -83,6 +85,13 @@ function PacientesListPage() {
   const total = data?.count ?? 0;
   const pacientes = data?.data ?? [];
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  const ids = useMemo(() => pacientes.map((p) => p.id), [pacientes]);
+  const { data: stats } = useQuery({
+    queryKey: ["pacientes-agendamento-stats", ids],
+    queryFn: () => getPacientesAgendamentoStats(ids),
+    enabled: ids.length > 0,
+  });
 
   return (
     <GestaoShell title="Pacientes">
@@ -179,7 +188,9 @@ function PacientesListPage() {
                   </TableCell>
                 </TableRow>
               ) : (
-                pacientes.map((p) => <PacienteRow key={p.id} paciente={p} />)
+                pacientes.map((p) => (
+                  <PacienteRow key={p.id} paciente={p} stats={stats?.[p.id]} />
+                ))
               )}
             </TableBody>
           </Table>
@@ -192,7 +203,9 @@ function PacientesListPage() {
               Nenhum paciente encontrado.
             </div>
           ) : (
-            pacientes.map((p) => <PacienteCard key={p.id} paciente={p} />)
+            pacientes.map((p) => (
+              <PacienteCard key={p.id} paciente={p} stats={stats?.[p.id]} />
+            ))
           )}
         </div>
 
