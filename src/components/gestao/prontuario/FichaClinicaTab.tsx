@@ -1,12 +1,17 @@
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Loader2, Plus, Printer, Trash2 } from "lucide-react";
+import { ChevronDown, Loader2, Plus, Printer, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import {
   blocosPreenchidos,
   fichaVazia,
@@ -19,10 +24,30 @@ import {
 import { fetchServicos } from "@/lib/configuracoes";
 import { calcularIdade, formatTelefoneDisplay, type Paciente } from "@/lib/pacientes";
 
+type BlocoKey = "atendimento" | "saude" | "medicos" | "escola" | "contato";
+const ALL_BLOCKS: BlocoKey[] = ["atendimento", "saude", "medicos", "escola", "contato"];
+
 export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
   const [ficha, setFicha] = useState<FichaClinica>(() => fichaVazia(paciente.id));
   const [saving, setSaving] = useState(false);
   const [dirty, setDirty] = useState(false);
+  const [openBlocks, setOpenBlocks] = useState<Record<BlocoKey, boolean>>({
+    atendimento: true,
+    saude: true,
+    medicos: false,
+    escola: false,
+    contato: false,
+  });
+
+  function toggleBlock(k: BlocoKey, v: boolean) {
+    setOpenBlocks((s) => ({ ...s, [k]: v }));
+  }
+  function expandAll() {
+    setOpenBlocks(Object.fromEntries(ALL_BLOCKS.map((k) => [k, true])) as Record<BlocoKey, boolean>);
+  }
+  function collapseAll() {
+    setOpenBlocks(Object.fromEntries(ALL_BLOCKS.map((k) => [k, false])) as Record<BlocoKey, boolean>);
+  }
 
   const fichaQ = useQuery({
     queryKey: ["ficha-clinica", paciente.id],
@@ -112,6 +137,33 @@ export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
   const { total, preenchidos } = blocosPreenchidos(ficha);
   const servicos = servicosQ.data ?? [];
 
+  const sumAtendimento = (() => {
+    const partes: string[] = [];
+    if (ficha.especialidades_interesse.length)
+      partes.push(`${ficha.especialidades_interesse.length} especialidade(s)`);
+    if (ficha.queixa_inicial) partes.push(ficha.queixa_inicial.split("\n")[0].slice(0, 50));
+    return partes.join(" · ") || "—";
+  })();
+  const sumSaude = (() => {
+    const partes: string[] = [];
+    partes.push(ficha.limitacoes.length ? ficha.limitacoes.join(", ") : "Sem limitações");
+    const flags = [
+      ficha.alergias && "alergias",
+      ficha.medicacao && "medicação",
+      ficha.diagnosticos && "diagnósticos",
+    ].filter(Boolean) as string[];
+    if (flags.length) partes.push(flags.join(" · "));
+    return partes.join(" · ");
+  })();
+  const sumMedicos = ficha.medicos.length
+    ? `${ficha.medicos.length} profissional(is)`
+    : "—";
+  const sumEscola =
+    [ficha.escola_turma, ficha.escola_professor].filter(Boolean).join(" · ") || "—";
+  const sumContato = ficha.contato2_nome
+    ? `${ficha.contato2_nome}${ficha.contato2_parentesco ? ` · ${ficha.contato2_parentesco}` : ""}`
+    : "—";
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -121,7 +173,13 @@ export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
             {preenchidos} de {total} blocos preenchidos
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="ghost" size="sm" onClick={expandAll}>
+            Expandir tudo
+          </Button>
+          <Button type="button" variant="ghost" size="sm" onClick={collapseAll}>
+            Recolher tudo
+          </Button>
           <Button type="button" variant="outline" onClick={handlePrint}>
             <Printer className="mr-2 h-4 w-4" />
             Imprimir ficha
@@ -139,7 +197,12 @@ export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
       </div>
 
       {/* A - Atendimento */}
-      <Bloco titulo="Atendimento na clínica">
+      <Bloco
+        titulo="Atendimento na clínica"
+        open={openBlocks.atendimento}
+        onOpenChange={(v) => toggleBlock("atendimento", v)}
+        summary={sumAtendimento}
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Campo label="Data de abertura">
             <Input
@@ -184,7 +247,12 @@ export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
       </Bloco>
 
       {/* B - Saúde */}
-      <Bloco titulo="Saúde">
+      <Bloco
+        titulo="Saúde"
+        open={openBlocks.saude}
+        onOpenChange={(v) => toggleBlock("saude", v)}
+        summary={sumSaude}
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="md:col-span-2">
             <Label className="text-sm text-gray-700">Limitações</Label>
@@ -237,7 +305,12 @@ export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
       </Bloco>
 
       {/* C - Médicos */}
-      <Bloco titulo="Médicos e profissionais externos">
+      <Bloco
+        titulo="Médicos e profissionais externos"
+        open={openBlocks.medicos}
+        onOpenChange={(v) => toggleBlock("medicos", v)}
+        summary={sumMedicos}
+      >
         <div className="space-y-3">
           {ficha.medicos.length === 0 && (
             <p className="text-sm text-gray-500">Nenhum profissional adicionado.</p>
@@ -280,7 +353,12 @@ export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
       </Bloco>
 
       {/* D - Escola */}
-      <Bloco titulo="Escola (detalhes)">
+      <Bloco
+        titulo="Escola (detalhes)"
+        open={openBlocks.escola}
+        onOpenChange={(v) => toggleBlock("escola", v)}
+        summary={sumEscola}
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Campo label="Telefone da escola">
             <Input
@@ -317,7 +395,12 @@ export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
       </Bloco>
 
       {/* E - Outro contato */}
-      <Bloco titulo="Contato familiar adicional">
+      <Bloco
+        titulo="Contato familiar adicional"
+        open={openBlocks.contato}
+        onOpenChange={(v) => toggleBlock("contato", v)}
+        summary={sumContato}
+      >
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <Campo label="Nome">
             <Input
@@ -362,14 +445,40 @@ export function FichaClinicaTab({ paciente }: { paciente: Paciente }) {
   );
 }
 
-function Bloco({ titulo, children }: { titulo: string; children: React.ReactNode }) {
+function Bloco({
+  titulo,
+  children,
+  open,
+  onOpenChange,
+  summary,
+}: {
+  titulo: string;
+  children: React.ReactNode;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  summary?: string;
+}) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-5">
-      <h4 className="mb-4 text-sm font-semibold uppercase tracking-wider text-[#7A3B14]">
-        {titulo}
-      </h4>
-      {children}
-    </div>
+    <Collapsible open={open} onOpenChange={onOpenChange}>
+      <div className="rounded-lg border border-gray-200 bg-white">
+        <CollapsibleTrigger className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left hover:bg-gray-50">
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <h4 className="text-sm font-semibold uppercase tracking-wider text-[#7A3B14]">
+              {titulo}
+            </h4>
+            {!open && summary && (
+              <span className="truncate text-xs text-gray-500">— {summary}</span>
+            )}
+          </div>
+          <ChevronDown
+            className={`h-4 w-4 shrink-0 text-gray-500 transition-transform ${open ? "rotate-180" : ""}`}
+          />
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <div className="border-t border-gray-100 p-5">{children}</div>
+        </CollapsibleContent>
+      </div>
+    </Collapsible>
   );
 }
 

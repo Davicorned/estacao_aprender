@@ -1,40 +1,44 @@
-## Problema
-Na aba **Dados Pessoais** (edição do paciente), todas as 8 seções (Foto, Dados pessoais, Responsável, 2º responsável, Escolaridade, Telefones, Endereço, Outros) ficam empilhadas num scroll longo — pesa visualmente e exige rolar muito para chegar nos campos menos usados.
+## Objetivo
+Reorganizar a aba **Ficha Clínica** (`FichaClinicaTab.tsx`) com o mesmo padrão visual usado na aba "Dados Pessoais": blocos colapsáveis, com resumos quando recolhidos e ações globais de expandir/recolher.
 
-## Solução proposta — Cards retráteis (accordion)
+## Mudanças (apenas UI, sem alterar dados/validação/BD)
 
-Manter tudo numa única tela (sem criar sub-abas), mas transformar cada seção num **card colapsável** com header clicável, ícone à esquerda e chevron à direita. Igual ao padrão que já usamos na **Ficha Clínica**, garantindo consistência visual.
+### 1. Substituir `Bloco` por `CollapsibleBloco`
+Usa `@/components/ui/collapsible` (mesmo componente já usado em PacienteForm).  
+Cabeçalho clicável com: título + chevron + resumo curto à direita quando recolhido.
 
-### Comportamento
-- **Abertos por padrão** (sempre que entrar): **Dados pessoais** + **Telefones** → o essencial em mãos.
-- **Fechados por padrão**: Responsável, 2º responsável, Escolaridade, Endereço, Outros.
-- Header mostra **resumo do conteúdo** quando fechado (ex.: "Responsável: Maria — Mãe" ou "—" se vazio). Ajuda a saber o que está preenchido sem abrir.
-- Botões **"Expandir tudo" / "Recolher tudo"** no topo da aba.
-- A **foto + nome + idade + status (ativo/inativo)** fica fixa num cabeçalho acima dos cards, sempre visível — funciona como identidade do paciente.
-
-### Layout dos cards
+### 2. Estado de abertura por bloco
 ```
-┌─ 👤  Dados pessoais ──────────── [▼] ┐
-│ Nome | Nasc. | Sexo | CPF | RG | Email │
-└──────────────────────────────────────┘
-
-┌─ 📞  Telefones ───────────────── [▼] ┐
-│ Celular | Residencial                  │
-└──────────────────────────────────────┘
-
-┌─ 👨‍👩‍👧  Responsável  · Maria — Mãe ─ [▶] ┐  ← fechado, com resumo
-└──────────────────────────────────────┘
+openBlocks: {
+  atendimento: true,   // aberto por padrão
+  saude: true,         // aberto por padrão
+  medicos: false,
+  escola: false,
+  contato: false,
+}
 ```
 
-## Mudanças
+### 3. Resumos dinâmicos (quando recolhido)
+- **Atendimento**: nº de especialidades selecionadas + 1ª linha da queixa (ex.: "3 especialidades · Dificuldade de fala…")
+- **Saúde**: limitações marcadas, ou "Sem limitações" + indicador "Alergias/Medicação" se preenchidos
+- **Médicos**: "N profissional(is)" ou "—"
+- **Escola**: turma · professor(a) (ex.: "5º ano · Profª Ana")
+- **Contato familiar**: nome + parentesco
 
-### Arquivo único: `src/components/gestao/pacientes/PacienteForm.tsx`
-1. Trocar o helper local `Section` por um novo `CollapsibleSection` (usa `@/components/ui/collapsible` que já existe no projeto) com: ícone, título, resumo opcional, estado aberto, chevron animado.
-2. Cabeçalho do paciente acima dos cards: avatar grande + nome + idade + switch "Paciente ativo" (movido pra cá, sai da seção "Outros").
-3. Barra de ações no topo da aba: **Expandir tudo · Recolher tudo**.
-4. Renderizar as 7 seções como `CollapsibleSection` com `defaultOpen` em Dados pessoais e Telefones; demais começam fechadas.
-5. Cada seção recebe uma função `summary()` que retorna o resumo curto a mostrar quando fechada (ex.: telefone formatado, nome+parentesco do responsável, "CEP — Cidade/UF" no endereço, "Fundamental II · Colégio Adventista" na escola, etc.).
+### 4. Barra de ações
+Adicionar ao cabeçalho (junto de "Imprimir" / "Salvar"):
+- Botão **Expandir tudo**
+- Botão **Recolher tudo**
 
-### Escopo
-- **Apenas o modo edição** (a aba "Dados Pessoais"). O wizard de cadastro novo continua igual (passos já resolvem o problema lá).
-- **Sem mudança nos dados** salvos, nas validações, ou no banco — é só apresentação.
+### 5. Mantido sem alteração
+- Toda lógica de estado (`useState ficha`, `update`, `toggleArray`, `setMedico`, etc.)
+- Query/mutations (`getFichaClinica`, `upsertFichaClinica`)
+- Função `htmlFicha` (impressão)
+- Contador "X de Y blocos preenchidos"
+- Botão "Salvar ficha" do rodapé
+
+## Arquivos editados
+- `src/components/gestao/prontuario/FichaClinicaTab.tsx` (único arquivo)
+
+## Escopo
+Somente apresentação. Nenhuma alteração em `src/lib/ficha-clinica.ts`, migrations, ou outros componentes.
