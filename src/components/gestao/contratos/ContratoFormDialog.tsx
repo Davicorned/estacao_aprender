@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -94,6 +96,8 @@ export function ContratoFormDialog({
   const [status, setStatus] = useState<ContratoStatus>("rascunho");
   const [termos, setTermos] = useState<string>(TEMPLATE_PADRAO);
   const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState(0);
+  const [maxVisited, setMaxVisited] = useState(0);
 
   // Novos campos do modelo Estação
   const [modalidade, setModalidade] = useState<Modalidade>("pacote_mensal");
@@ -160,6 +164,8 @@ export function ContratoFormDialog({
     setPacienteSearch("");
     setPacienteResults([]);
     setPacienteOpen(false);
+    setStep(0);
+    setMaxVisited(contrato ? 4 : 0);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Atualiza valores com base no serviço quando criando novo
@@ -315,7 +321,12 @@ export function ContratoFormDialog({
           </DialogDescription>
         </DialogHeader>
 
+        {(() => null)()}
+        <Stepper step={step} maxVisited={maxVisited} onJump={(i) => setStep(i)} />
+
         <div className="space-y-4">
+          {step === 0 && (
+          <>
           {/* Paciente */}
           <div>
             <Label>Paciente *</Label>
@@ -392,7 +403,11 @@ export function ContratoFormDialog({
               </Select>
             </div>
           </div>
+          </>
+          )}
 
+          {step === 1 && (
+          <>
           {/* Dados do responsável */}
           <fieldset className="rounded-md border border-amber-100 bg-amber-50/30 p-3">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-amber-800">
@@ -417,7 +432,11 @@ export function ContratoFormDialog({
               </div>
             </div>
           </fieldset>
+          </>
+          )}
 
+          {step === 2 && (
+          <>
           {/* Modalidade e pagamento */}
           <fieldset className="rounded-md border border-amber-100 bg-amber-50/30 p-3">
             <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-amber-800">
@@ -471,7 +490,11 @@ export function ContratoFormDialog({
               )}
             </div>
           </fieldset>
+          </>
+          )}
 
+          {step === 3 && (
+          <>
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
               <Label>Qtd de sessões</Label>
@@ -548,7 +571,24 @@ export function ContratoFormDialog({
               </div>
             </div>
           </div>
+          </>
+          )}
 
+          {step === 4 && (
+          <>
+          <ResumoContrato
+            paciente={paciente?.nome}
+            profissional={profissionais.find((p) => p.id === profId)?.nome}
+            servico={servicos.find((s) => s.id === servId)?.nome}
+            respNome={respNome}
+            respCpf={respCpf}
+            modalidade={MODALIDADE_LABEL[modalidade]}
+            valorMensal={formatBRL(valorMensalPreview)}
+            formaPagamento={FORMA_PAGAMENTO_LABEL[formaPagamento]}
+            dataInicio={dataInicio}
+            dataTermino={dataTermino}
+            status={STATUS_LABEL[status]}
+          />
           <div>
             <div className="mb-1 flex items-center justify-between">
               <Label>Termos do contrato</Label>
@@ -569,22 +609,169 @@ export function ContratoFormDialog({
               className="font-mono text-xs"
             />
           </div>
+          </>
+          )}
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSubmit}
-            disabled={saving}
-            className="bg-gradient-to-r from-[#D67F43] to-[#E89B6D] text-white hover:opacity-90"
-          >
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isEdit ? "Salvar" : "Gerar contrato"}
-          </Button>
+        <DialogFooter className="flex-col gap-2 sm:flex-row sm:justify-between">
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={saving}>
+              Cancelar
+            </Button>
+            {step > 0 && (
+              <Button variant="outline" onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={saving}>
+                <ChevronLeft className="mr-1 h-4 w-4" /> Voltar
+              </Button>
+            )}
+          </div>
+          <div className="flex gap-2">
+            {step < 4 ? (
+              <Button
+                onClick={() => {
+                  const err = validateStep(step, { paciente, profId, servId, respNome, respCpf, dataInicio });
+                  if (err) return toast.error(err);
+                  const next = step + 1;
+                  setStep(next);
+                  setMaxVisited((m) => Math.max(m, next));
+                }}
+                className="bg-gradient-to-r from-[#D67F43] to-[#E89B6D] text-white hover:opacity-90"
+              >
+                Próximo <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            ) : (
+              <Button
+                onClick={handleSubmit}
+                disabled={saving}
+                className="bg-gradient-to-r from-[#D67F43] to-[#E89B6D] text-white hover:opacity-90"
+              >
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isEdit ? "Salvar" : "Gerar contrato"}
+              </Button>
+            )}
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+const STEP_TITLES = [
+  "Paciente & Serviço",
+  "Responsável",
+  "Pagamento",
+  "Vigência",
+  "Revisão",
+];
+
+function validateStep(
+  step: number,
+  v: { paciente: any; profId: string; servId: string; respNome: string; respCpf: string; dataInicio: string },
+): string | null {
+  if (step === 0) {
+    if (!v.paciente) return "Selecione um paciente";
+    if (!v.profId) return "Selecione um profissional";
+    if (!v.servId) return "Selecione um serviço";
+  }
+  if (step === 1) {
+    if (!v.respNome.trim()) return "Informe o nome do responsável";
+    if (!v.respCpf.trim()) return "Informe o CPF do responsável";
+  }
+  if (step === 3) {
+    if (!v.dataInicio) return "Informe a data de início";
+  }
+  return null;
+}
+
+function Stepper({
+  step,
+  maxVisited,
+  onJump,
+}: {
+  step: number;
+  maxVisited: number;
+  onJump: (i: number) => void;
+}) {
+  return (
+    <div className="mb-2 space-y-2">
+      <div className="flex items-center justify-between gap-1 overflow-x-auto">
+        {STEP_TITLES.map((title, i) => {
+          const isDone = i < step;
+          const isCurrent = i === step;
+          const isClickable = i <= maxVisited;
+          return (
+            <button
+              key={title}
+              type="button"
+              disabled={!isClickable}
+              onClick={() => isClickable && onJump(i)}
+              className={cn(
+                "flex flex-1 items-center gap-2 rounded-md px-2 py-1 text-xs transition",
+                isClickable && "hover:bg-amber-50",
+                !isClickable && "opacity-50 cursor-not-allowed",
+              )}
+            >
+              <span
+                className={cn(
+                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full border text-[11px] font-semibold",
+                  isCurrent && "border-[#D67F43] bg-[#D67F43] text-white",
+                  isDone && "border-[#D67F43] bg-amber-50 text-[#D67F43]",
+                  !isCurrent && !isDone && "border-gray-300 text-gray-500",
+                )}
+              >
+                {isDone ? <Check className="h-3 w-3" /> : i + 1}
+              </span>
+              <span
+                className={cn(
+                  "hidden truncate sm:inline",
+                  isCurrent ? "font-semibold text-amber-800" : "text-gray-600",
+                )}
+              >
+                {title}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <Progress value={((step + 1) / STEP_TITLES.length) * 100} className="h-1" />
+    </div>
+  );
+}
+
+function ResumoContrato(props: {
+  paciente?: string;
+  profissional?: string;
+  servico?: string;
+  respNome: string;
+  respCpf: string;
+  modalidade: string;
+  valorMensal: string;
+  formaPagamento: string;
+  dataInicio: string;
+  dataTermino: string;
+  status: string;
+}) {
+  const row = (k: string, v: string | undefined) => (
+    <div className="flex justify-between gap-3 py-1 text-sm">
+      <span className="text-gray-500">{k}</span>
+      <span className="font-medium text-gray-800 text-right">{v || "—"}</span>
+    </div>
+  );
+  return (
+    <div className="rounded-md border border-amber-100 bg-amber-50/30 p-3">
+      <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-amber-800">
+        Resumo
+      </div>
+      <div className="divide-y divide-amber-100/60">
+        {row("Paciente", props.paciente)}
+        {row("Profissional", props.profissional)}
+        {row("Serviço", props.servico)}
+        {row("Responsável", `${props.respNome}${props.respCpf ? ` · ${props.respCpf}` : ""}`)}
+        {row("Modalidade", props.modalidade)}
+        {row("Valor mensal", props.valorMensal)}
+        {row("Pagamento", props.formaPagamento)}
+        {row("Início → Término", `${props.dataInicio || "—"} → ${props.dataTermino || "—"}`)}
+        {row("Status", props.status)}
+      </div>
+    </div>
   );
 }
