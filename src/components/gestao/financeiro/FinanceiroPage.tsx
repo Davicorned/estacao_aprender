@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, DollarSign, AlertTriangle, Clock, Activity, CheckCircle2, Trash2 } from "lucide-react";
+import { Plus, DollarSign, AlertTriangle, Clock, Activity, CheckCircle2, MoreHorizontal, Pencil, RotateCcw, XCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -12,6 +12,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  alterarStatusLancamento,
   deleteLancamento,
   FORMA_LABEL,
   formatBRL,
@@ -77,6 +85,7 @@ export function FinanceiroPage() {
   const [loading, setLoading] = useState(true);
 
   const [formOpen, setFormOpen] = useState(false);
+  const [editando, setEditando] = useState<LancamentoComJoin | null>(null);
   const [payOpen, setPayOpen] = useState(false);
   const [selecionados, setSelecionados] = useState<Set<string>>(new Set());
 
@@ -125,6 +134,16 @@ export function FinanceiroPage() {
     try {
       await deleteLancamento(id);
       toast.success("Lançamento excluído");
+      carregar();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro");
+    }
+  }
+
+  async function handleAlterarStatus(id: string, novo: LancamentoStatus) {
+    try {
+      await alterarStatusLancamento(id, novo);
+      toast.success(`Marcado como ${STATUS_LABEL[novo]}`);
       carregar();
     } catch (e: any) {
       toast.error(e.message ?? "Erro");
@@ -204,7 +223,7 @@ export function FinanceiroPage() {
             </Button>
           )}
           <Button
-            onClick={() => setFormOpen(true)}
+            onClick={() => { setEditando(null); setFormOpen(true); }}
             className="bg-gradient-to-r from-[#D67F43] to-[#E89B6D] text-white hover:opacity-90"
           >
             <Plus className="mr-2 h-4 w-4" /> Novo Lançamento
@@ -258,27 +277,48 @@ export function FinanceiroPage() {
                       {l.forma_pagamento ? FORMA_LABEL[l.forma_pagamento] : "—"}
                     </td>
                     <td className="px-3 py-2 text-right">
-                      {l.status === "pendente" && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-green-700"
-                          onClick={() => {
-                            setSelecionados(new Set([l.id]));
-                            setPayOpen(true);
-                          }}
-                        >
-                          Registrar pagamento
-                        </Button>
-                      )}
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-red-600"
-                        onClick={() => handleDelete(l.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-56">
+                          <DropdownMenuItem
+                            onClick={() => { setEditando(l); setFormOpen(true); }}
+                          >
+                            <Pencil className="mr-2 h-4 w-4" /> Editar
+                          </DropdownMenuItem>
+                          {l.status === "pendente" && (
+                            <DropdownMenuItem
+                              onClick={() => {
+                                setSelecionados(new Set([l.id]));
+                                setPayOpen(true);
+                              }}
+                            >
+                              <CheckCircle2 className="mr-2 h-4 w-4 text-green-700" />
+                              Marcar como pago
+                            </DropdownMenuItem>
+                          )}
+                          {l.status !== "pendente" && (
+                            <DropdownMenuItem onClick={() => handleAlterarStatus(l.id, "pendente")}>
+                              <RotateCcw className="mr-2 h-4 w-4" /> Marcar como pendente
+                            </DropdownMenuItem>
+                          )}
+                          {l.status !== "cancelado" && (
+                            <DropdownMenuItem onClick={() => handleAlterarStatus(l.id, "cancelado")}>
+                              <XCircle className="mr-2 h-4 w-4" /> Cancelar lançamento
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-red-600 focus:text-red-700"
+                            onClick={() => handleDelete(l.id)}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );
@@ -290,8 +330,9 @@ export function FinanceiroPage() {
 
       <LancamentoFormDialog
         open={formOpen}
-        onOpenChange={setFormOpen}
+        onOpenChange={(v) => { setFormOpen(v); if (!v) setEditando(null); }}
         onSaved={() => carregar()}
+        lancamento={editando}
       />
       <RegistrarPagamentoDialog
         open={payOpen}
