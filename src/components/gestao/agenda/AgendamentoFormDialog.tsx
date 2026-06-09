@@ -561,7 +561,7 @@ export function AgendamentoFormDialog({
                 <div className="space-y-2 pt-1">
                   <Label>Quantidade de sessões</Label>
                   <div className="flex flex-wrap items-center gap-2">
-                    {[4, 8, 12, 16].map((n) => (
+                    {[4, 8].map((n) => (
                       <Button
                         key={n}
                         type="button"
@@ -574,7 +574,7 @@ export function AgendamentoFormDialog({
                             : ""
                         }
                       >
-                        {n}
+                        {n} ({n === 4 ? "1x/sem" : "2x/sem"})
                       </Button>
                     ))}
                     <Input
