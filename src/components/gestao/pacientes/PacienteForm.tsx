@@ -82,6 +82,9 @@ type FormState = {
   responsavel2_celular: string;
   escolaridade_nivel: string;
   escola_nome: string;
+  escola_turma: string;
+  escola_professor: string;
+  escola_coordenacao: string;
 };
 
 function blank(): FormState {
@@ -112,6 +115,9 @@ function blank(): FormState {
     responsavel2_celular: "",
     escolaridade_nivel: "",
     escola_nome: "",
+    escola_turma: "",
+    escola_professor: "",
+    escola_coordenacao: "",
   };
 }
 
@@ -143,6 +149,9 @@ function fromPaciente(p: Paciente): FormState {
     responsavel2_celular: p.responsavel2_celular ? maskCelular(p.responsavel2_celular) : "",
     escolaridade_nivel: p.escolaridade_nivel ?? "",
     escola_nome: p.escola_nome ?? "",
+    escola_turma: p.escola_turma ?? "",
+    escola_professor: p.escola_professor ?? "",
+    escola_coordenacao: p.escola_coordenacao ?? "",
   };
 }
 
@@ -175,7 +184,27 @@ function toInput(s: FormState): PacienteInput {
     responsavel2_celular: s.responsavel2_celular ? s.responsavel2_celular.replace(/\D/g, "") : null,
     escolaridade_nivel: s.escolaridade_nivel || null,
     escola_nome: s.escola_nome.trim() || null,
+    escola_turma: mostraCamposEscola(s.escolaridade_nivel)
+      ? s.escola_turma.trim() || null
+      : null,
+    escola_professor: mostraCamposEscola(s.escolaridade_nivel)
+      ? s.escola_professor.trim() || null
+      : null,
+    escola_coordenacao: mostraCamposEscola(s.escolaridade_nivel)
+      ? s.escola_coordenacao.trim() || null
+      : null,
   };
+}
+
+const NIVEIS_COM_CAMPOS_ESCOLA = new Set<string>([
+  "Educação Infantil",
+  "Fundamental I",
+  "Fundamental II",
+  "Ensino Médio",
+]);
+
+function mostraCamposEscola(nivel: string): boolean {
+  return NIVEIS_COM_CAMPOS_ESCOLA.has(nivel);
 }
 
 export function PacienteForm({ paciente }: { paciente?: Paciente }) {
@@ -441,8 +470,9 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
   );
 
   const sectionEscolaridade = (
-    <Section title="Escolaridade">
-      <Field label="Nível">
+    <div className="space-y-4">
+      <Section title="Escolaridade">
+        <Field label="Nível">
         <Select
           value={form.escolaridade_nivel || undefined}
           onValueChange={(v) => set("escolaridade_nivel", v)}
@@ -458,14 +488,38 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             ))}
           </SelectContent>
         </Select>
-      </Field>
-      <Field label="Nome da escola" className="md:col-span-2">
-        <Input
-          value={form.escola_nome}
-          onChange={(e) => set("escola_nome", e.target.value)}
-        />
-      </Field>
-    </Section>
+        </Field>
+        <Field label="Nome da escola" className="md:col-span-2">
+          <Input
+            value={form.escola_nome}
+            onChange={(e) => set("escola_nome", e.target.value)}
+          />
+        </Field>
+      </Section>
+      {mostraCamposEscola(form.escolaridade_nivel) && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Field label="Turma">
+            <Input
+              value={form.escola_turma}
+              onChange={(e) => set("escola_turma", e.target.value)}
+              placeholder="Ex.: 2º A"
+            />
+          </Field>
+          <Field label="Professor(a)">
+            <Input
+              value={form.escola_professor}
+              onChange={(e) => set("escola_professor", e.target.value)}
+            />
+          </Field>
+          <Field label="Coordenação">
+            <Input
+              value={form.escola_coordenacao}
+              onChange={(e) => set("escola_coordenacao", e.target.value)}
+            />
+          </Field>
+        </div>
+      )}
+    </div>
   );
 
   const sectionTelefones = (
