@@ -100,6 +100,8 @@ export function AgendamentoFormDialog({
   const [observacoes, setObservacoes] = useState("");
 
   // Recorrência
+  const [modoAgendamento, setModoAgendamento] = useState<"unico" | "recorrente">("unico");
+  const [freqManual, setFreqManual] = useState(false);
   const [recTipo, setRecTipo] = useState<RecorrenciaTipo>("nao");
   const [recOcorrencias, setRecOcorrencias] = useState<number>(4);
   const [recSegundoDia, setRecSegundoDia] = useState<number>(4); // padrão Qui
