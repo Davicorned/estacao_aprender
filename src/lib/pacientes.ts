@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { registrarEvento } from "@/lib/historico";
 
 export type Sexo = "M" | "F" | "O";
 
@@ -108,6 +109,7 @@ export async function createPaciente(input: PacienteInput): Promise<Paciente> {
     .select("*")
     .single();
   if (error) throw error;
+  void registrarEvento((data as Paciente).id, "paciente_criado", `Paciente ${(data as Paciente).nome} cadastrado`);
   return data as Paciente;
 }
 
@@ -122,6 +124,10 @@ export async function updatePaciente(
     .select("*")
     .single();
   if (error) throw error;
+  const campos = Object.keys(input).filter((k) => k !== "updated_at");
+  if (campos.length > 0) {
+    void registrarEvento(id, "paciente_editado", `Dados atualizados (${campos.length} ${campos.length === 1 ? "campo" : "campos"})`, { campos });
+  }
   return data as Paciente;
 }
 
