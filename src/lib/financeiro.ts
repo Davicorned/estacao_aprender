@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/configuracoes";
+import { registrarEvento } from "@/lib/historico";
 
 export type LancamentoStatus = "pendente" | "pago" | "atrasado" | "cancelado";
 export type LancamentoTipo = "receita" | "despesa";
@@ -130,6 +131,11 @@ export async function registrarPagamento(
   ids: string[],
   payload: { data_pagamento: string; forma_pagamento: FormaPagamento }
 ): Promise<void> {
+  // Buscar pacientes/valores antes do update para o histórico
+  const { data: prev } = await supabase
+    .from("lancamentos_financeiros")
+    .select("id, paciente_id, valor_centavos, descricao")
+    .in("id", ids);
   const { error } = await supabase
     .from("lancamentos_financeiros")
     .update({
@@ -140,6 +146,15 @@ export async function registrarPagamento(
     })
     .in("id", ids);
   if (error) throw error;
+  for (const l of (prev ?? []) as any[]) {
+    if (!l.paciente_id) continue;
+    void registrarEvento(
+      l.paciente_id,
+      "lancamento_pago",
+      `Pagamento de ${formatBRL(l.valor_centavos)} registrado (${payload.data_pagamento.split("-").reverse().join("/")})`,
+      { lancamento_id: l.id, valor_centavos: l.valor_centavos, forma_pagamento: payload.forma_pagamento },
+    );
+  }
 }
 
 export async function deleteLancamento(id: string): Promise<void> {
