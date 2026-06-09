@@ -234,6 +234,10 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
   const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState("dados");
   const [step, setStep] = useState(0);
+  const [openBlocks, setOpenBlocks] = useState<Record<string, boolean>>({
+    dados: true,
+    telefones: true,
+  });
   const fileRef = useRef<HTMLInputElement>(null);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
