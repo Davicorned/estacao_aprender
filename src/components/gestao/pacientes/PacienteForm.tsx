@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Loader2, Trash2, Upload } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Loader2, Trash2, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +16,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -183,6 +185,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState("dados");
+  const [step, setStep] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
@@ -243,6 +246,8 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     const erro = validar();
     if (erro) {
       toast.error(erro);
+      // Em modo wizard, voltar para o primeiro passo (onde estão os campos obrigatórios)
+      if (!isEdit) setStep(0);
       return;
     }
     try {
@@ -285,6 +290,441 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     }
   }
 
+  // Seções renderizadas individualmente para suportar tanto o modo wizard
+  // (cadastro novo) quanto o modo tabbed (edição).
+  const fotoSection = (
+    <div className="flex items-center gap-4">
+      <PacienteAvatar nome={form.nome || "?"} fotoUrl={form.foto_url || null} size={96} />
+      <div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFotoChange}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={uploading || !isEdit}
+          onClick={() => fileRef.current?.click()}
+        >
+          {uploading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Upload className="mr-2 h-4 w-4" />
+          )}
+          Alterar foto
+        </Button>
+        {!isEdit && (
+          <p className="mt-1 text-xs text-gray-400">
+            Disponível após salvar o paciente.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+
+  const sectionDadosPessoais = (
+    <Section title="Dados pessoais">
+      <Field label="Nome completo *" className="md:col-span-2">
+        <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} maxLength={150} />
+      </Field>
+      <Field label={`Data de nascimento *${idade !== null ? ` — ${idade} anos` : ""}`}>
+        <Input
+          type="date"
+          value={form.data_nascimento}
+          onChange={(e) => set("data_nascimento", e.target.value)}
+        />
+      </Field>
+      <Field label="Sexo *">
+        <RadioGroup
+          value={form.sexo}
+          onValueChange={(v) => set("sexo", v as Sexo)}
+          className="flex gap-4 pt-2"
+        >
+          <label className="flex items-center gap-2 text-sm">
+            <RadioGroupItem value="M" /> Masculino
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <RadioGroupItem value="F" /> Feminino
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <RadioGroupItem value="O" /> Outro
+          </label>
+        </RadioGroup>
+      </Field>
+      <Field label="CPF">
+        <Input
+          value={form.cpf}
+          onChange={(e) => set("cpf", maskCPF(e.target.value))}
+          placeholder="000.000.000-00"
+          inputMode="numeric"
+        />
+      </Field>
+      <Field label="RG">
+        <Input value={form.rg} onChange={(e) => set("rg", e.target.value)} />
+      </Field>
+      <Field label="E-mail" className="md:col-span-2">
+        <Input
+          type="email"
+          value={form.email}
+          onChange={(e) => set("email", e.target.value)}
+        />
+      </Field>
+    </Section>
+  );
+
+  const sectionResponsavel = (
+    <Section title="Responsável (menores de idade)">
+      <Field label="Nome do responsável" className="md:col-span-2">
+        <Input
+          value={form.responsavel_nome}
+          onChange={(e) => set("responsavel_nome", e.target.value)}
+        />
+      </Field>
+      <Field label="Parentesco">
+        <Select
+          value={form.responsavel_parentesco || undefined}
+          onValueChange={(v) => set("responsavel_parentesco", v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecionar" />
+          </SelectTrigger>
+          <SelectContent>
+            {PARENTESCOS.map((p) => (
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+    </Section>
+  );
+
+  const sectionResponsavel2 = (
+    <Section title="Segundo responsável (opcional)">
+      <Field label="Nome">
+        <Input
+          value={form.responsavel2_nome}
+          onChange={(e) => set("responsavel2_nome", e.target.value)}
+        />
+      </Field>
+      <Field label="Parentesco">
+        <Select
+          value={form.responsavel2_parentesco || undefined}
+          onValueChange={(v) => set("responsavel2_parentesco", v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecionar" />
+          </SelectTrigger>
+          <SelectContent>
+            {PARENTESCOS.map((p) => (
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label="Celular">
+        <Input
+          value={form.responsavel2_celular}
+          onChange={(e) => set("responsavel2_celular", maskCelular(e.target.value))}
+          placeholder="(11) 91234-5678"
+          inputMode="numeric"
+        />
+      </Field>
+    </Section>
+  );
+
+  const sectionEscolaridade = (
+    <Section title="Escolaridade">
+      <Field label="Nível">
+        <Select
+          value={form.escolaridade_nivel || undefined}
+          onValueChange={(v) => set("escolaridade_nivel", v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecionar" />
+          </SelectTrigger>
+          <SelectContent>
+            {ESCOLARIDADE_NIVEIS.map((n) => (
+              <SelectItem key={n} value={n}>
+                {n}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label="Nome da escola" className="md:col-span-2">
+        <Input
+          value={form.escola_nome}
+          onChange={(e) => set("escola_nome", e.target.value)}
+        />
+      </Field>
+    </Section>
+  );
+
+  const sectionTelefones = (
+    <Section title="Telefones">
+      <Field label="Celular *">
+        <Input
+          value={form.telefone_celular}
+          onChange={(e) => set("telefone_celular", maskCelular(e.target.value))}
+          placeholder="(11) 91234-5678"
+          inputMode="numeric"
+        />
+      </Field>
+      <Field label="Residencial">
+        <Input
+          value={form.telefone_residencial}
+          onChange={(e) => set("telefone_residencial", maskResidencial(e.target.value))}
+          placeholder="(11) 3456-7890"
+          inputMode="numeric"
+        />
+      </Field>
+    </Section>
+  );
+
+  const sectionEndereco = (
+    <Section title="Endereço">
+      <Field label="CEP">
+        <Input
+          value={form.cep}
+          onChange={(e) => set("cep", maskCEP(e.target.value))}
+          onBlur={handleCepBlur}
+          placeholder="00000-000"
+          inputMode="numeric"
+        />
+      </Field>
+      <Field label="Endereço" className="md:col-span-2">
+        <Input value={form.endereco} onChange={(e) => set("endereco", e.target.value)} />
+      </Field>
+      <Field label="Número">
+        <Input value={form.numero} onChange={(e) => set("numero", e.target.value)} />
+      </Field>
+      <Field label="Complemento" className="md:col-span-2">
+        <Input value={form.complemento} onChange={(e) => set("complemento", e.target.value)} />
+      </Field>
+      <Field label="Bairro">
+        <Input value={form.bairro} onChange={(e) => set("bairro", e.target.value)} />
+      </Field>
+      <Field label="Cidade">
+        <Input value={form.cidade} onChange={(e) => set("cidade", e.target.value)} />
+      </Field>
+      <Field label="Estado">
+        <Select value={form.estado} onValueChange={(v) => set("estado", v)}>
+          <SelectTrigger>
+            <SelectValue placeholder="UF" />
+          </SelectTrigger>
+          <SelectContent>
+            {ESTADOS.map((uf) => (
+              <SelectItem key={uf} value={uf}>
+                {uf}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+    </Section>
+  );
+
+  const sectionOutros = (
+    <Section title="Outros">
+      <Field label="Como conheceu?">
+        <Select
+          value={form.como_conheceu || undefined}
+          onValueChange={(v) => set("como_conheceu", v)}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Selecionar" />
+          </SelectTrigger>
+          <SelectContent>
+            {COMO_CONHECEU.map((p) => (
+              <SelectItem key={p} value={p}>
+                {p}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </Field>
+      <Field label="Observações (visível somente para a equipe)" className="md:col-span-3">
+        <Textarea
+          rows={4}
+          value={form.observacoes}
+          onChange={(e) => set("observacoes", e.target.value)}
+        />
+      </Field>
+      <Field label="Paciente ativo">
+        <div className="pt-2">
+          <Switch checked={form.ativo} onCheckedChange={(v) => set("ativo", v)} />
+        </div>
+      </Field>
+    </Section>
+  );
+
+  // Definição dos passos do wizard (apenas para cadastro novo).
+  const wizardSteps: Array<{
+    title: string;
+    subtitle: string;
+    content: React.ReactNode;
+    validate?: () => string | null;
+  }> = [
+    {
+      title: "Identificação",
+      subtitle: "Quem é o paciente",
+      content: <div className="space-y-8">{sectionDadosPessoais}</div>,
+      validate: () => {
+        if (!form.nome.trim()) return "Informe o nome";
+        if (!form.data_nascimento) return "Informe a data de nascimento";
+        if (!form.sexo) return "Informe o sexo";
+        const cpf = form.cpf.replace(/\D/g, "");
+        if (cpf && cpf.length !== 11) return "CPF inválido";
+        return null;
+      },
+    },
+    {
+      title: "Contato",
+      subtitle: "Telefones e endereço",
+      content: <div className="space-y-8">{sectionTelefones}{sectionEndereco}</div>,
+      validate: () => {
+        if (form.telefone_celular.replace(/\D/g, "").length < 10)
+          return "Informe um celular válido";
+        return null;
+      },
+    },
+    {
+      title: "Responsáveis",
+      subtitle: "Família e contatos próximos",
+      content: <div className="space-y-8">{sectionResponsavel}{sectionResponsavel2}</div>,
+    },
+    {
+      title: "Escola",
+      subtitle: "Dados escolares (opcional)",
+      content: <div className="space-y-8">{sectionEscolaridade}</div>,
+    },
+    {
+      title: "Finalizar",
+      subtitle: "Observações e confirmação",
+      content: <div className="space-y-8">{sectionOutros}</div>,
+    },
+  ];
+
+  const isLastStep = step === wizardSteps.length - 1;
+
+  function goNext() {
+    const current = wizardSteps[step];
+    const erro = current?.validate?.();
+    if (erro) {
+      toast.error(erro);
+      return;
+    }
+    setStep((s) => Math.min(s + 1, wizardSteps.length - 1));
+  }
+
+  function goPrev() {
+    setStep((s) => Math.max(s - 1, 0));
+  }
+
+  if (!isEdit) {
+    const progress = ((step + 1) / wizardSteps.length) * 100;
+    const current = wizardSteps[step];
+    return (
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="rounded-lg border border-gray-200 bg-white p-6">
+          {/* Header do wizard */}
+          <div className="mb-6">
+            <div className="mb-3 flex items-center justify-between text-xs text-gray-500">
+              <span>
+                Passo {step + 1} de {wizardSteps.length}
+              </span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <Progress value={progress} className="h-1.5" />
+            <div className="mt-4 hidden gap-2 sm:flex">
+              {wizardSteps.map((s, i) => {
+                const done = i < step;
+                const active = i === step;
+                return (
+                  <button
+                    key={s.title}
+                    type="button"
+                    onClick={() => i < step && setStep(i)}
+                    disabled={i > step}
+                    className={cn(
+                      "flex flex-1 items-center gap-2 rounded-md border px-3 py-2 text-left text-xs transition-colors",
+                      active && "border-[#D67F43] bg-orange-50 text-[#B85A24]",
+                      done && "border-emerald-200 bg-emerald-50 text-emerald-700 cursor-pointer hover:bg-emerald-100",
+                      !active && !done && "border-gray-200 bg-gray-50 text-gray-400",
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold",
+                        active && "bg-[#D67F43] text-white",
+                        done && "bg-emerald-600 text-white",
+                        !active && !done && "bg-gray-200 text-gray-500",
+                      )}
+                    >
+                      {done ? <Check className="h-3 w-3" /> : i + 1}
+                    </span>
+                    <span className="truncate font-medium">{s.title}</span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="mt-5">
+              <h3 className="text-lg font-semibold text-gray-900">{current.title}</h3>
+              <p className="text-sm text-gray-500">{current.subtitle}</p>
+            </div>
+          </div>
+
+          {/* Conteúdo do passo */}
+          {current.content}
+        </div>
+
+        {/* Navegação */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => navigate({ to: "/gestao/pacientes" })}
+          >
+            Cancelar
+          </Button>
+          <div className="flex gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={goPrev} disabled={step === 0}>
+              <ChevronLeft className="mr-1 h-4 w-4" />
+              Voltar
+            </Button>
+            {isLastStep ? (
+              <Button
+                type="submit"
+                disabled={saving}
+                className="bg-gradient-to-r from-[#D67F43] to-[#B85A24] text-white hover:opacity-90"
+              >
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar paciente
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                onClick={goNext}
+                className="bg-gradient-to-r from-[#D67F43] to-[#B85A24] text-white hover:opacity-90"
+              >
+                Continuar
+                <ChevronRight className="ml-1 h-4 w-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+      </form>
+    );
+  }
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -298,265 +738,14 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           </TabsList>
 
           <TabsContent value="dados" className="mt-6 space-y-8">
-            {/* Foto */}
-            <div className="flex items-center gap-4">
-              <PacienteAvatar nome={form.nome || "?"} fotoUrl={form.foto_url || null} size={96} />
-              <div>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFotoChange}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  disabled={uploading || !isEdit}
-                  onClick={() => fileRef.current?.click()}
-                >
-                  {uploading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Upload className="mr-2 h-4 w-4" />
-                  )}
-                  Alterar foto
-                </Button>
-                {!isEdit && (
-                  <p className="mt-1 text-xs text-gray-400">
-                    Disponível após salvar o paciente.
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Dados básicos */}
-            <Section title="Dados pessoais">
-              <Field label="Nome completo *" className="md:col-span-2">
-                <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} maxLength={150} />
-              </Field>
-              <Field label={`Data de nascimento *${idade !== null ? ` — ${idade} anos` : ""}`}>
-                <Input
-                  type="date"
-                  value={form.data_nascimento}
-                  onChange={(e) => set("data_nascimento", e.target.value)}
-                />
-              </Field>
-              <Field label="Sexo *">
-                <RadioGroup
-                  value={form.sexo}
-                  onValueChange={(v) => set("sexo", v as Sexo)}
-                  className="flex gap-4 pt-2"
-                >
-                  <label className="flex items-center gap-2 text-sm">
-                    <RadioGroupItem value="M" /> Masculino
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <RadioGroupItem value="F" /> Feminino
-                  </label>
-                  <label className="flex items-center gap-2 text-sm">
-                    <RadioGroupItem value="O" /> Outro
-                  </label>
-                </RadioGroup>
-              </Field>
-              <Field label="CPF">
-                <Input
-                  value={form.cpf}
-                  onChange={(e) => set("cpf", maskCPF(e.target.value))}
-                  placeholder="000.000.000-00"
-                  inputMode="numeric"
-                />
-              </Field>
-              <Field label="RG">
-                <Input value={form.rg} onChange={(e) => set("rg", e.target.value)} />
-              </Field>
-              <Field label="E-mail" className="md:col-span-2">
-                <Input
-                  type="email"
-                  value={form.email}
-                  onChange={(e) => set("email", e.target.value)}
-                />
-              </Field>
-            </Section>
-
-            <Section title="Responsável (menores de idade)">
-              <Field label="Nome do responsável" className="md:col-span-2">
-                <Input
-                  value={form.responsavel_nome}
-                  onChange={(e) => set("responsavel_nome", e.target.value)}
-                />
-              </Field>
-              <Field label="Parentesco">
-                <Select
-                  value={form.responsavel_parentesco || undefined}
-                  onValueChange={(v) => set("responsavel_parentesco", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PARENTESCOS.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            </Section>
-
-            <Section title="Segundo responsável (opcional)">
-              <Field label="Nome">
-                <Input
-                  value={form.responsavel2_nome}
-                  onChange={(e) => set("responsavel2_nome", e.target.value)}
-                />
-              </Field>
-              <Field label="Parentesco">
-                <Select
-                  value={form.responsavel2_parentesco || undefined}
-                  onValueChange={(v) => set("responsavel2_parentesco", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PARENTESCOS.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Celular">
-                <Input
-                  value={form.responsavel2_celular}
-                  onChange={(e) => set("responsavel2_celular", maskCelular(e.target.value))}
-                  placeholder="(11) 91234-5678"
-                  inputMode="numeric"
-                />
-              </Field>
-            </Section>
-
-            <Section title="Escolaridade">
-              <Field label="Nível">
-                <Select
-                  value={form.escolaridade_nivel || undefined}
-                  onValueChange={(v) => set("escolaridade_nivel", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ESCOLARIDADE_NIVEIS.map((n) => (
-                      <SelectItem key={n} value={n}>
-                        {n}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Nome da escola" className="md:col-span-2">
-                <Input
-                  value={form.escola_nome}
-                  onChange={(e) => set("escola_nome", e.target.value)}
-                />
-              </Field>
-            </Section>
-
-            <Section title="Telefones">
-              <Field label="Celular *">
-                <Input
-                  value={form.telefone_celular}
-                  onChange={(e) => set("telefone_celular", maskCelular(e.target.value))}
-                  placeholder="(11) 91234-5678"
-                  inputMode="numeric"
-                />
-              </Field>
-              <Field label="Residencial">
-                <Input
-                  value={form.telefone_residencial}
-                  onChange={(e) => set("telefone_residencial", maskResidencial(e.target.value))}
-                  placeholder="(11) 3456-7890"
-                  inputMode="numeric"
-                />
-              </Field>
-            </Section>
-
-            <Section title="Endereço">
-              <Field label="CEP">
-                <Input
-                  value={form.cep}
-                  onChange={(e) => set("cep", maskCEP(e.target.value))}
-                  onBlur={handleCepBlur}
-                  placeholder="00000-000"
-                  inputMode="numeric"
-                />
-              </Field>
-              <Field label="Endereço" className="md:col-span-2">
-                <Input value={form.endereco} onChange={(e) => set("endereco", e.target.value)} />
-              </Field>
-              <Field label="Número">
-                <Input value={form.numero} onChange={(e) => set("numero", e.target.value)} />
-              </Field>
-              <Field label="Complemento" className="md:col-span-2">
-                <Input value={form.complemento} onChange={(e) => set("complemento", e.target.value)} />
-              </Field>
-              <Field label="Bairro">
-                <Input value={form.bairro} onChange={(e) => set("bairro", e.target.value)} />
-              </Field>
-              <Field label="Cidade">
-                <Input value={form.cidade} onChange={(e) => set("cidade", e.target.value)} />
-              </Field>
-              <Field label="Estado">
-                <Select value={form.estado} onValueChange={(v) => set("estado", v)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="UF" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ESTADOS.map((uf) => (
-                      <SelectItem key={uf} value={uf}>
-                        {uf}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-            </Section>
-
-            <Section title="Outros">
-              <Field label="Como conheceu?">
-                <Select
-                  value={form.como_conheceu || undefined}
-                  onValueChange={(v) => set("como_conheceu", v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecionar" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {COMO_CONHECEU.map((p) => (
-                      <SelectItem key={p} value={p}>
-                        {p}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field label="Observações (visível somente para a equipe)" className="md:col-span-3">
-                <Textarea
-                  rows={4}
-                  value={form.observacoes}
-                  onChange={(e) => set("observacoes", e.target.value)}
-                />
-              </Field>
-              <Field label="Paciente ativo">
-                <div className="pt-2">
-                  <Switch checked={form.ativo} onCheckedChange={(v) => set("ativo", v)} />
-                </div>
-              </Field>
-            </Section>
+            {fotoSection}
+            {sectionDadosPessoais}
+            {sectionResponsavel}
+            {sectionResponsavel2}
+            {sectionEscolaridade}
+            {sectionTelefones}
+            {sectionEndereco}
+            {sectionOutros}
           </TabsContent>
 
           {isEdit && (
