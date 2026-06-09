@@ -1084,3 +1084,140 @@ function PlaceholderTab({ text }: { text: string }) {
     </div>
   );
 }
+
+type CollapsibleBlock = {
+  key: string;
+  title: string;
+  icon: React.ReactNode;
+  summary: string;
+  body: React.ReactNode;
+  defaultOpen?: boolean;
+};
+
+function CollapsibleSection({
+  icon,
+  title,
+  summary,
+  open,
+  onOpenChange,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  summary: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={onOpenChange}
+      className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+    >
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50"
+        >
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-orange-50 text-[#B85A24]">
+            {icon}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-gray-900">{title}</span>
+            {!open && (
+              <span className="block truncate text-xs text-gray-500">{summary}</span>
+            )}
+          </span>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-gray-400 transition-transform",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="border-t border-gray-100 px-4 py-4">{children}</div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function enderecoSummary(f: {
+  cep: string;
+  cidade: string;
+  estado: string;
+  endereco: string;
+}): string {
+  const cidade = [f.cidade, f.estado].filter(Boolean).join("/");
+  if (f.cep && cidade) return `${f.cep} · ${cidade}`;
+  if (cidade) return cidade;
+  if (f.endereco) return f.endereco;
+  return "—";
+}
+
+function PacienteHeaderCard({
+  nome,
+  fotoUrl,
+  idade,
+  ativo,
+  uploading,
+  onUploadClick,
+  onToggleAtivo,
+  fileRef,
+  onFotoChange,
+}: {
+  nome: string;
+  fotoUrl: string | null;
+  idade: number | null;
+  ativo: boolean;
+  uploading: boolean;
+  onUploadClick: () => void;
+  onToggleAtivo: (v: boolean) => void;
+  fileRef: React.RefObject<HTMLInputElement | null>;
+  onFotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gradient-to-br from-orange-50/50 to-white p-4 sm:flex-row sm:items-center">
+      <PacienteAvatar nome={nome} fotoUrl={fotoUrl} size={72} />
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-base font-semibold text-gray-900">{nome}</h3>
+        <p className="text-xs text-gray-500">
+          {idade !== null ? `${idade} anos` : "Idade —"}
+          {" · "}
+          <span className={ativo ? "text-emerald-600" : "text-gray-400"}>
+            {ativo ? "Ativo" : "Inativo"}
+          </span>
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onFotoChange}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={uploading}
+          onClick={onUploadClick}
+        >
+          {uploading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Upload className="mr-2 h-4 w-4" />
+          )}
+          Foto
+        </Button>
+        <label className="flex items-center gap-2 text-xs text-gray-600">
+          <Switch checked={ativo} onCheckedChange={onToggleAtivo} />
+          Ativo
+        </label>
+      </div>
+    </div>
+  );
+}
