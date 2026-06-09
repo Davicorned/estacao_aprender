@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/configuracoes";
 import { registrarEvento } from "@/lib/historico";
+import { calcularValorMensal, type Contrato } from "@/lib/contratos";
 
 export type LancamentoStatus = "pendente" | "pago" | "atrasado" | "cancelado";
 export type LancamentoTipo = "receita" | "despesa";
@@ -160,6 +161,179 @@ export async function registrarPagamento(
 export async function deleteLancamento(id: string): Promise<void> {
   const { error } = await supabase.from("lancamentos_financeiros").delete().eq("id", id);
   if (error) throw error;
+}
+
+/** Update genérico de um lançamento. */
+export async function updateLancamento(
+  id: string,
+  patch: Partial<Omit<Lancamento, "id" | "created_at" | "updated_at">>,
+): Promise<Lancamento> {
+  const { data, error } = await supabase
+    .from("lancamentos_financeiros")
+    .update({ ...patch, updated_at: new Date().toISOString() })
+    .eq("id", id)
+    .select("*")
+    .single();
+  if (error) throw error;
+  return data as Lancamento;
+}
+
+/** Altera status com efeitos colaterais (limpa pagamento ao voltar p/ pendente). */
+export async function alterarStatusLancamento(
+  id: string,
+  novoStatus: LancamentoStatus,
+): Promise<void> {
+  const { data: prev } = await supabase
+    .from("lancamentos_financeiros")
+    .select("id, paciente_id, valor_centavos, status")
+    .eq("id", id)
+    .maybeSingle();
+
+  const patch: Record<string, any> = {
+    status: novoStatus,
+    updated_at: new Date().toISOString(),
+  };
+  if (novoStatus === "pendente" || novoStatus === "cancelado") {
+    patch.data_pagamento = null;
+    patch.forma_pagamento = null;
+  }
+  const { error } = await supabase
+    .from("lancamentos_financeiros")
+    .update(patch)
+    .eq("id", id);
+  if (error) throw error;
+
+  if (prev && (prev as any).paciente_id) {
+    void registrarEvento(
+      (prev as any).paciente_id,
+      "lancamento_status_alterado",
+      `Lançamento de ${formatBRL((prev as any).valor_centavos)} marcado como ${STATUS_LABEL[novoStatus]}`,
+      { lancamento_id: id, de: (prev as any).status, para: novoStatus },
+    );
+  }
+}
+
+// =========== Geração de mensalidades a partir de contrato ===========
+
+const MESES_PT = [
+  "janeiro", "fevereiro", "março", "abril", "maio", "junho",
+  "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
+];
+
+function clampDia(ano: number, mes0: number, dia: number): string {
+  const ultimoDia = new Date(ano, mes0 + 1, 0).getDate();
+  const d = Math.min(dia, ultimoDia);
+  return `${ano}-${String(mes0 + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+}
+
+/**
+ * Gera 1 lançamento mensal pendente para um contrato pacote_mensal.
+ * - primeira=true: usa o mês de data_inicio (ou próximo se dia_vencimento já passou).
+ * - primeira=false: gera no mês seguinte à última mensalidade existente
+ *   (ou data_inicio se ainda não há nenhuma).
+ * Idempotente: não cria se já existe lançamento no mesmo mês de vencimento.
+ */
+export async function gerarMensalidadeContrato(
+  contrato: Pick<
+    Contrato,
+    | "id"
+    | "paciente_id"
+    | "modalidade"
+    | "dia_vencimento"
+    | "aulas_por_mes"
+    | "valor_com_desconto_centavos"
+    | "forma_pagamento"
+    | "data_inicio"
+  > & { servico_id?: string | null },
+  opts: { primeira?: boolean } = {},
+): Promise<{ created: boolean; mes?: string; reason?: string }> {
+  if (contrato.modalidade !== "pacote_mensal") return { created: false, reason: "not_mensal" };
+  if (!contrato.dia_vencimento) return { created: false, reason: "sem_dia_vencimento" };
+  const valor = calcularValorMensal(
+    contrato.aulas_por_mes,
+    contrato.valor_com_desconto_centavos,
+    contrato.forma_pagamento,
+  );
+  if (valor <= 0) return { created: false, reason: "valor_zero" };
+
+  // Determinar mês alvo
+  const inicio = new Date(contrato.data_inicio + "T00:00:00");
+  let ano = inicio.getFullYear();
+  let mes0 = inicio.getMonth();
+
+  if (opts.primeira) {
+    // Se o dia_vencimento já passou no mês de data_inicio, vai pro próximo mês
+    if (contrato.dia_vencimento < inicio.getDate()) {
+      mes0 += 1;
+      if (mes0 > 11) { mes0 = 0; ano += 1; }
+    }
+  } else {
+    // Busca último lançamento gerado e usa mês seguinte
+    const { data: existentes } = await supabase
+      .from("lancamentos_financeiros")
+      .select("data_vencimento")
+      .eq("contrato_id", contrato.id)
+      .order("data_vencimento", { ascending: false })
+      .limit(1);
+    const ult = existentes?.[0]?.data_vencimento as string | undefined;
+    if (ult) {
+      const d = new Date(ult + "T00:00:00");
+      ano = d.getFullYear();
+      mes0 = d.getMonth() + 1;
+      if (mes0 > 11) { mes0 = 0; ano += 1; }
+    }
+  }
+
+  const dataVenc = clampDia(ano, mes0, contrato.dia_vencimento);
+  const inicioMes = `${ano}-${String(mes0 + 1).padStart(2, "0")}-01`;
+  const fimMes = `${ano}-${String(mes0 + 1).padStart(2, "0")}-${String(new Date(ano, mes0 + 1, 0).getDate()).padStart(2, "0")}`;
+
+  // Idempotência: já existe lançamento neste mês p/ este contrato?
+  const { data: dup } = await supabase
+    .from("lancamentos_financeiros")
+    .select("id")
+    .eq("contrato_id", contrato.id)
+    .gte("data_vencimento", inicioMes)
+    .lte("data_vencimento", fimMes)
+    .limit(1);
+  if (dup && dup.length > 0) return { created: false, reason: "ja_existe", mes: `${MESES_PT[mes0]}/${ano}` };
+
+  // Nome do serviço para descrição
+  let servicoNome = "atendimento";
+  if (contrato.servico_id) {
+    const { data: s } = await supabase
+      .from("servicos")
+      .select("nome")
+      .eq("id", contrato.servico_id)
+      .maybeSingle();
+    if (s?.nome) servicoNome = s.nome;
+  }
+
+  const userId = (await supabase.auth.getUser()).data.user?.id ?? null;
+  const descricao = `Mensalidade ${servicoNome} — ${MESES_PT[mes0]}/${ano}`;
+  const { error } = await supabase.from("lancamentos_financeiros").insert({
+    paciente_id: contrato.paciente_id,
+    contrato_id: contrato.id,
+    agendamento_id: null,
+    tipo: "receita",
+    descricao,
+    valor_centavos: valor,
+    data_vencimento: dataVenc,
+    data_pagamento: null,
+    status: "pendente",
+    forma_pagamento: null,
+    created_by: userId,
+  });
+  if (error) throw error;
+
+  void registrarEvento(
+    contrato.paciente_id,
+    "lancamento_gerado",
+    `Mensalidade ${MESES_PT[mes0]}/${ano} gerada — ${formatBRL(valor)}`,
+    { contrato_id: contrato.id, valor_centavos: valor, data_vencimento: dataVenc },
+  );
+
+  return { created: true, mes: `${MESES_PT[mes0]}/${ano}` };
 }
 
 export type ResumoMes = {
