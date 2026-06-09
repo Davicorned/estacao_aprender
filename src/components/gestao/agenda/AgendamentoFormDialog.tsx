@@ -566,7 +566,14 @@ export function AgendamentoFormDialog({
                 </div>
                 {recTipo === "duas_por_semana" && (
                   <div className="space-y-1">
-                    <Label>2º dia da semana</Label>
+                    <Label>
+                      2º dia da semana
+                      {data && (
+                        <span className="ml-1 font-normal text-gray-500">
+                          (1º = {DIAS_SEMANA_LABEL[parseIsoDate(data).getDay()]})
+                        </span>
+                      )}
+                    </Label>
                     <Select
                       value={String(recSegundoDia)}
                       onValueChange={(v) => setRecSegundoDia(Number(v))}
@@ -583,6 +590,19 @@ export function AgendamentoFormDialog({
                   </div>
                 )}
               </div>
+              {recTipo === "duas_por_semana" && data && (
+                <p className="text-xs text-gray-500">
+                  Sessões serão criadas às{" "}
+                  <span className="font-medium text-gray-700">
+                    {DIAS_SEMANA_LABEL[parseIsoDate(data).getDay()]}s
+                  </span>{" "}
+                  (a partir de {parseIsoDate(data).toLocaleDateString("pt-BR")}) e às{" "}
+                  <span className="font-medium text-gray-700">
+                    {DIAS_SEMANA_LABEL[recSegundoDia]}s
+                  </span>
+                  .
+                </p>
+              )}
               {recTipo !== "nao" && (
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
