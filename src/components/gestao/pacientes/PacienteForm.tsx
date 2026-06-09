@@ -470,8 +470,9 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
   );
 
   const sectionEscolaridade = (
-    <Section title="Escolaridade">
-      <Field label="Nível">
+    <div className="space-y-4">
+      <Section title="Escolaridade">
+        <Field label="Nível">
         <Select
           value={form.escolaridade_nivel || undefined}
           onValueChange={(v) => set("escolaridade_nivel", v)}
@@ -487,14 +488,38 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             ))}
           </SelectContent>
         </Select>
-      </Field>
-      <Field label="Nome da escola" className="md:col-span-2">
-        <Input
-          value={form.escola_nome}
-          onChange={(e) => set("escola_nome", e.target.value)}
-        />
-      </Field>
-    </Section>
+        </Field>
+        <Field label="Nome da escola" className="md:col-span-2">
+          <Input
+            value={form.escola_nome}
+            onChange={(e) => set("escola_nome", e.target.value)}
+          />
+        </Field>
+      </Section>
+      {mostraCamposEscola(form.escolaridade_nivel) && (
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+          <Field label="Turma">
+            <Input
+              value={form.escola_turma}
+              onChange={(e) => set("escola_turma", e.target.value)}
+              placeholder="Ex.: 2º A"
+            />
+          </Field>
+          <Field label="Professor(a)">
+            <Input
+              value={form.escola_professor}
+              onChange={(e) => set("escola_professor", e.target.value)}
+            />
+          </Field>
+          <Field label="Coordenação">
+            <Input
+              value={form.escola_coordenacao}
+              onChange={(e) => set("escola_coordenacao", e.target.value)}
+            />
+          </Field>
+        </div>
+      )}
+    </div>
   );
 
   const sectionTelefones = (
