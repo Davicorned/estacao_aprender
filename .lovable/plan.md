@@ -1,40 +1,40 @@
-## Objetivo
+## Problema
+Na aba **Dados Pessoais** (edição do paciente), todas as 8 seções (Foto, Dados pessoais, Responsável, 2º responsável, Escolaridade, Telefones, Endereço, Outros) ficam empilhadas num scroll longo — pesa visualmente e exige rolar muito para chegar nos campos menos usados.
 
-Quando o nível de escolaridade for **Educação Infantil**, **Fundamental I**, **Fundamental II** ou **Ensino Médio**, exibir 3 campos extras (opcionais) na seção **Escolaridade** do cadastro do paciente: **Turma**, **Professor(a)** e **Coordenação**. Para **Superior**, **Outro** ou em branco, esses campos ficam ocultos.
+## Solução proposta — Cards retráteis (accordion)
 
-## Onde aparece
+Manter tudo numa única tela (sem criar sub-abas), mas transformar cada seção num **card colapsável** com header clicável, ícone à esquerda e chevron à direita. Igual ao padrão que já usamos na **Ficha Clínica**, garantindo consistência visual.
 
-- **Wizard de cadastro novo** → passo "Escola"
-- **Edição do paciente** → aba "Dados Pessoais", seção "Escolaridade"
+### Comportamento
+- **Abertos por padrão** (sempre que entrar): **Dados pessoais** + **Telefones** → o essencial em mãos.
+- **Fechados por padrão**: Responsável, 2º responsável, Escolaridade, Endereço, Outros.
+- Header mostra **resumo do conteúdo** quando fechado (ex.: "Responsável: Maria — Mãe" ou "—" se vazio). Ajuda a saber o que está preenchido sem abrir.
+- Botões **"Expandir tudo" / "Recolher tudo"** no topo da aba.
+- A **foto + nome + idade + status (ativo/inativo)** fica fixa num cabeçalho acima dos cards, sempre visível — funciona como identidade do paciente.
 
-Os campos são sempre **opcionais** (sem validação obrigatória).
+### Layout dos cards
+```
+┌─ 👤  Dados pessoais ──────────── [▼] ┐
+│ Nome | Nasc. | Sexo | CPF | RG | Email │
+└──────────────────────────────────────┘
+
+┌─ 📞  Telefones ───────────────── [▼] ┐
+│ Celular | Residencial                  │
+└──────────────────────────────────────┘
+
+┌─ 👨‍👩‍👧  Responsável  · Maria — Mãe ─ [▶] ┐  ← fechado, com resumo
+└──────────────────────────────────────┘
+```
 
 ## Mudanças
 
-### 1. Banco de dados
-Nova migration adicionando 3 colunas em `pacientes`:
-- `escola_turma` (text, nullable) — ex.: "2º A"
-- `escola_professor` (text, nullable)
-- `escola_coordenacao` (text, nullable)
+### Arquivo único: `src/components/gestao/pacientes/PacienteForm.tsx`
+1. Trocar o helper local `Section` por um novo `CollapsibleSection` (usa `@/components/ui/collapsible` que já existe no projeto) com: ícone, título, resumo opcional, estado aberto, chevron animado.
+2. Cabeçalho do paciente acima dos cards: avatar grande + nome + idade + switch "Paciente ativo" (movido pra cá, sai da seção "Outros").
+3. Barra de ações no topo da aba: **Expandir tudo · Recolher tudo**.
+4. Renderizar as 7 seções como `CollapsibleSection` com `defaultOpen` em Dados pessoais e Telefones; demais começam fechadas.
+5. Cada seção recebe uma função `summary()` que retorna o resumo curto a mostrar quando fechada (ex.: telefone formatado, nome+parentesco do responsável, "CEP — Cidade/UF" no endereço, "Fundamental II · Colégio Adventista" na escola, etc.).
 
-> Esses 3 campos já existem na tabela `paciente_ficha_clinica` (`escola_turma`, `escola_professor`, `escola_coordenacao`), mas lá fazem parte de um bloco mais amplo de "Escola" da ficha clínica. Vamos **manter ambos** por ora — o cadastro básico usa as novas colunas em `pacientes` (preenchidas pela recepção), e a Ficha Clínica continua com seus próprios campos para histórico clínico. Se você preferir unificar, me avisa.
-
-### 2. Types e helpers (`src/lib/pacientes.ts`)
-- Adicionar `escola_turma`, `escola_professor`, `escola_coordenacao` em `Paciente`.
-
-### 3. Formulário (`src/components/gestao/pacientes/PacienteForm.tsx`)
-- Adicionar os 3 campos em `FormState`, `blank()`, `fromPaciente()`, `toInput()`.
-- Na seção **Escolaridade**, renderizar Turma/Professor/Coordenação **somente** se `escolaridade_nivel` for um dos 4 níveis escolares.
-- Layout: campos em grid de 3 colunas abaixo de "Nome da escola".
-
-## Comportamento visual
-
-```
-Escolaridade
-  [Nível ▾]  [Nome da escola ........................]
-
-  (se nível ∈ {Ed. Infantil, Fund. I, Fund. II, Ensino Médio})
-  [Turma]    [Professor(a)]    [Coordenação]
-```
-
-Trocar o nível para Superior/Outro **mantém os valores em memória** (não apaga), mas eles deixam de ser exibidos e salvos como null no banco — assim o usuário não perde digitação por engano. *(Se preferir limpar ao trocar de nível, me diz.)*
+### Escopo
+- **Apenas o modo edição** (a aba "Dados Pessoais"). O wizard de cadastro novo continua igual (passos já resolvem o problema lá).
+- **Sem mudança nos dados** salvos, nas validações, ou no banco — é só apresentação.

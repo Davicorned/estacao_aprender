@@ -1,7 +1,21 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { toast } from "sonner";
-import { Check, ChevronLeft, ChevronRight, Loader2, Trash2, Upload } from "lucide-react";
+import {
+  Check,
+  ChevronDown,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardList,
+  GraduationCap,
+  Loader2,
+  MapPin,
+  Phone,
+  Trash2,
+  Upload,
+  User as UserIcon,
+  Users,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,6 +31,11 @@ import {
 } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import {
   AlertDialog,
@@ -215,6 +234,10 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
   const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState("dados");
   const [step, setStep] = useState(0);
+  const [openBlocks, setOpenBlocks] = useState<Record<string, boolean>>({
+    dados: true,
+    telefones: true,
+  });
   const fileRef = useRef<HTMLInputElement>(null);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
@@ -319,44 +342,10 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     }
   }
 
-  // Seções renderizadas individualmente para suportar tanto o modo wizard
-  // (cadastro novo) quanto o modo tabbed (edição).
-  const fotoSection = (
-    <div className="flex items-center gap-4">
-      <PacienteAvatar nome={form.nome || "?"} fotoUrl={form.foto_url || null} size={96} />
-      <div>
-        <input
-          ref={fileRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={handleFotoChange}
-        />
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={uploading || !isEdit}
-          onClick={() => fileRef.current?.click()}
-        >
-          {uploading ? (
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-          ) : (
-            <Upload className="mr-2 h-4 w-4" />
-          )}
-          Alterar foto
-        </Button>
-        {!isEdit && (
-          <p className="mt-1 text-xs text-gray-400">
-            Disponível após salvar o paciente.
-          </p>
-        )}
-      </div>
-    </div>
-  );
-
-  const sectionDadosPessoais = (
-    <Section title="Dados pessoais">
+  // ===== Conteúdo dos blocos (apenas campos, reutilizados pelo wizard e pelos
+  // cards retráteis do modo edição). =====
+  const fieldsDadosPessoais = (
+    <>
       <Field label="Nome completo *" className="md:col-span-2">
         <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} maxLength={150} />
       </Field>
@@ -402,11 +391,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           onChange={(e) => set("email", e.target.value)}
         />
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionResponsavel = (
-    <Section title="Responsável (menores de idade)">
+  const fieldsResponsavel = (
+    <>
       <Field label="Nome do responsável" className="md:col-span-2">
         <Input
           value={form.responsavel_nome}
@@ -430,11 +419,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           </SelectContent>
         </Select>
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionResponsavel2 = (
-    <Section title="Segundo responsável (opcional)">
+  const fieldsResponsavel2 = (
+    <>
       <Field label="Nome">
         <Input
           value={form.responsavel2_nome}
@@ -466,13 +455,12 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           inputMode="numeric"
         />
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionEscolaridade = (
-    <div className="space-y-4">
-      <Section title="Escolaridade">
-        <Field label="Nível">
+  const fieldsEscolaridadeBase = (
+    <>
+      <Field label="Nível">
         <Select
           value={form.escolaridade_nivel || undefined}
           onValueChange={(v) => set("escolaridade_nivel", v)}
@@ -488,14 +476,19 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             ))}
           </SelectContent>
         </Select>
-        </Field>
-        <Field label="Nome da escola" className="md:col-span-2">
-          <Input
-            value={form.escola_nome}
-            onChange={(e) => set("escola_nome", e.target.value)}
-          />
-        </Field>
-      </Section>
+      </Field>
+      <Field label="Nome da escola" className="md:col-span-2">
+        <Input
+          value={form.escola_nome}
+          onChange={(e) => set("escola_nome", e.target.value)}
+        />
+      </Field>
+    </>
+  );
+
+  const bodyEscolaridade = (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">{fieldsEscolaridadeBase}</div>
       {mostraCamposEscola(form.escolaridade_nivel) && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field label="Turma">
@@ -522,8 +515,8 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     </div>
   );
 
-  const sectionTelefones = (
-    <Section title="Telefones">
+  const fieldsTelefones = (
+    <>
       <Field label="Celular *">
         <Input
           value={form.telefone_celular}
@@ -540,11 +533,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           inputMode="numeric"
         />
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionEndereco = (
-    <Section title="Endereço">
+  const fieldsEndereco = (
+    <>
       <Field label="CEP">
         <Input
           value={form.cep}
@@ -583,11 +576,13 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           </SelectContent>
         </Select>
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionOutros = (
-    <Section title="Outros">
+  // Campos do bloco "Outros" — sem o switch de ativo (movido para o cabeçalho
+  // do paciente). No wizard de cadastro novo, o switch volta a aparecer aqui.
+  const fieldsOutros = (
+    <>
       <Field label="Como conheceu?">
         <Select
           value={form.como_conheceu || undefined}
@@ -612,6 +607,30 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           onChange={(e) => set("observacoes", e.target.value)}
         />
       </Field>
+    </>
+  );
+
+  // Wrappers com título para o wizard (mantém o visual atual passo a passo).
+  const sectionDadosPessoais = <Section title="Dados pessoais">{fieldsDadosPessoais}</Section>;
+  const sectionResponsavel = (
+    <Section title="Responsável (menores de idade)">{fieldsResponsavel}</Section>
+  );
+  const sectionResponsavel2 = (
+    <Section title="Segundo responsável (opcional)">{fieldsResponsavel2}</Section>
+  );
+  const sectionEscolaridade = (
+    <div>
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
+        Escolaridade
+      </h3>
+      {bodyEscolaridade}
+    </div>
+  );
+  const sectionTelefones = <Section title="Telefones">{fieldsTelefones}</Section>;
+  const sectionEndereco = <Section title="Endereço">{fieldsEndereco}</Section>;
+  const sectionOutros = (
+    <Section title="Outros">
+      {fieldsOutros}
       <Field label="Paciente ativo">
         <div className="pt-2">
           <Switch checked={form.ativo} onCheckedChange={(v) => set("ativo", v)} />
@@ -779,6 +798,70 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     );
   }
 
+  // ===== Modo edição: cards retráteis =====
+  const gridClass = "grid grid-cols-1 gap-4 md:grid-cols-3";
+  const editBlocks: CollapsibleBlock[] = [
+    {
+      key: "dados",
+      title: "Dados pessoais",
+      icon: <UserIcon className="h-4 w-4" />,
+      summary: form.cpf
+        ? `CPF ${form.cpf}${form.email ? ` · ${form.email}` : ""}`
+        : form.email || "—",
+      defaultOpen: true,
+      body: <div className={gridClass}>{fieldsDadosPessoais}</div>,
+    },
+    {
+      key: "telefones",
+      title: "Telefones",
+      icon: <Phone className="h-4 w-4" />,
+      summary: form.telefone_celular || "—",
+      defaultOpen: true,
+      body: <div className={gridClass}>{fieldsTelefones}</div>,
+    },
+    {
+      key: "responsavel",
+      title: "Responsável (menores de idade)",
+      icon: <Users className="h-4 w-4" />,
+      summary: form.responsavel_nome
+        ? `${form.responsavel_nome}${form.responsavel_parentesco ? ` — ${form.responsavel_parentesco}` : ""}`
+        : "—",
+      body: <div className={gridClass}>{fieldsResponsavel}</div>,
+    },
+    {
+      key: "responsavel2",
+      title: "Segundo responsável (opcional)",
+      icon: <Users className="h-4 w-4" />,
+      summary: form.responsavel2_nome
+        ? `${form.responsavel2_nome}${form.responsavel2_parentesco ? ` — ${form.responsavel2_parentesco}` : ""}`
+        : "—",
+      body: <div className={gridClass}>{fieldsResponsavel2}</div>,
+    },
+    {
+      key: "escolaridade",
+      title: "Escolaridade",
+      icon: <GraduationCap className="h-4 w-4" />,
+      summary: form.escolaridade_nivel
+        ? `${form.escolaridade_nivel}${form.escola_nome ? ` · ${form.escola_nome}` : ""}`
+        : "—",
+      body: bodyEscolaridade,
+    },
+    {
+      key: "endereco",
+      title: "Endereço",
+      icon: <MapPin className="h-4 w-4" />,
+      summary: enderecoSummary(form),
+      body: <div className={gridClass}>{fieldsEndereco}</div>,
+    },
+    {
+      key: "outros",
+      title: "Outros",
+      icon: <ClipboardList className="h-4 w-4" />,
+      summary: form.como_conheceu || (form.observacoes ? "Com observações" : "—"),
+      body: <div className={gridClass}>{fieldsOutros}</div>,
+    },
+  ];
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="rounded-lg border border-gray-200 bg-white p-6">
@@ -791,15 +874,65 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             {isEdit && <TabsTrigger value="financeiro">Financeiro</TabsTrigger>}
           </TabsList>
 
-          <TabsContent value="dados" className="mt-6 space-y-8">
-            {fotoSection}
-            {sectionDadosPessoais}
-            {sectionResponsavel}
-            {sectionResponsavel2}
-            {sectionEscolaridade}
-            {sectionTelefones}
-            {sectionEndereco}
-            {sectionOutros}
+          <TabsContent value="dados" className="mt-6 space-y-4">
+            <PacienteHeaderCard
+              nome={form.nome || "Sem nome"}
+              fotoUrl={form.foto_url || null}
+              idade={idade}
+              ativo={form.ativo}
+              uploading={uploading}
+              onUploadClick={() => fileRef.current?.click()}
+              onToggleAtivo={(v) => set("ativo", v)}
+              fileRef={fileRef}
+              onFotoChange={handleFotoChange}
+            />
+
+            <div className="flex items-center justify-between gap-2">
+              <p className="text-xs text-gray-500">
+                {editBlocks.length} seções · clique para expandir
+              </p>
+              <div className="flex gap-1">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => {
+                    setOpenBlocks(Object.fromEntries(editBlocks.map((b) => [b.key, true])));
+                  }}
+                >
+                  Expandir tudo
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 text-xs"
+                  onClick={() => {
+                    setOpenBlocks(Object.fromEntries(editBlocks.map((b) => [b.key, false])));
+                  }}
+                >
+                  Recolher tudo
+                </Button>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {editBlocks.map((b) => (
+                <CollapsibleSection
+                  key={b.key}
+                  icon={b.icon}
+                  title={b.title}
+                  summary={b.summary}
+                  open={openBlocks[b.key] ?? b.defaultOpen ?? false}
+                  onOpenChange={(v) =>
+                    setOpenBlocks((prev) => ({ ...prev, [b.key]: v }))
+                  }
+                >
+                  {b.body}
+                </CollapsibleSection>
+              ))}
+            </div>
           </TabsContent>
 
           {isEdit && (
@@ -914,6 +1047,143 @@ function PlaceholderTab({ text }: { text: string }) {
   return (
     <div className="rounded-lg border border-dashed border-gray-300 bg-gray-50 p-8 text-center text-sm text-gray-500">
       {text}
+    </div>
+  );
+}
+
+type CollapsibleBlock = {
+  key: string;
+  title: string;
+  icon: React.ReactNode;
+  summary: string;
+  body: React.ReactNode;
+  defaultOpen?: boolean;
+};
+
+function CollapsibleSection({
+  icon,
+  title,
+  summary,
+  open,
+  onOpenChange,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  summary: string;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <Collapsible
+      open={open}
+      onOpenChange={onOpenChange}
+      className="overflow-hidden rounded-lg border border-gray-200 bg-white"
+    >
+      <CollapsibleTrigger asChild>
+        <button
+          type="button"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-gray-50"
+        >
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-orange-50 text-[#B85A24]">
+            {icon}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold text-gray-900">{title}</span>
+            {!open && (
+              <span className="block truncate text-xs text-gray-500">{summary}</span>
+            )}
+          </span>
+          <ChevronDown
+            className={cn(
+              "h-4 w-4 shrink-0 text-gray-400 transition-transform",
+              open && "rotate-180",
+            )}
+          />
+        </button>
+      </CollapsibleTrigger>
+      <CollapsibleContent>
+        <div className="border-t border-gray-100 px-4 py-4">{children}</div>
+      </CollapsibleContent>
+    </Collapsible>
+  );
+}
+
+function enderecoSummary(f: {
+  cep: string;
+  cidade: string;
+  estado: string;
+  endereco: string;
+}): string {
+  const cidade = [f.cidade, f.estado].filter(Boolean).join("/");
+  if (f.cep && cidade) return `${f.cep} · ${cidade}`;
+  if (cidade) return cidade;
+  if (f.endereco) return f.endereco;
+  return "—";
+}
+
+function PacienteHeaderCard({
+  nome,
+  fotoUrl,
+  idade,
+  ativo,
+  uploading,
+  onUploadClick,
+  onToggleAtivo,
+  fileRef,
+  onFotoChange,
+}: {
+  nome: string;
+  fotoUrl: string | null;
+  idade: number | null;
+  ativo: boolean;
+  uploading: boolean;
+  onUploadClick: () => void;
+  onToggleAtivo: (v: boolean) => void;
+  fileRef: React.RefObject<HTMLInputElement | null>;
+  onFotoChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+  return (
+    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gradient-to-br from-orange-50/50 to-white p-4 sm:flex-row sm:items-center">
+      <PacienteAvatar nome={nome} fotoUrl={fotoUrl} size={72} />
+      <div className="min-w-0 flex-1">
+        <h3 className="truncate text-base font-semibold text-gray-900">{nome}</h3>
+        <p className="text-xs text-gray-500">
+          {idade !== null ? `${idade} anos` : "Idade —"}
+          {" · "}
+          <span className={ativo ? "text-emerald-600" : "text-gray-400"}>
+            {ativo ? "Ativo" : "Inativo"}
+          </span>
+        </p>
+      </div>
+      <div className="flex items-center gap-3">
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={onFotoChange}
+        />
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={uploading}
+          onClick={onUploadClick}
+        >
+          {uploading ? (
+            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          ) : (
+            <Upload className="mr-2 h-4 w-4" />
+          )}
+          Foto
+        </Button>
+        <label className="flex items-center gap-2 text-xs text-gray-600">
+          <Switch checked={ativo} onCheckedChange={onToggleAtivo} />
+          Ativo
+        </label>
+      </div>
     </div>
   );
 }
