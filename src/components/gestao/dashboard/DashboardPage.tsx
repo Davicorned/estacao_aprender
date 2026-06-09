@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
-import { Users, Calendar, Activity, DollarSign, ArrowRight, TrendingUp, TrendingDown } from "lucide-react";
+import { Users, Calendar, Activity, DollarSign, ArrowRight, TrendingUp, TrendingDown, RefreshCw } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -149,7 +149,7 @@ export function DashboardPage() {
       </div>
 
       {/* Row 1: KPIs */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         <KpiCard
           label="Pacientes cadastrados"
           value={String(kpis?.pacientes_ativos ?? "—")}
@@ -167,6 +167,12 @@ export function DashboardPage() {
           value={String(kpis?.sessoes_mes ?? "—")}
           Icon={Activity}
           pct={kpis?.variacao_sessoes_pct ?? null}
+        />
+        <KpiCard
+          label="Pacientes remarcados"
+          value={String(kpis?.pacientes_remarcados ?? "—")}
+          Icon={RefreshCw}
+          pct={kpis?.variacao_remarcados_pct ?? null}
         />
         <KpiCard
           label="Receita do período"

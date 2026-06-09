@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/configuracoes";
+import { registrarEvento } from "@/lib/historico";
 
 export type ContratoStatus = "rascunho" | "ativo" | "encerrado" | "cancelado";
 export type Frequencia = "semanal" | "quinzenal" | "mensal" | "livre";
@@ -384,6 +385,12 @@ export async function createContrato(input: ContratoInput): Promise<Contrato> {
     .select("*")
     .single();
   if (error) throw error;
+  void registrarEvento(
+    (data as Contrato).paciente_id,
+    "contrato_criado",
+    `Contrato criado — ${formatBRL((data as Contrato).valor_centavos)}`,
+    { contrato_id: (data as Contrato).id },
+  );
   return data as Contrato;
 }
 
@@ -395,6 +402,14 @@ export async function updateContrato(id: string, patch: Partial<ContratoInput>):
     .select("*")
     .single();
   if (error) throw error;
+  if (patch.status === "encerrado" || patch.status === "cancelado") {
+    void registrarEvento(
+      (data as Contrato).paciente_id,
+      "contrato_encerrado",
+      patch.status === "cancelado" ? "Contrato cancelado" : "Contrato encerrado",
+      { contrato_id: id, status: patch.status },
+    );
+  }
   return data as Contrato;
 }
 

@@ -1,53 +1,97 @@
-## Novo fluxo do "Novo Agendamento"
+## Duas adições
 
-Inverter a ordem: a escolha de **recorrência vem antes da data**, e a quantidade de sessões determina automaticamente a frequência.
+### 1. KPI "Pacientes remarcados" no Dashboard
 
-### Etapas do formulário (nova ordem)
+Mostrar, no período selecionado, **quantos pacientes distintos tiveram pelo menos um agendamento remarcado** (data ou horário alterado pelo usuário — não confundir com mudança de status).
 
-1. **Paciente** (igual hoje, mantém card de contrato vigente)
-2. **Profissional + Serviço**
-3. **Tipo de agendamento** — toggle:
-   - **Sessão única** (não recorrente)
-   - **Pacote recorrente**
-4. **Bloco condicional:**
+**Como detectar remarcação:**
+- Toda vez que `updateAgendamento` alterar `data`, `hora_inicio` ou `hora_fim`, registramos um evento no histórico (ver item 2).
+- O KPI conta pacientes distintos com pelo menos 1 evento `tipo='remarcacao'` no período.
 
-   **Se "Sessão única":**
-   - Campo `Data` + `Horário de início` (duração vem do serviço)
+**Novo card no `DashboardPage`:** "Pacientes remarcados" com número + comparativo vs período anterior, ao lado dos outros KPIs.
 
-   **Se "Pacote recorrente":**
-   - `Quantidade de sessões` (default 4; opções rápidas: 4, 8, 12, 16 + livre)
-   - Frequência **derivada automaticamente** da quantidade:
-     - múltiplo de 4 e não-múltiplo de 8 → **1x por semana**
-     - múltiplo de 8 → **2x por semana**
-     - (regra exibida como texto — usuário pode trocar manualmente com um link "alterar frequência" para casos quinzenal/mensal)
-   - Se **1x/semana** → `Dia da semana` + `Horário de início` + `Data de início` (próxima ocorrência desse dia)
-   - Se **2x/semana** → `1º dia da semana` + `2º dia da semana` + `Horário de início` + `Data de início`
-   - Mostra resumo: "8 sessões, terças e quintas às 14:00, de 09/06 a 30/07"
+### 2. Histórico do paciente (timeline)
 
-5. **Pré-visualização das ocorrências** (mantém como hoje, com conflitos e toggles)
-6. **Observações** + botões salvar
+Nova aba **"Histórico"** dentro da página do paciente (`/gestao/pacientes/$id`), inspirada no print enviado: linha do tempo com ícone + descrição + autor + timestamp.
+
+**Eventos registrados automaticamente:**
+- `paciente_criado` — quando o cadastro é criado
+- `paciente_editado` — quando dados pessoais mudam (campos relevantes)
+- `agendamento_criado` — novo agendamento (mostra data/hora/profissional/serviço)
+- `agendamento_remarcado` — data ou hora alterada (mostra "de X para Y")
+- `agendamento_cancelado` — com motivo se houver
+- `agendamento_atendido` / `faltou`
+- `contrato_criado` / `contrato_finalizado`
+- `evolucao_registrada` — nova evolução clínica
+- `lancamento_pago` — pagamento registrado
+- `comentario` — botão "+ Comentário" no topo, autor = usuário logado
+
+**Filtro:** "Todos" / "Agendamentos" / "Financeiro" / "Clínico" / "Comentários".
 
 ### Detalhes técnicos
 
-**Arquivo único afetado:** `src/components/gestao/agenda/AgendamentoFormDialog.tsx`
+**Nova tabela `paciente_historico`** (migration nova):
+```
+id uuid pk
+paciente_id uuid → pacientes(id) on delete cascade
+tipo text  -- 'agendamento_criado'|'agendamento_remarcado'|... 'comentario'
+descricao text  -- texto livre/renderizado
+metadata jsonb  -- {de:{data,hora}, para:{data,hora}, agendamento_id, etc}
+autor_id uuid null (auth.users)
+autor_nome text null  -- snapshot
+created_at timestamptz default now()
 
-- Adicionar estado `modoAgendamento: "unico" | "recorrente"` no topo, antes de `data`.
-- Reordenar os blocos JSX: mover bloco "Recorrência" para depois de paciente/profissional/serviço e antes do bloco de data.
-- Quando `modoAgendamento === "recorrente"`:
-  - `recTipo` deixa de ser exposto diretamente; é derivado de `ocorrencias` via helper `frequenciaDerivada(n)`:
-    - `n % 8 === 0` → `"duas_por_semana"`
-    - senão → `"semanal"`
-  - Adicionar link "alterar frequência" que abre Select com `quinzenal` / `mensal` / forçar `semanal`.
-- Substituir o atual campo "Data" único por:
-  - Modo único: `Data` + `Hora`
-  - Modo recorrente 1x: `Dia da semana` (Select) + `Data de início` (calculada/ajustada para o próximo dia da semana selecionado) + `Hora`
-  - Modo recorrente 2x: `1º dia da semana` + `2º dia da semana` + `Data de início` (próximo 1º dia) + `Hora`
-- Helper `proximaDataParaDiaSemana(dataRef, diaSemana)` para ajustar a data-base ao dia da semana escolhido.
-- `ocorrenciasParaRecorrencia` em `src/lib/agendamentos.ts` já suporta tudo — **sem mudança em lib**.
-- Card de contrato vigente: quando o usuário clica "preencher a partir do contrato", também define `modoAgendamento = "recorrente"` e `ocorrencias = contrato.sessoes_restantes`.
+index (paciente_id, created_at desc)
+```
+GRANTs + RLS: `authenticated` SELECT/INSERT, service_role ALL.
+
+**Helper `src/lib/historico.ts`:**
+- `listHistorico(pacienteId, filtro?)`
+- `registrarEvento(pacienteId, tipo, descricao, metadata?)` — pega `auth.user` e nome do profissional.
+- `registrarComentario(pacienteId, texto)`
+
+**Instrumentação (chamadas a `registrarEvento`):**
+- `src/lib/agendamentos.ts`
+  - `createAgendamento` / `createAgendamentosLote` → `agendamento_criado`
+  - `updateAgendamento` → se `data/hora_inicio/hora_fim` mudaram → `agendamento_remarcado` com `{de, para}`
+  - `updateStatus` → `agendamento_cancelado` / `_atendido` / `_faltou`
+- `src/lib/pacientes.ts` → `createPaciente` / `updatePaciente`
+- `src/lib/contratos.ts` → criação/finalização
+- `src/lib/evolucoes.ts` → nova evolução
+- `src/lib/financeiro.ts` → registrar pagamento
+
+Para detectar diff em `updateAgendamento`, ler o registro anterior antes do update (já temos `getAgendamento`).
+
+**UI — novo componente `HistoricoTab.tsx`** (em `src/components/gestao/pacientes/` ou `prontuario/`):
+- Timeline vertical com linha + bolinhas coloridas por categoria (verde=agendamento, azul=clínico, amarelo=financeiro, cinza=comentário).
+- Cards com ícone, descrição, autor + timestamp.
+- Botão "+ Comentário" abre dialog simples (textarea + salvar).
+- Filtro "Todos ▾" no topo direito.
+- Adicionar como nova aba em `ProntuarioTab` ou na página do paciente.
+
+**Dashboard — `src/lib/dashboard.ts`:**
+- Nova função `pacientesRemarcadosNoPeriodo(range, profissionalId?)`: conta `count distinct paciente_id` em `paciente_historico` onde `tipo='agendamento_remarcado'` e `created_at` no range. Se `profissionalId` fornecido, faz join com agendamentos via `metadata->>agendamento_id`.
+- Incluir no `fetchKpis` retornando `pacientes_remarcados` + variação.
+- `DashboardPage`: novo `StatCard` "Pacientes remarcados" com ícone `RefreshCw`.
+
+### Arquivos a criar/editar
+
+**Criar:**
+- `supabase/migrations/20260611100000_paciente_historico.sql`
+- `src/lib/historico.ts`
+- `src/components/gestao/pacientes/HistoricoTab.tsx`
+- `src/components/gestao/pacientes/ComentarioDialog.tsx`
+
+**Editar:**
+- `src/lib/agendamentos.ts` (instrumentar create/update/status)
+- `src/lib/pacientes.ts` (create/update)
+- `src/lib/contratos.ts`, `src/lib/evolucoes.ts`, `src/lib/financeiro.ts`
+- `src/lib/dashboard.ts` (KPI remarcados)
+- `src/components/gestao/dashboard/DashboardPage.tsx` (novo card)
+- `src/components/gestao/pacientes/PacienteForm.tsx` ou `prontuario/ProntuarioTab.tsx` (nova aba "Histórico")
 
 ### Fora do escopo
 
-- Sem mudança em banco de dados.
-- Sem mudança em `src/lib/agendamentos.ts` / `src/lib/contratos.ts`.
-- Lógica de conflitos e pré-visualização permanecem inalteradas.
+- Não vamos retroagir histórico para agendamentos antigos (só registra do momento da implementação em diante).
+- Sem edição/exclusão de comentários nesta versão.
+- Sem export/PDF do histórico.

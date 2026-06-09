@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { countPacientesRemarcados } from "@/lib/historico";
 
 export type PeriodoRange = { start: string; end: string };
 
@@ -48,10 +49,12 @@ export type Kpis = {
   agendamentos_hoje: number;
   sessoes_mes: number;
   receita_mes_centavos: number;
+  pacientes_remarcados: number;
   variacao_pacientes_pct: number | null;
   variacao_agendamentos_pct: number | null;
   variacao_sessoes_pct: number | null;
   variacao_receita_pct: number | null;
+  variacao_remarcados_pct: number | null;
 };
 
 function pct(atual: number, anterior: number): number | null {
@@ -90,6 +93,11 @@ export async function fetchKpis(range: PeriodoRange, profissionalId?: string | n
       .lte("data_pagamento", prev.end),
   ]);
 
+  const [remarcAtual, remarcPrev] = await Promise.all([
+    countPacientesRemarcados(range),
+    countPacientesRemarcados(prev),
+  ]);
+
   const sum = (rows: any[] | null) => (rows ?? []).reduce((s, r) => s + (r.valor_centavos || 0), 0);
   const receitaAtual = sum(lancRes.data as any);
   const receitaPrev = sum(lancPrevRes.data as any);
@@ -101,10 +109,12 @@ export async function fetchKpis(range: PeriodoRange, profissionalId?: string | n
     agendamentos_hoje: agHojeRes.count ?? 0,
     sessoes_mes: sessAtual,
     receita_mes_centavos: receitaAtual,
+    pacientes_remarcados: remarcAtual,
     variacao_pacientes_pct: null,
     variacao_agendamentos_pct: null,
     variacao_sessoes_pct: pct(sessAtual, sessPrev),
     variacao_receita_pct: pct(receitaAtual, receitaPrev),
+    variacao_remarcados_pct: pct(remarcAtual, remarcPrev),
   };
 }
 
