@@ -31,6 +31,7 @@ import { PacienteAvatar } from "./PacienteAvatar";
 import { ProntuarioTab } from "@/components/gestao/prontuario/ProntuarioTab";
 import { HistoricoSessoesTab } from "@/components/gestao/prontuario/HistoricoSessoesTab";
 import { FinanceiroPacienteTab } from "@/components/gestao/financeiro/FinanceiroPacienteTab";
+import { FichaClinicaTab } from "@/components/gestao/prontuario/FichaClinicaTab";
 import {
   buscarCep,
   calcularIdade,
@@ -39,6 +40,7 @@ import {
   createPaciente,
   deletePaciente,
   ESTADOS,
+  ESCOLARIDADE_NIVEIS,
   maskCelular,
   maskCEP,
   maskCPF,
@@ -73,6 +75,11 @@ type FormState = {
   observacoes: string;
   foto_url: string;
   ativo: boolean;
+  responsavel2_nome: string;
+  responsavel2_parentesco: string;
+  responsavel2_celular: string;
+  escolaridade_nivel: string;
+  escola_nome: string;
 };
 
 function blank(): FormState {
@@ -98,6 +105,11 @@ function blank(): FormState {
     observacoes: "",
     foto_url: "",
     ativo: true,
+    responsavel2_nome: "",
+    responsavel2_parentesco: "",
+    responsavel2_celular: "",
+    escolaridade_nivel: "",
+    escola_nome: "",
   };
 }
 
@@ -124,6 +136,11 @@ function fromPaciente(p: Paciente): FormState {
     observacoes: p.observacoes ?? "",
     foto_url: p.foto_url ?? "",
     ativo: p.ativo,
+    responsavel2_nome: p.responsavel2_nome ?? "",
+    responsavel2_parentesco: p.responsavel2_parentesco ?? "",
+    responsavel2_celular: p.responsavel2_celular ? maskCelular(p.responsavel2_celular) : "",
+    escolaridade_nivel: p.escolaridade_nivel ?? "",
+    escola_nome: p.escola_nome ?? "",
   };
 }
 
@@ -151,6 +168,11 @@ function toInput(s: FormState): PacienteInput {
     foto_url: s.foto_url || null,
     ativo: s.ativo,
     profissional_responsavel_id: null,
+    responsavel2_nome: s.responsavel2_nome.trim() || null,
+    responsavel2_parentesco: s.responsavel2_parentesco || null,
+    responsavel2_celular: s.responsavel2_celular ? s.responsavel2_celular.replace(/\D/g, "") : null,
+    escolaridade_nivel: s.escolaridade_nivel || null,
+    escola_nome: s.escola_nome.trim() || null,
   };
 }
 
