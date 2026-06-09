@@ -200,16 +200,21 @@ export function AgendamentoFormDialog({
   }, [paciente, isEdit]);
 
   // Config da recorrência (objeto)
+  const recTipoDerivado: RecorrenciaTipo =
+    recOcorrencias > 0 && recOcorrencias % 8 === 0 ? "duas_por_semana" : "semanal";
+  const recTipoEfetivo: RecorrenciaTipo =
+    modoAgendamento === "unico" ? "nao" : freqManual ? recTipo : recTipoDerivado;
+
   const recConfig: RecorrenciaConfig = useMemo(() => {
-    if (recTipo === "nao") return { tipo: "nao" };
-    if (recTipo === "duas_por_semana")
+    if (recTipoEfetivo === "nao") return { tipo: "nao" };
+    if (recTipoEfetivo === "duas_por_semana")
       return {
         tipo: "duas_por_semana",
         ocorrencias: recOcorrencias,
         segundoDiaSemana: recSegundoDia,
       };
-    return { tipo: recTipo, ocorrencias: recOcorrencias };
-  }, [recTipo, recOcorrencias, recSegundoDia]);
+    return { tipo: recTipoEfetivo, ocorrencias: recOcorrencias };
+  }, [recTipoEfetivo, recOcorrencias, recSegundoDia]);
 
   // Datas previstas (para mostrar "até" calculado)
   const datasPrevistas = useMemo(
