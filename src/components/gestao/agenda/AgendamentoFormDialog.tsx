@@ -29,7 +29,6 @@ import {
   createAgendamento,
   createAgendamentosLote,
   DIAS_SEMANA_LABEL,
-  ocorrenciasAteData,
   ocorrenciasParaRecorrencia,
   parseIsoDate,
   RECORRENCIA_LABEL,
@@ -51,6 +50,14 @@ import {
 } from "@/lib/contratos";
 
 type PacienteLite = { id: string; nome: string; foto_url: string | null };
+
+function proximaDataParaDiaSemana(dataRef: string, diaSemana: number): string {
+  const base = parseIsoDate(dataRef);
+  const diff = (diaSemana - base.getDay() + 7) % 7;
+  const d = new Date(base);
+  d.setDate(base.getDate() + diff);
+  return toIsoDate(d);
+}
 
 export type FormDialogProps = {
   open: boolean;
@@ -92,11 +99,11 @@ export function AgendamentoFormDialog({
   const [observacoes, setObservacoes] = useState("");
 
   // Recorrência
+  const [modoAgendamento, setModoAgendamento] = useState<"unico" | "recorrente">("unico");
+  const [freqManual, setFreqManual] = useState(false);
   const [recTipo, setRecTipo] = useState<RecorrenciaTipo>("nao");
   const [recOcorrencias, setRecOcorrencias] = useState<number>(4);
   const [recSegundoDia, setRecSegundoDia] = useState<number>(4); // padrão Qui
-  const [recAte, setRecAte] = useState<string>("");
-
   // Contratos ativos do paciente
   const [contratos, setContratos] = useState<ContratoAtivoResumo[]>([]);
   const [contratoVinculadoId, setContratoVinculadoId] = useState<string | null>(null);
@@ -123,6 +130,8 @@ export function AgendamentoFormDialog({
       setHoraFim(agendamento.hora_fim.slice(0, 5));
       setObservacoes(agendamento.observacoes ?? "");
       setRecTipo("nao");
+      setModoAgendamento("unico");
+      setFreqManual(false);
       setContratoVinculadoId(agendamento.contrato_id ?? null);
     } else {
       setPaciente(pacienteInicial ?? null);
@@ -137,6 +146,8 @@ export function AgendamentoFormDialog({
       setObservacoes("");
       setRecTipo("nao");
       setRecOcorrencias(4);
+      setModoAgendamento("unico");
+      setFreqManual(false);
       setContratoVinculadoId(null);
     }
     setPacienteSearch("");
@@ -186,16 +197,21 @@ export function AgendamentoFormDialog({
   }, [paciente, isEdit]);
 
   // Config da recorrência (objeto)
+  const recTipoDerivado: RecorrenciaTipo =
+    recOcorrencias > 0 && recOcorrencias % 8 === 0 ? "duas_por_semana" : "semanal";
+  const recTipoEfetivo: RecorrenciaTipo =
+    modoAgendamento === "unico" ? "nao" : freqManual ? recTipo : recTipoDerivado;
+
   const recConfig: RecorrenciaConfig = useMemo(() => {
-    if (recTipo === "nao") return { tipo: "nao" };
-    if (recTipo === "duas_por_semana")
+    if (recTipoEfetivo === "nao") return { tipo: "nao" };
+    if (recTipoEfetivo === "duas_por_semana")
       return {
         tipo: "duas_por_semana",
         ocorrencias: recOcorrencias,
         segundoDiaSemana: recSegundoDia,
       };
-    return { tipo: recTipo, ocorrencias: recOcorrencias };
-  }, [recTipo, recOcorrencias, recSegundoDia]);
+    return { tipo: recTipoEfetivo, ocorrencias: recOcorrencias };
+  }, [recTipoEfetivo, recOcorrencias, recSegundoDia]);
 
   // Datas previstas (para mostrar "até" calculado)
   const datasPrevistas = useMemo(
@@ -204,22 +220,17 @@ export function AgendamentoFormDialog({
   );
   const dataFimCalculada = datasPrevistas[datasPrevistas.length - 1] ?? "";
 
-  function handleAteChange(novoAte: string) {
-    setRecAte(novoAte);
-    if (!novoAte || recTipo === "nao") return;
-    const n = ocorrenciasAteData(data, novoAte, recConfig);
-    setRecOcorrencias(n);
-  }
-
   function aplicarContrato(c: ContratoAtivoResumo) {
     setProfissionalId(c.profissional_id);
     setServicoId(c.servico_id);
     setContratoVinculadoId(c.id);
+    setModoAgendamento("recorrente");
+    setFreqManual(true);
     // Mapeia frequência do contrato → recorrência
     if (c.frequencia === "semanal") setRecTipo("semanal");
     else if (c.frequencia === "quinzenal") setRecTipo("quinzenal");
     else if (c.frequencia === "mensal") setRecTipo("mensal");
-    else setRecTipo("nao");
+    else setRecTipo("semanal");
     // 2x/semana se aulas_por_mes >= 8 e frequência semanal
     if (c.frequencia === "semanal" && (c.aulas_por_mes ?? 0) >= 8) {
       setRecTipo("duas_por_semana");
@@ -284,7 +295,7 @@ export function AgendamentoFormDialog({
       toast.error(erro);
       return;
     }
-    if (!isEdit && recTipo !== "nao") {
+    if (!isEdit && modoAgendamento === "recorrente") {
       await abrirPreview();
       return;
     }
@@ -524,116 +535,199 @@ export function AgendamentoFormDialog({
             </RadioGroup>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label>Data *</Label>
-              <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>Início *</Label>
-              <Input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} step={900} />
-            </div>
-            <div className="space-y-1">
-              <Label>Fim *</Label>
-              <Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} step={900} />
-            </div>
-          </div>
-
           {!isEdit && (
             <div className="rounded-md border border-gray-200 p-3 space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <CalendarCheck className="h-4 w-4 text-[#B85A24]" />
-                Recorrência
+                Tipo de agendamento
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>Frequência</Label>
-                  <Select
-                    value={recTipo}
-                    onValueChange={(v) => setRecTipo(v as RecorrenciaTipo)}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="nao">{RECORRENCIA_LABEL.nao}</SelectItem>
-                      <SelectItem value="semanal">{RECORRENCIA_LABEL.semanal}</SelectItem>
-                      <SelectItem value="duas_por_semana">
-                        {RECORRENCIA_LABEL.duas_por_semana}
-                      </SelectItem>
-                      <SelectItem value="quinzenal">{RECORRENCIA_LABEL.quinzenal}</SelectItem>
-                      <SelectItem value="mensal">{RECORRENCIA_LABEL.mensal}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {recTipo === "duas_por_semana" && (
-                  <div className="space-y-1">
-                    <Label>
-                      2º dia da semana
-                      {data && (
-                        <span className="ml-1 font-normal text-gray-500">
-                          (1º = {DIAS_SEMANA_LABEL[parseIsoDate(data).getDay()]})
-                        </span>
-                      )}
-                    </Label>
-                    <Select
-                      value={String(recSegundoDia)}
-                      onValueChange={(v) => setRecSegundoDia(Number(v))}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {DIAS_SEMANA_LABEL.map((nome, i) => (
-                          <SelectItem key={i} value={String(i)}>
-                            {nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-              {recTipo === "duas_por_semana" && data && (
-                <p className="text-xs text-gray-500">
-                  Sessões serão criadas às{" "}
-                  <span className="font-medium text-gray-700">
-                    {DIAS_SEMANA_LABEL[parseIsoDate(data).getDay()]}s
-                  </span>{" "}
-                  (a partir de {parseIsoDate(data).toLocaleDateString("pt-BR")}) e às{" "}
-                  <span className="font-medium text-gray-700">
-                    {DIAS_SEMANA_LABEL[recSegundoDia]}s
-                  </span>
-                  .
-                </p>
-              )}
-              {recTipo !== "nao" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label>Quantas sessões</Label>
+              <RadioGroup
+                value={modoAgendamento}
+                onValueChange={(v) => {
+                  setModoAgendamento(v as "unico" | "recorrente");
+                  if (v === "unico") setFreqManual(false);
+                }}
+                className="flex gap-4"
+              >
+                <label className="flex items-center gap-2 text-sm">
+                  <RadioGroupItem value="unico" /> Sessão única
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <RadioGroupItem value="recorrente" /> Pacote recorrente
+                </label>
+              </RadioGroup>
+
+              {modoAgendamento === "recorrente" && (
+                <div className="space-y-2 pt-1">
+                  <Label>Quantidade de sessões</Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[4, 8, 12, 16].map((n) => (
+                      <Button
+                        key={n}
+                        type="button"
+                        size="sm"
+                        variant={recOcorrencias === n ? "default" : "outline"}
+                        onClick={() => setRecOcorrencias(n)}
+                        className={
+                          recOcorrencias === n
+                            ? "bg-[#B85A24] text-white hover:bg-[#A04E1F]"
+                            : ""
+                        }
+                      >
+                        {n}
+                      </Button>
+                    ))}
                     <Input
                       type="number"
                       min={1}
                       max={52}
                       value={recOcorrencias}
                       onChange={(e) =>
-                        setRecOcorrencias(Math.max(1, Math.min(52, Number(e.target.value) || 1)))
+                        setRecOcorrencias(
+                          Math.max(1, Math.min(52, Number(e.target.value) || 1)),
+                        )
                       }
+                      className="w-20"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label>Até (calculado)</Label>
-                    <Input
-                      type="date"
-                      value={recAte || dataFimCalculada}
-                      onChange={(e) => handleAteChange(e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-2 text-xs text-gray-500">
-                    Termina em {datasPrevistas.length} sessões — última em{" "}
-                    {dataFimCalculada
-                      ? parseIsoDate(dataFimCalculada).toLocaleDateString("pt-BR")
-                      : "—"}
-                    .
-                  </div>
+                  <p className="text-xs text-gray-600">
+                    Frequência:{" "}
+                    <strong>{RECORRENCIA_LABEL[recTipoEfetivo]}</strong>
+                    {!freqManual && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFreqManual(true);
+                          setRecTipo(recTipoDerivado);
+                        }}
+                        className="ml-2 text-[#B85A24] hover:underline"
+                      >
+                        alterar
+                      </button>
+                    )}
+                  </p>
+                  {freqManual && (
+                    <Select
+                      value={recTipo}
+                      onValueChange={(v) => setRecTipo(v as RecorrenciaTipo)}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="semanal">{RECORRENCIA_LABEL.semanal}</SelectItem>
+                        <SelectItem value="duas_por_semana">
+                          {RECORRENCIA_LABEL.duas_por_semana}
+                        </SelectItem>
+                        <SelectItem value="quinzenal">{RECORRENCIA_LABEL.quinzenal}</SelectItem>
+                        <SelectItem value="mensal">{RECORRENCIA_LABEL.mensal}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Data / dias da semana / horários */}
+          {(modoAgendamento === "unico" || isEdit) && (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label>Data *</Label>
+                <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Início *</Label>
+                <Input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} step={900} />
+              </div>
+              <div className="space-y-1">
+                <Label>Fim *</Label>
+                <Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} step={900} />
+              </div>
+            </div>
+          )}
+
+          {!isEdit && modoAgendamento === "recorrente" && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {recTipoEfetivo === "duas_por_semana" ? (
+                  <>
+                    <div className="space-y-1">
+                      <Label>1º dia da semana *</Label>
+                      <Select
+                        value={String(parseIsoDate(data).getDay())}
+                        onValueChange={(v) =>
+                          setData(proximaDataParaDiaSemana(data, Number(v)))
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {DIAS_SEMANA_LABEL.map((nome, i) => (
+                            <SelectItem key={i} value={String(i)}>{nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>2º dia da semana *</Label>
+                      <Select
+                        value={String(recSegundoDia)}
+                        onValueChange={(v) => setRecSegundoDia(Number(v))}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {DIAS_SEMANA_LABEL.map((nome, i) => (
+                            <SelectItem key={i} value={String(i)}>{nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-1 col-span-2">
+                    <Label>Dia da semana *</Label>
+                    <Select
+                      value={String(parseIsoDate(data).getDay())}
+                      onValueChange={(v) =>
+                        setData(proximaDataParaDiaSemana(data, Number(v)))
+                      }
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {DIAS_SEMANA_LABEL.map((nome, i) => (
+                          <SelectItem key={i} value={String(i)}>{nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Data de início *</Label>
+                  <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Início *</Label>
+                  <Input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} step={900} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Fim *</Label>
+                  <Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} step={900} />
+                </div>
+              </div>
+              <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                <strong>{datasPrevistas.length}</strong> sessões — de{" "}
+                {parseIsoDate(data).toLocaleDateString("pt-BR")} a{" "}
+                {dataFimCalculada
+                  ? parseIsoDate(dataFimCalculada).toLocaleDateString("pt-BR")
+                  : "—"}
+                {recTipoEfetivo === "duas_por_semana" && (
+                  <>
+                    {" · "}
+                    {DIAS_SEMANA_LABEL[parseIsoDate(data).getDay()]} e{" "}
+                    {DIAS_SEMANA_LABEL[recSegundoDia]}
+                  </>
+                )}
+              </div>
             </div>
           )}
 
@@ -655,7 +749,7 @@ export function AgendamentoFormDialog({
             className="bg-gradient-to-r from-[#D67F43] to-[#B85A24] text-white hover:opacity-90"
           >
             {(saving || previewLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {!isEdit && recTipo !== "nao" ? "Pré-visualizar sessões" : "Salvar"}
+            {!isEdit && modoAgendamento === "recorrente" ? "Pré-visualizar sessões" : "Salvar"}
           </Button>
         </DialogFooter>
 
