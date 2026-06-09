@@ -25,6 +25,7 @@ export type Agendamento = {
   observacoes: string | null;
   motivo_cancelamento: string | null;
   recorrencia_grupo_id: string | null;
+  contrato_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -44,6 +45,7 @@ export type AgendamentoInput = {
   hora_fim: string;
   tipo: AgendamentoTipo;
   observacoes: string | null;
+  contrato_id?: string | null;
 };
 
 // =========== Constantes ===========
