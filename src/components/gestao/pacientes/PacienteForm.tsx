@@ -185,6 +185,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [tab, setTab] = useState("dados");
+  const [step, setStep] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
 
   function set<K extends keyof FormState>(k: K, v: FormState[K]) {
@@ -245,6 +246,8 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     const erro = validar();
     if (erro) {
       toast.error(erro);
+      // Em modo wizard, voltar para o primeiro passo (onde estão os campos obrigatórios)
+      if (!isEdit) setStep(0);
       return;
     }
     try {
