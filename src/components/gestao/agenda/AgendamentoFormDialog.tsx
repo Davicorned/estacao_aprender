@@ -29,7 +29,6 @@ import {
   createAgendamento,
   createAgendamentosLote,
   DIAS_SEMANA_LABEL,
-  ocorrenciasAteData,
   ocorrenciasParaRecorrencia,
   parseIsoDate,
   RECORRENCIA_LABEL,
@@ -105,8 +104,6 @@ export function AgendamentoFormDialog({
   const [recTipo, setRecTipo] = useState<RecorrenciaTipo>("nao");
   const [recOcorrencias, setRecOcorrencias] = useState<number>(4);
   const [recSegundoDia, setRecSegundoDia] = useState<number>(4); // padrão Qui
-  const [recAte, setRecAte] = useState<string>("");
-
   // Contratos ativos do paciente
   const [contratos, setContratos] = useState<ContratoAtivoResumo[]>([]);
   const [contratoVinculadoId, setContratoVinculadoId] = useState<string | null>(null);
@@ -222,13 +219,6 @@ export function AgendamentoFormDialog({
     [data, recConfig],
   );
   const dataFimCalculada = datasPrevistas[datasPrevistas.length - 1] ?? "";
-
-  function handleAteChange(novoAte: string) {
-    setRecAte(novoAte);
-    if (!novoAte || recTipo === "nao") return;
-    const n = ocorrenciasAteData(data, novoAte, recConfig);
-    setRecOcorrencias(n);
-  }
 
   function aplicarContrato(c: ContratoAtivoResumo) {
     setProfissionalId(c.profissional_id);
