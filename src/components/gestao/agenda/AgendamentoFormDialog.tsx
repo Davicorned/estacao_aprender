@@ -234,11 +234,13 @@ export function AgendamentoFormDialog({
     setProfissionalId(c.profissional_id);
     setServicoId(c.servico_id);
     setContratoVinculadoId(c.id);
+    setModoAgendamento("recorrente");
+    setFreqManual(true);
     // Mapeia frequência do contrato → recorrência
     if (c.frequencia === "semanal") setRecTipo("semanal");
     else if (c.frequencia === "quinzenal") setRecTipo("quinzenal");
     else if (c.frequencia === "mensal") setRecTipo("mensal");
-    else setRecTipo("nao");
+    else setRecTipo("semanal");
     // 2x/semana se aulas_por_mes >= 8 e frequência semanal
     if (c.frequencia === "semanal" && (c.aulas_por_mes ?? 0) >= 8) {
       setRecTipo("duas_por_semana");
@@ -303,7 +305,7 @@ export function AgendamentoFormDialog({
       toast.error(erro);
       return;
     }
-    if (!isEdit && recTipo !== "nao") {
+    if (!isEdit && modoAgendamento === "recorrente") {
       await abrirPreview();
       return;
     }
