@@ -545,96 +545,199 @@ export function AgendamentoFormDialog({
             </RadioGroup>
           </div>
 
-          <div className="grid grid-cols-3 gap-3">
-            <div className="space-y-1">
-              <Label>Data *</Label>
-              <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
-            </div>
-            <div className="space-y-1">
-              <Label>Início *</Label>
-              <Input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} step={900} />
-            </div>
-            <div className="space-y-1">
-              <Label>Fim *</Label>
-              <Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} step={900} />
-            </div>
-          </div>
-
           {!isEdit && (
             <div className="rounded-md border border-gray-200 p-3 space-y-3">
               <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
                 <CalendarCheck className="h-4 w-4 text-[#B85A24]" />
-                Recorrência
+                Tipo de agendamento
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label>Frequência</Label>
-                  <Select
-                    value={recTipo}
-                    onValueChange={(v) => setRecTipo(v as RecorrenciaTipo)}
-                  >
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="nao">{RECORRENCIA_LABEL.nao}</SelectItem>
-                      <SelectItem value="semanal">{RECORRENCIA_LABEL.semanal}</SelectItem>
-                      <SelectItem value="duas_por_semana">
-                        {RECORRENCIA_LABEL.duas_por_semana}
-                      </SelectItem>
-                      <SelectItem value="quinzenal">{RECORRENCIA_LABEL.quinzenal}</SelectItem>
-                      <SelectItem value="mensal">{RECORRENCIA_LABEL.mensal}</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                {recTipo === "duas_por_semana" && (
-                  <div className="space-y-1">
-                    <Label>2º dia da semana</Label>
-                    <Select
-                      value={String(recSegundoDia)}
-                      onValueChange={(v) => setRecSegundoDia(Number(v))}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {DIAS_SEMANA_LABEL.map((nome, i) => (
-                          <SelectItem key={i} value={String(i)}>
-                            {nome}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-              {recTipo !== "nao" && (
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1">
-                    <Label>Quantas sessões</Label>
+              <RadioGroup
+                value={modoAgendamento}
+                onValueChange={(v) => {
+                  setModoAgendamento(v as "unico" | "recorrente");
+                  if (v === "unico") setFreqManual(false);
+                }}
+                className="flex gap-4"
+              >
+                <label className="flex items-center gap-2 text-sm">
+                  <RadioGroupItem value="unico" /> Sessão única
+                </label>
+                <label className="flex items-center gap-2 text-sm">
+                  <RadioGroupItem value="recorrente" /> Pacote recorrente
+                </label>
+              </RadioGroup>
+
+              {modoAgendamento === "recorrente" && (
+                <div className="space-y-2 pt-1">
+                  <Label>Quantidade de sessões</Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {[4, 8, 12, 16].map((n) => (
+                      <Button
+                        key={n}
+                        type="button"
+                        size="sm"
+                        variant={recOcorrencias === n ? "default" : "outline"}
+                        onClick={() => setRecOcorrencias(n)}
+                        className={
+                          recOcorrencias === n
+                            ? "bg-[#B85A24] text-white hover:bg-[#A04E1F]"
+                            : ""
+                        }
+                      >
+                        {n}
+                      </Button>
+                    ))}
                     <Input
                       type="number"
                       min={1}
                       max={52}
                       value={recOcorrencias}
                       onChange={(e) =>
-                        setRecOcorrencias(Math.max(1, Math.min(52, Number(e.target.value) || 1)))
+                        setRecOcorrencias(
+                          Math.max(1, Math.min(52, Number(e.target.value) || 1)),
+                        )
                       }
+                      className="w-20"
                     />
                   </div>
-                  <div className="space-y-1">
-                    <Label>Até (calculado)</Label>
-                    <Input
-                      type="date"
-                      value={recAte || dataFimCalculada}
-                      onChange={(e) => handleAteChange(e.target.value)}
-                    />
-                  </div>
-                  <div className="col-span-2 text-xs text-gray-500">
-                    Termina em {datasPrevistas.length} sessões — última em{" "}
-                    {dataFimCalculada
-                      ? parseIsoDate(dataFimCalculada).toLocaleDateString("pt-BR")
-                      : "—"}
-                    .
-                  </div>
+                  <p className="text-xs text-gray-600">
+                    Frequência:{" "}
+                    <strong>{RECORRENCIA_LABEL[recTipoEfetivo]}</strong>
+                    {!freqManual && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFreqManual(true);
+                          setRecTipo(recTipoDerivado);
+                        }}
+                        className="ml-2 text-[#B85A24] hover:underline"
+                      >
+                        alterar
+                      </button>
+                    )}
+                  </p>
+                  {freqManual && (
+                    <Select
+                      value={recTipo}
+                      onValueChange={(v) => setRecTipo(v as RecorrenciaTipo)}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="semanal">{RECORRENCIA_LABEL.semanal}</SelectItem>
+                        <SelectItem value="duas_por_semana">
+                          {RECORRENCIA_LABEL.duas_por_semana}
+                        </SelectItem>
+                        <SelectItem value="quinzenal">{RECORRENCIA_LABEL.quinzenal}</SelectItem>
+                        <SelectItem value="mensal">{RECORRENCIA_LABEL.mensal}</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
                 </div>
               )}
+            </div>
+          )}
+
+          {/* Data / dias da semana / horários */}
+          {(modoAgendamento === "unico" || isEdit) && (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <Label>Data *</Label>
+                <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+              </div>
+              <div className="space-y-1">
+                <Label>Início *</Label>
+                <Input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} step={900} />
+              </div>
+              <div className="space-y-1">
+                <Label>Fim *</Label>
+                <Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} step={900} />
+              </div>
+            </div>
+          )}
+
+          {!isEdit && modoAgendamento === "recorrente" && (
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                {recTipoEfetivo === "duas_por_semana" ? (
+                  <>
+                    <div className="space-y-1">
+                      <Label>1º dia da semana *</Label>
+                      <Select
+                        value={String(parseIsoDate(data).getDay())}
+                        onValueChange={(v) =>
+                          setData(proximaDataParaDiaSemana(data, Number(v)))
+                        }
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {DIAS_SEMANA_LABEL.map((nome, i) => (
+                            <SelectItem key={i} value={String(i)}>{nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1">
+                      <Label>2º dia da semana *</Label>
+                      <Select
+                        value={String(recSegundoDia)}
+                        onValueChange={(v) => setRecSegundoDia(Number(v))}
+                      >
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {DIAS_SEMANA_LABEL.map((nome, i) => (
+                            <SelectItem key={i} value={String(i)}>{nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </>
+                ) : (
+                  <div className="space-y-1 col-span-2">
+                    <Label>Dia da semana *</Label>
+                    <Select
+                      value={String(parseIsoDate(data).getDay())}
+                      onValueChange={(v) =>
+                        setData(proximaDataParaDiaSemana(data, Number(v)))
+                      }
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {DIAS_SEMANA_LABEL.map((nome, i) => (
+                          <SelectItem key={i} value={String(i)}>{nome}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-3">
+                <div className="space-y-1">
+                  <Label>Data de início *</Label>
+                  <Input type="date" value={data} onChange={(e) => setData(e.target.value)} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Início *</Label>
+                  <Input type="time" value={horaInicio} onChange={(e) => setHoraInicio(e.target.value)} step={900} />
+                </div>
+                <div className="space-y-1">
+                  <Label>Fim *</Label>
+                  <Input type="time" value={horaFim} onChange={(e) => setHoraFim(e.target.value)} step={900} />
+                </div>
+              </div>
+              <div className="rounded-md bg-gray-50 px-3 py-2 text-xs text-gray-600">
+                <strong>{datasPrevistas.length}</strong> sessões — de{" "}
+                {parseIsoDate(data).toLocaleDateString("pt-BR")} a{" "}
+                {dataFimCalculada
+                  ? parseIsoDate(dataFimCalculada).toLocaleDateString("pt-BR")
+                  : "—"}
+                {recTipoEfetivo === "duas_por_semana" && (
+                  <>
+                    {" · "}
+                    {DIAS_SEMANA_LABEL[parseIsoDate(data).getDay()]} e{" "}
+                    {DIAS_SEMANA_LABEL[recSegundoDia]}
+                  </>
+                )}
+              </div>
             </div>
           )}
 
