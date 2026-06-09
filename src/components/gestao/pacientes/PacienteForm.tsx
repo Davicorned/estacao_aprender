@@ -338,8 +338,8 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     }
   }
 
-  // Seções renderizadas individualmente para suportar tanto o modo wizard
-  // (cadastro novo) quanto o modo tabbed (edição).
+  // ===== Conteúdo dos blocos (apenas campos, reutilizados pelo wizard e pelos
+  // cards retráteis do modo edição). =====
   const fotoSection = (
     <div className="flex items-center gap-4">
       <PacienteAvatar nome={form.nome || "?"} fotoUrl={form.foto_url || null} size={96} />
@@ -374,8 +374,8 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     </div>
   );
 
-  const sectionDadosPessoais = (
-    <Section title="Dados pessoais">
+  const fieldsDadosPessoais = (
+    <>
       <Field label="Nome completo *" className="md:col-span-2">
         <Input value={form.nome} onChange={(e) => set("nome", e.target.value)} maxLength={150} />
       </Field>
@@ -421,11 +421,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           onChange={(e) => set("email", e.target.value)}
         />
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionResponsavel = (
-    <Section title="Responsável (menores de idade)">
+  const fieldsResponsavel = (
+    <>
       <Field label="Nome do responsável" className="md:col-span-2">
         <Input
           value={form.responsavel_nome}
@@ -449,11 +449,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           </SelectContent>
         </Select>
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionResponsavel2 = (
-    <Section title="Segundo responsável (opcional)">
+  const fieldsResponsavel2 = (
+    <>
       <Field label="Nome">
         <Input
           value={form.responsavel2_nome}
@@ -485,13 +485,12 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           inputMode="numeric"
         />
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionEscolaridade = (
-    <div className="space-y-4">
-      <Section title="Escolaridade">
-        <Field label="Nível">
+  const fieldsEscolaridadeBase = (
+    <>
+      <Field label="Nível">
         <Select
           value={form.escolaridade_nivel || undefined}
           onValueChange={(v) => set("escolaridade_nivel", v)}
@@ -507,14 +506,19 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
             ))}
           </SelectContent>
         </Select>
-        </Field>
-        <Field label="Nome da escola" className="md:col-span-2">
-          <Input
-            value={form.escola_nome}
-            onChange={(e) => set("escola_nome", e.target.value)}
-          />
-        </Field>
-      </Section>
+      </Field>
+      <Field label="Nome da escola" className="md:col-span-2">
+        <Input
+          value={form.escola_nome}
+          onChange={(e) => set("escola_nome", e.target.value)}
+        />
+      </Field>
+    </>
+  );
+
+  const bodyEscolaridade = (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">{fieldsEscolaridadeBase}</div>
       {mostraCamposEscola(form.escolaridade_nivel) && (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <Field label="Turma">
@@ -541,8 +545,8 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
     </div>
   );
 
-  const sectionTelefones = (
-    <Section title="Telefones">
+  const fieldsTelefones = (
+    <>
       <Field label="Celular *">
         <Input
           value={form.telefone_celular}
@@ -559,11 +563,11 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           inputMode="numeric"
         />
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionEndereco = (
-    <Section title="Endereço">
+  const fieldsEndereco = (
+    <>
       <Field label="CEP">
         <Input
           value={form.cep}
@@ -602,11 +606,13 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           </SelectContent>
         </Select>
       </Field>
-    </Section>
+    </>
   );
 
-  const sectionOutros = (
-    <Section title="Outros">
+  // Campos do bloco "Outros" — sem o switch de ativo (movido para o cabeçalho
+  // do paciente). No wizard de cadastro novo, o switch volta a aparecer aqui.
+  const fieldsOutros = (
+    <>
       <Field label="Como conheceu?">
         <Select
           value={form.como_conheceu || undefined}
@@ -631,6 +637,30 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
           onChange={(e) => set("observacoes", e.target.value)}
         />
       </Field>
+    </>
+  );
+
+  // Wrappers com título para o wizard (mantém o visual atual passo a passo).
+  const sectionDadosPessoais = <Section title="Dados pessoais">{fieldsDadosPessoais}</Section>;
+  const sectionResponsavel = (
+    <Section title="Responsável (menores de idade)">{fieldsResponsavel}</Section>
+  );
+  const sectionResponsavel2 = (
+    <Section title="Segundo responsável (opcional)">{fieldsResponsavel2}</Section>
+  );
+  const sectionEscolaridade = (
+    <div>
+      <h3 className="mb-3 text-sm font-semibold uppercase tracking-wider text-gray-500">
+        Escolaridade
+      </h3>
+      {bodyEscolaridade}
+    </div>
+  );
+  const sectionTelefones = <Section title="Telefones">{fieldsTelefones}</Section>;
+  const sectionEndereco = <Section title="Endereço">{fieldsEndereco}</Section>;
+  const sectionOutros = (
+    <Section title="Outros">
+      {fieldsOutros}
       <Field label="Paciente ativo">
         <div className="pt-2">
           <Switch checked={form.ativo} onCheckedChange={(v) => set("ativo", v)} />
