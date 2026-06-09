@@ -31,6 +31,9 @@ export type Paciente = {
   responsavel2_celular: string | null;
   escolaridade_nivel: string | null;
   escola_nome: string | null;
+  escola_turma: string | null;
+  escola_professor: string | null;
+  escola_coordenacao: string | null;
   created_at: string;
   updated_at: string;
 };
