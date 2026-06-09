@@ -323,7 +323,7 @@ export function AgendamentoFormDialog({
               </Select>
             </div>
             <div className="space-y-1">
-              <Label>Procedimento *</Label>
+              <Label>Serviço *</Label>
               <Select value={servicoId} onValueChange={setServicoId}>
                 <SelectTrigger><SelectValue placeholder="Selecionar" /></SelectTrigger>
                 <SelectContent>
