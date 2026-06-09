@@ -1,44 +1,40 @@
 ## Objetivo
-Reorganizar a aba **Ficha Clínica** (`FichaClinicaTab.tsx`) com o mesmo padrão visual usado na aba "Dados Pessoais": blocos colapsáveis, com resumos quando recolhidos e ações globais de expandir/recolher.
+Reorganizar o diálogo **Novo/Editar contrato** (`ContratoFormDialog.tsx`) usando um **wizard em etapas**, no mesmo estilo do cadastro de pacientes — reduzindo o scroll vertical e deixando o preenchimento mais guiado.
 
-## Mudanças (apenas UI, sem alterar dados/validação/BD)
+## Etapas propostas
 
-### 1. Substituir `Bloco` por `CollapsibleBloco`
-Usa `@/components/ui/collapsible` (mesmo componente já usado em PacienteForm).  
-Cabeçalho clicável com: título + chevron + resumo curto à direita quando recolhido.
+1. **Paciente & Serviço**
+   - Busca de paciente, Profissional, Tipo de serviço.
+2. **Responsável**
+   - Nome, CPF, RG, Endereço (pré-preenchidos a partir do paciente).
+3. **Modalidade & Pagamento**
+   - Modalidade, Aulas/mês, Dia vencimento, Valor c/ e s/ desconto, Forma de pagamento, prévia do **valor mensal**.
+4. **Vigência**
+   - Qtd sessões, Frequência, Data início/término, Status, Cidade da assinatura, Autoriza imagem.
+5. **Revisão & Termos**
+   - Resumo (paciente, responsável, valores, datas) + Textarea dos termos + botão *Reaplicar template*.
+   - Botão final **"Gerar contrato"** / **"Salvar"**.
 
-### 2. Estado de abertura por bloco
-```
-openBlocks: {
-  atendimento: true,   // aberto por padrão
-  saude: true,         // aberto por padrão
-  medicos: false,
-  escola: false,
-  contato: false,
-}
-```
+## UX do wizard
 
-### 3. Resumos dinâmicos (quando recolhido)
-- **Atendimento**: nº de especialidades selecionadas + 1ª linha da queixa (ex.: "3 especialidades · Dificuldade de fala…")
-- **Saúde**: limitações marcadas, ou "Sem limitações" + indicador "Alergias/Medicação" se preenchidos
-- **Médicos**: "N profissional(is)" ou "—"
-- **Escola**: turma · professor(a) (ex.: "5º ano · Profª Ana")
-- **Contato familiar**: nome + parentesco
+- Cabeçalho com **stepper** (1 → 5) mostrando etapa atual e títulos curtos.
+- Barra `Progress` fina abaixo do stepper.
+- Footer com **Voltar** / **Próximo**; na última etapa, **Voltar** + **Gerar contrato/Salvar**.
+- Permitir **clicar nas etapas já visitadas** para navegação livre.
+- **Validações por etapa** antes de avançar:
+  - Etapa 1: paciente, profissional, serviço obrigatórios.
+  - Etapa 2: nome e CPF obrigatórios.
+  - Etapa 4: data de início obrigatória.
+- No **modo edição**, todas as etapas começam liberadas (sem bloqueio sequencial).
 
-### 4. Barra de ações
-Adicionar ao cabeçalho (junto de "Imprimir" / "Salvar"):
-- Botão **Expandir tudo**
-- Botão **Recolher tudo**
+## Detalhes técnicos
 
-### 5. Mantido sem alteração
-- Toda lógica de estado (`useState ficha`, `update`, `toggleArray`, `setMedico`, etc.)
-- Query/mutations (`getFichaClinica`, `upsertFichaClinica`)
-- Função `htmlFicha` (impressão)
-- Contador "X de Y blocos preenchidos"
-- Botão "Salvar ficha" do rodapé
+- Arquivo único: `src/components/gestao/contratos/ContratoFormDialog.tsx`.
+- Adicionar `const [step, setStep] = useState(0)` + array `STEPS` com `{ id, title, validate }`.
+- Manter **todo o estado e lógica atuais** (`useEffect`s, `buildVars`, `regenerarTemplate`, `handleSubmit`, payload) — só envolver o conteúdo em um `switch(step)` que renderiza o bloco da etapa.
+- Resetar `step` para 0 sempre que `open` virar `true`.
+- Usar `@/components/ui/progress` (já existente) para a barra.
+- Sem mudanças em dados/DB nem em `contratos.ts`.
 
-## Arquivos editados
-- `src/components/gestao/prontuario/FichaClinicaTab.tsx` (único arquivo)
-
-## Escopo
-Somente apresentação. Nenhuma alteração em `src/lib/ficha-clinica.ts`, migrations, ou outros componentes.
+## Arquivos a editar
+- `src/components/gestao/contratos/ContratoFormDialog.tsx` (apenas UI/estrutura).

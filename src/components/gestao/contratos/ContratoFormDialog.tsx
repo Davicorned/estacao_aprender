@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Search } from "lucide-react";
+import { Loader2, Search, ChevronLeft, ChevronRight, Check } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -94,6 +96,8 @@ export function ContratoFormDialog({
   const [status, setStatus] = useState<ContratoStatus>("rascunho");
   const [termos, setTermos] = useState<string>(TEMPLATE_PADRAO);
   const [saving, setSaving] = useState(false);
+  const [step, setStep] = useState(0);
+  const [maxVisited, setMaxVisited] = useState(0);
 
   // Novos campos do modelo Estação
   const [modalidade, setModalidade] = useState<Modalidade>("pacote_mensal");
@@ -160,6 +164,8 @@ export function ContratoFormDialog({
     setPacienteSearch("");
     setPacienteResults([]);
     setPacienteOpen(false);
+    setStep(0);
+    setMaxVisited(contrato ? 4 : 0);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Atualiza valores com base no serviço quando criando novo
