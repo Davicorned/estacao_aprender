@@ -25,6 +25,7 @@ export type Agendamento = {
   observacoes: string | null;
   motivo_cancelamento: string | null;
   recorrencia_grupo_id: string | null;
+  contrato_id: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -44,6 +45,7 @@ export type AgendamentoInput = {
   hora_fim: string;
   tipo: AgendamentoTipo;
   observacoes: string | null;
+  contrato_id?: string | null;
 };
 
 // =========== Constantes ===========
@@ -234,57 +236,158 @@ export async function createAgendamento(input: AgendamentoInput): Promise<Agenda
   return data as Agendamento;
 }
 
-export type Recorrencia = "nao" | "semanal" | "quinzenal" | "mensal";
+// =========== Recorrência ===========
 
+export type RecorrenciaTipo =
+  | "nao"
+  | "semanal"
+  | "duas_por_semana"
+  | "quinzenal"
+  | "mensal";
+
+export type RecorrenciaConfig =
+  | { tipo: "nao" }
+  | { tipo: "semanal"; ocorrencias: number }
+  | { tipo: "duas_por_semana"; ocorrencias: number; segundoDiaSemana: number }
+  | { tipo: "quinzenal"; ocorrencias: number }
+  | { tipo: "mensal"; ocorrencias: number };
+
+export const RECORRENCIA_LABEL: Record<RecorrenciaTipo, string> = {
+  nao: "Não repetir",
+  semanal: "Semanal",
+  duas_por_semana: "2x por semana",
+  quinzenal: "Quinzenal",
+  mensal: "Mensal",
+};
+
+export const DIAS_SEMANA_LABEL = [
+  "Domingo",
+  "Segunda",
+  "Terça",
+  "Quarta",
+  "Quinta",
+  "Sexta",
+  "Sábado",
+];
+
+/** Gera as datas (ISO yyyy-mm-dd) de uma recorrência a partir de uma data-base. */
 export function ocorrenciasParaRecorrencia(
   dataBase: string,
-  rec: Recorrencia,
+  cfg: RecorrenciaConfig,
 ): string[] {
-  if (rec === "nao") return [dataBase];
+  if (cfg.tipo === "nao") return [dataBase];
   const base = parseIsoDate(dataBase);
+  const n = Math.max(1, Math.min(52, cfg.ocorrencias));
   const out: string[] = [];
-  if (rec === "semanal" || rec === "quinzenal") {
-    const stepDias = rec === "semanal" ? 7 : 14;
-    for (let i = 0; i < 4; i++) {
+
+  if (cfg.tipo === "semanal" || cfg.tipo === "quinzenal") {
+    const step = cfg.tipo === "semanal" ? 7 : 14;
+    for (let i = 0; i < n; i++) {
       const d = new Date(base);
-      d.setDate(base.getDate() + i * stepDias);
+      d.setDate(base.getDate() + i * step);
       out.push(toIsoDate(d));
     }
-  } else if (rec === "mensal") {
-    for (let i = 0; i < 3; i++) {
+    return out;
+  }
+
+  if (cfg.tipo === "mensal") {
+    for (let i = 0; i < n; i++) {
       const d = new Date(base);
       d.setMonth(base.getMonth() + i);
       out.push(toIsoDate(d));
     }
+    return out;
+  }
+
+  // duas_por_semana — alterna entre o dia da semana base e o segundo dia
+  const diaA = base.getDay();
+  const diaB = cfg.segundoDiaSemana;
+  if (diaA === diaB) {
+    // cai em semanal
+    for (let i = 0; i < n; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i * 7);
+      out.push(toIsoDate(d));
+    }
+    return out;
+  }
+  let cur = new Date(base);
+  out.push(toIsoDate(cur));
+  for (let i = 1; i < n; i++) {
+    const d = new Date(cur);
+    do {
+      d.setDate(d.getDate() + 1);
+    } while (d.getDay() !== diaA && d.getDay() !== diaB);
+    cur = d;
+    out.push(toIsoDate(cur));
   }
   return out;
 }
 
-export async function createAgendamentosRecorrentes(
-  input: AgendamentoInput,
-  rec: Recorrencia,
-): Promise<{ criados: number; conflitos: string[] }> {
-  const datas = ocorrenciasParaRecorrencia(input.data, rec);
-  const grupo = rec === "nao" ? null : crypto.randomUUID();
-  const conflitos: string[] = [];
-  const rows: (AgendamentoInput & { recorrencia_grupo_id: string | null })[] = [];
-  for (const data of datas) {
-    const conf = await checarConflito({
-      profissionalId: input.profissional_id,
-      data,
-      horaInicio: input.hora_inicio,
-      horaFim: input.hora_fim,
-    });
-    if (conf) {
-      conflitos.push(data);
-      continue;
-    }
-    rows.push({ ...input, data, recorrencia_grupo_id: grupo });
+/** Calcula nº de ocorrências necessárias até atingir a data ISO `ate` (inclusive). */
+export function ocorrenciasAteData(
+  dataBase: string,
+  ate: string,
+  cfg: RecorrenciaConfig,
+): number {
+  if (cfg.tipo === "nao") return 1;
+  const baseT = parseIsoDate(dataBase).getTime();
+  const ateT = parseIsoDate(ate).getTime();
+  if (ateT < baseT) return 1;
+  // estimativa generosa e contagem
+  const probe: RecorrenciaConfig = { ...cfg, ocorrencias: 60 } as RecorrenciaConfig;
+  const datas = ocorrenciasParaRecorrencia(dataBase, probe);
+  let n = 0;
+  for (const d of datas) {
+    if (parseIsoDate(d).getTime() <= ateT) n++;
+    else break;
   }
-  if (rows.length === 0) return { criados: 0, conflitos };
+  return Math.max(1, n);
+}
+
+/** Cria agendamentos para um conjunto de datas já validadas pelo usuário. */
+export async function createAgendamentosLote(
+  baseInput: AgendamentoInput,
+  datas: string[],
+  opts: { contratoId?: string | null; agrupar?: boolean } = {},
+): Promise<{ criados: number }> {
+  if (datas.length === 0) return { criados: 0 };
+  const grupo = opts.agrupar && datas.length > 1 ? crypto.randomUUID() : null;
+  const rows = datas.map((data) => ({
+    ...baseInput,
+    data,
+    contrato_id: opts.contratoId ?? null,
+    recorrencia_grupo_id: grupo,
+  }));
   const { error } = await supabase.from("agendamentos").insert(rows);
   if (error) throw error;
-  return { criados: rows.length, conflitos };
+  return { criados: rows.length };
+}
+
+/** Verifica em lote quais datas têm conflito para um profissional/horário. */
+export async function checarConflitosLote(params: {
+  profissionalId: string;
+  datas: string[];
+  horaInicio: string;
+  horaFim: string;
+}): Promise<Set<string>> {
+  if (params.datas.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from("agendamentos")
+    .select("data, hora_inicio, hora_fim")
+    .eq("profissional_id", params.profissionalId)
+    .in("data", params.datas)
+    .neq("status", "cancelado");
+  if (error) throw error;
+  const inicio = timeToMin(params.horaInicio);
+  const fim = timeToMin(params.horaFim);
+  const conflitos = new Set<string>();
+  for (const row of data ?? []) {
+    const a = timeToMin(row.hora_inicio as string);
+    const b = timeToMin(row.hora_fim as string);
+    if (inicio < b && fim > a) conflitos.add(row.data as string);
+  }
+  return conflitos;
 }
 
 export async function updateAgendamento(

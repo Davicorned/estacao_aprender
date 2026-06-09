@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Loader2, Search, UserPlus } from "lucide-react";
+import { CalendarCheck, FileText, Loader2, Search, UserPlus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -9,17 +9,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,18 +25,30 @@ import {
 import {
   addMin,
   checarConflito,
+  checarConflitosLote,
   createAgendamento,
-  createAgendamentosRecorrentes,
+  createAgendamentosLote,
+  DIAS_SEMANA_LABEL,
+  ocorrenciasAteData,
   ocorrenciasParaRecorrencia,
+  parseIsoDate,
+  RECORRENCIA_LABEL,
   type AgendamentoComJoin,
   type AgendamentoInput,
   type AgendamentoTipo,
-  type Recorrencia,
+  type RecorrenciaConfig,
+  type RecorrenciaTipo,
   searchPacientesQuick,
   toIsoDate,
   updateAgendamento,
 } from "@/lib/agendamentos";
 import type { Profissional, Servico } from "@/lib/configuracoes";
+import {
+  FREQUENCIA_LABEL,
+  listarContratosAtivosPorPaciente,
+  MODALIDADE_LABEL,
+  type ContratoAtivoResumo,
+} from "@/lib/contratos";
 
 type PacienteLite = { id: string; nome: string; foto_url: string | null };
 
@@ -87,8 +90,24 @@ export function AgendamentoFormDialog({
   const [horaInicio, setHoraInicio] = useState("08:00");
   const [horaFim, setHoraFim] = useState("08:50");
   const [observacoes, setObservacoes] = useState("");
-  const [recorrencia, setRecorrencia] = useState<Recorrencia>("nao");
-  const [confirmRecOpen, setConfirmRecOpen] = useState(false);
+
+  // Recorrência
+  const [recTipo, setRecTipo] = useState<RecorrenciaTipo>("nao");
+  const [recOcorrencias, setRecOcorrencias] = useState<number>(4);
+  const [recSegundoDia, setRecSegundoDia] = useState<number>(4); // padrão Qui
+  const [recAte, setRecAte] = useState<string>("");
+
+  // Contratos ativos do paciente
+  const [contratos, setContratos] = useState<ContratoAtivoResumo[]>([]);
+  const [contratoVinculadoId, setContratoVinculadoId] = useState<string | null>(null);
+
+  // Pré-visualização
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewDatas, setPreviewDatas] = useState<string[]>([]);
+  const [previewConflitos, setPreviewConflitos] = useState<Set<string>>(new Set());
+  const [previewSelecionadas, setPreviewSelecionadas] = useState<Set<string>>(new Set());
+  const [previewLoading, setPreviewLoading] = useState(false);
+
   const [saving, setSaving] = useState(false);
 
   // Reset ao abrir
@@ -103,7 +122,8 @@ export function AgendamentoFormDialog({
       setHoraInicio(agendamento.hora_inicio.slice(0, 5));
       setHoraFim(agendamento.hora_fim.slice(0, 5));
       setObservacoes(agendamento.observacoes ?? "");
-      setRecorrencia("nao");
+      setRecTipo("nao");
+      setContratoVinculadoId(agendamento.contrato_id ?? null);
     } else {
       setPaciente(pacienteInicial ?? null);
       setProfissionalId(profissionalIdInicial ?? profissionais[0]?.id ?? "");
@@ -115,11 +135,14 @@ export function AgendamentoFormDialog({
       const dur = servicos[0]?.duracao_min ?? 50;
       setHoraFim(addMin(hi, dur));
       setObservacoes("");
-      setRecorrencia("nao");
+      setRecTipo("nao");
+      setRecOcorrencias(4);
+      setContratoVinculadoId(null);
     }
     setPacienteSearch("");
     setPacienteResults([]);
     setPacienteOpen(!agendamento && !pacienteInicial);
+    setContratos([]);
   }, [open]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Atualiza horaFim quando troca serviço ou horaInicio
@@ -146,15 +169,70 @@ export function AgendamentoFormDialog({
     return () => clearTimeout(t);
   }, [pacienteSearch, pacienteOpen]);
 
-  const ocorrenciasCount = useMemo(
-    () => ocorrenciasParaRecorrencia(data, recorrencia).length,
-    [data, recorrencia],
+  // Carrega contratos ativos quando paciente é selecionado
+  useEffect(() => {
+    if (!paciente || isEdit) return;
+    let alive = true;
+    listarContratosAtivosPorPaciente(paciente.id)
+      .then((rows) => {
+        if (alive) setContratos(rows);
+      })
+      .catch(() => {
+        if (alive) setContratos([]);
+      });
+    return () => {
+      alive = false;
+    };
+  }, [paciente, isEdit]);
+
+  // Config da recorrência (objeto)
+  const recConfig: RecorrenciaConfig = useMemo(() => {
+    if (recTipo === "nao") return { tipo: "nao" };
+    if (recTipo === "duas_por_semana")
+      return {
+        tipo: "duas_por_semana",
+        ocorrencias: recOcorrencias,
+        segundoDiaSemana: recSegundoDia,
+      };
+    return { tipo: recTipo, ocorrencias: recOcorrencias };
+  }, [recTipo, recOcorrencias, recSegundoDia]);
+
+  // Datas previstas (para mostrar "até" calculado)
+  const datasPrevistas = useMemo(
+    () => (data ? ocorrenciasParaRecorrencia(data, recConfig) : []),
+    [data, recConfig],
   );
+  const dataFimCalculada = datasPrevistas[datasPrevistas.length - 1] ?? "";
+
+  function handleAteChange(novoAte: string) {
+    setRecAte(novoAte);
+    if (!novoAte || recTipo === "nao") return;
+    const n = ocorrenciasAteData(data, novoAte, recConfig);
+    setRecOcorrencias(n);
+  }
+
+  function aplicarContrato(c: ContratoAtivoResumo) {
+    setProfissionalId(c.profissional_id);
+    setServicoId(c.servico_id);
+    setContratoVinculadoId(c.id);
+    // Mapeia frequência do contrato → recorrência
+    if (c.frequencia === "semanal") setRecTipo("semanal");
+    else if (c.frequencia === "quinzenal") setRecTipo("quinzenal");
+    else if (c.frequencia === "mensal") setRecTipo("mensal");
+    else setRecTipo("nao");
+    // 2x/semana se aulas_por_mes >= 8 e frequência semanal
+    if (c.frequencia === "semanal" && (c.aulas_por_mes ?? 0) >= 8) {
+      setRecTipo("duas_por_semana");
+    }
+    // Sessões sugeridas: restantes do contrato (cap 12)
+    const sug = c.sessoes_restantes ?? c.aulas_por_mes ?? 4;
+    setRecOcorrencias(Math.max(1, Math.min(12, sug)));
+  }
 
   function validar(): string | null {
     if (!paciente) return "Selecione um paciente";
     if (!profissionalId) return "Selecione um profissional";
-    if (!servicoId) return "Selecione um procedimento";
+    if (!servicoId) return "Selecione um serviço";
     if (!data) return "Informe a data";
     if (!horaInicio || !horaFim) return "Informe os horários";
     if (horaFim <= horaInicio) return "Horário final deve ser após o inicial";
@@ -165,29 +243,54 @@ export function AgendamentoFormDialog({
     return null;
   }
 
+  function baseInput(): AgendamentoInput {
+    return {
+      paciente_id: paciente!.id,
+      profissional_id: profissionalId,
+      servico_id: servicoId || null,
+      data,
+      hora_inicio: horaInicio,
+      hora_fim: horaFim,
+      tipo,
+      observacoes: observacoes.trim() || null,
+    };
+  }
+
+  async function abrirPreview() {
+    setPreviewLoading(true);
+    try {
+      const datas = ocorrenciasParaRecorrencia(data, recConfig);
+      const conflitos = await checarConflitosLote({
+        profissionalId,
+        datas,
+        horaInicio,
+        horaFim,
+      });
+      setPreviewDatas(datas);
+      setPreviewConflitos(conflitos);
+      setPreviewSelecionadas(new Set(datas.filter((d) => !conflitos.has(d))));
+      setPreviewOpen(true);
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao calcular ocorrências");
+    } finally {
+      setPreviewLoading(false);
+    }
+  }
+
   async function handleSubmit() {
     const erro = validar();
     if (erro) {
       toast.error(erro);
       return;
     }
-    if (!isEdit && recorrencia !== "nao" && !confirmRecOpen) {
-      setConfirmRecOpen(true);
+    if (!isEdit && recTipo !== "nao") {
+      await abrirPreview();
       return;
     }
     setSaving(true);
     try {
-      const input: AgendamentoInput = {
-        paciente_id: paciente!.id,
-        profissional_id: profissionalId,
-        servico_id: servicoId || null,
-        data,
-        hora_inicio: horaInicio,
-        hora_fim: horaFim,
-        tipo,
-        observacoes: observacoes.trim() || null,
-      };
-
+      const input = baseInput();
       if (isEdit && agendamento) {
         const conf = await checarConflito({
           profissionalId,
@@ -203,7 +306,7 @@ export function AgendamentoFormDialog({
         }
         await updateAgendamento(agendamento.id, input);
         toast.success("Agendamento atualizado");
-      } else if (recorrencia === "nao") {
+      } else {
         const conf = await checarConflito({
           profissionalId,
           data,
@@ -215,19 +318,8 @@ export function AgendamentoFormDialog({
           setSaving(false);
           return;
         }
-        await createAgendamento(input);
+        await createAgendamento({ ...input, contrato_id: contratoVinculadoId });
         toast.success("Agendamento criado");
-      } else {
-        const r = await createAgendamentosRecorrentes(input, recorrencia);
-        if (r.criados === 0) {
-          toast.error("Todos os horários estavam em conflito");
-          setSaving(false);
-          return;
-        }
-        toast.success(
-          `${r.criados} agendamento(s) criado(s)` +
-            (r.conflitos.length ? ` — ${r.conflitos.length} pulado(s) por conflito` : ""),
-        );
       }
 
       onOpenChange(false);
@@ -237,13 +329,36 @@ export function AgendamentoFormDialog({
       toast.error("Erro ao salvar agendamento");
     } finally {
       setSaving(false);
-      setConfirmRecOpen(false);
+    }
+  }
+
+  async function confirmarPreview() {
+    const datas = Array.from(previewSelecionadas).sort();
+    if (datas.length === 0) {
+      toast.error("Selecione ao menos uma sessão");
+      return;
+    }
+    setSaving(true);
+    try {
+      const r = await createAgendamentosLote(baseInput(), datas, {
+        contratoId: contratoVinculadoId,
+        agrupar: true,
+      });
+      toast.success(`${r.criados} agendamento(s) criado(s)`);
+      setPreviewOpen(false);
+      onOpenChange(false);
+      onSaved?.();
+    } catch (e) {
+      console.error(e);
+      toast.error("Erro ao salvar agendamentos");
+    } finally {
+      setSaving(false);
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-lg">
+      <DialogContent className="max-w-xl max-h-[92vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Editar Agendamento" : "Novo Agendamento"}</DialogTitle>
           <DialogDescription>Preencha os dados do agendamento.</DialogDescription>
@@ -263,6 +378,7 @@ export function AgendamentoFormDialog({
                   onClick={() => {
                     setPacienteOpen(true);
                     setPacienteSearch("");
+                    setContratoVinculadoId(null);
                   }}
                 >
                   Trocar
@@ -309,6 +425,63 @@ export function AgendamentoFormDialog({
               </div>
             )}
           </div>
+
+          {/* Contratos ativos */}
+          {!isEdit && paciente && contratos.length > 0 && (
+            <div className="space-y-2">
+              {contratos.map((c) => {
+                const vinculado = contratoVinculadoId === c.id;
+                return (
+                  <div
+                    key={c.id}
+                    className={`rounded-md border p-3 text-sm ${
+                      vinculado
+                        ? "border-[#D67F43] bg-[#FEF3E8]"
+                        : "border-gray-200 bg-gray-50"
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 font-medium text-gray-800">
+                          <FileText className="h-4 w-4 text-[#B85A24]" />
+                          Contrato vigente
+                          {vinculado && (
+                            <span className="rounded-full bg-[#D67F43] px-2 py-0.5 text-[10px] font-semibold text-white">
+                              VINCULADO
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 text-xs text-gray-600">
+                          {c.modalidade ? MODALIDADE_LABEL[c.modalidade] : "—"} ·{" "}
+                          {c.aulas_por_mes ?? "?"} aulas/mês ·{" "}
+                          {FREQUENCIA_LABEL[c.frequencia]}
+                          {c.qtd_sessoes != null && (
+                            <>
+                              {" · "}
+                              {c.sessoes_agendadas}/{c.qtd_sessoes} sessões agendadas
+                            </>
+                          )}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant={vinculado ? "outline" : "default"}
+                        onClick={() => (vinculado ? setContratoVinculadoId(null) : aplicarContrato(c))}
+                        className={
+                          vinculado
+                            ? ""
+                            : "bg-gradient-to-r from-[#D67F43] to-[#B85A24] text-white hover:opacity-90"
+                        }
+                      >
+                        {vinculado ? "Desvincular" : "Usar dados"}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
@@ -367,17 +540,80 @@ export function AgendamentoFormDialog({
           </div>
 
           {!isEdit && (
-            <div className="space-y-1">
-              <Label>Recorrência</Label>
-              <Select value={recorrencia} onValueChange={(v) => setRecorrencia(v as Recorrencia)}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="nao">Não se repete</SelectItem>
-                  <SelectItem value="semanal">Semanal (4 ocorrências)</SelectItem>
-                  <SelectItem value="quinzenal">Quinzenal (4 ocorrências)</SelectItem>
-                  <SelectItem value="mensal">Mensal (3 ocorrências)</SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="rounded-md border border-gray-200 p-3 space-y-3">
+              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wide text-gray-600">
+                <CalendarCheck className="h-4 w-4 text-[#B85A24]" />
+                Recorrência
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="space-y-1">
+                  <Label>Frequência</Label>
+                  <Select
+                    value={recTipo}
+                    onValueChange={(v) => setRecTipo(v as RecorrenciaTipo)}
+                  >
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="nao">{RECORRENCIA_LABEL.nao}</SelectItem>
+                      <SelectItem value="semanal">{RECORRENCIA_LABEL.semanal}</SelectItem>
+                      <SelectItem value="duas_por_semana">
+                        {RECORRENCIA_LABEL.duas_por_semana}
+                      </SelectItem>
+                      <SelectItem value="quinzenal">{RECORRENCIA_LABEL.quinzenal}</SelectItem>
+                      <SelectItem value="mensal">{RECORRENCIA_LABEL.mensal}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                {recTipo === "duas_por_semana" && (
+                  <div className="space-y-1">
+                    <Label>2º dia da semana</Label>
+                    <Select
+                      value={String(recSegundoDia)}
+                      onValueChange={(v) => setRecSegundoDia(Number(v))}
+                    >
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {DIAS_SEMANA_LABEL.map((nome, i) => (
+                          <SelectItem key={i} value={String(i)}>
+                            {nome}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+              {recTipo !== "nao" && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label>Quantas sessões</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={52}
+                      value={recOcorrencias}
+                      onChange={(e) =>
+                        setRecOcorrencias(Math.max(1, Math.min(52, Number(e.target.value) || 1)))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Até (calculado)</Label>
+                    <Input
+                      type="date"
+                      value={recAte || dataFimCalculada}
+                      onChange={(e) => handleAteChange(e.target.value)}
+                    />
+                  </div>
+                  <div className="col-span-2 text-xs text-gray-500">
+                    Termina em {datasPrevistas.length} sessões — última em{" "}
+                    {dataFimCalculada
+                      ? parseIsoDate(dataFimCalculada).toLocaleDateString("pt-BR")
+                      : "—"}
+                    .
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -395,28 +631,82 @@ export function AgendamentoFormDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
           <Button
             onClick={handleSubmit}
-            disabled={saving}
+            disabled={saving || previewLoading}
             className="bg-gradient-to-r from-[#D67F43] to-[#B85A24] text-white hover:opacity-90"
           >
-            {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Salvar
+            {(saving || previewLoading) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {!isEdit && recTipo !== "nao" ? "Pré-visualizar sessões" : "Salvar"}
           </Button>
         </DialogFooter>
 
-        <AlertDialog open={confirmRecOpen} onOpenChange={setConfirmRecOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Criar agendamentos recorrentes?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Serão criados {ocorrenciasCount} agendamentos. Horários em conflito serão ignorados.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleSubmit}>Confirmar</AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+        {/* Pré-visualização das ocorrências */}
+        <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Confirmar sessões a criar</DialogTitle>
+              <DialogDescription>
+                Desmarque as sessões que não deseja criar. Conflitos vêm desmarcados por padrão.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-72 overflow-y-auto rounded-md border border-gray-200 divide-y">
+              {previewDatas.map((d) => {
+                const conf = previewConflitos.has(d);
+                const sel = previewSelecionadas.has(d);
+                const dt = parseIsoDate(d);
+                return (
+                  <label
+                    key={d}
+                    className={`flex items-center gap-3 px-3 py-2 text-sm ${
+                      conf ? "bg-red-50" : "bg-white"
+                    }`}
+                  >
+                    <Checkbox
+                      checked={sel}
+                      onCheckedChange={(v) => {
+                        const novo = new Set(previewSelecionadas);
+                        if (v) novo.add(d);
+                        else novo.delete(d);
+                        setPreviewSelecionadas(novo);
+                      }}
+                    />
+                    <div className="flex-1">
+                      <div className="font-medium text-gray-800">
+                        {DIAS_SEMANA_LABEL[dt.getDay()]},{" "}
+                        {dt.toLocaleDateString("pt-BR")}
+                      </div>
+                      <div className="text-xs text-gray-500">
+                        {horaInicio} – {horaFim}
+                      </div>
+                    </div>
+                    {conf && (
+                      <span className="rounded-full bg-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-800">
+                        CONFLITO
+                      </span>
+                    )}
+                  </label>
+                );
+              })}
+            </div>
+            <div className="text-xs text-gray-500">
+              {previewSelecionadas.size} de {previewDatas.length} sessões serão criadas
+              {previewConflitos.size > 0 && ` · ${previewConflitos.size} em conflito`}
+              {contratoVinculadoId && " · vinculadas ao contrato"}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setPreviewOpen(false)}>
+                Voltar
+              </Button>
+              <Button
+                onClick={confirmarPreview}
+                disabled={saving || previewSelecionadas.size === 0}
+                className="bg-gradient-to-r from-[#D67F43] to-[#B85A24] text-white hover:opacity-90"
+              >
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Criar {previewSelecionadas.size} sessão(ões)
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </DialogContent>
     </Dialog>
   );
