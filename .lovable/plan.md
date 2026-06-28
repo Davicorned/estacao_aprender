@@ -1,101 +1,81 @@
+## Problemas atuais (vistos no print)
 
-# Expansão do Admin do Site
+1. **Coluna do formulário muito estreita** — rótulos quebram ("Etiqueta (laranja, em / cima do título)"), inputs ficam apertados, validação ocupa duas linhas.
+2. **Prévia mostra só os avisos** — quando faltam dados a área fica preta/vazia, então você não sabe como o bloco vai ficar nem onde ele entra na Home.
+3. **Sem contexto da Home** — a prévia mostra a seção isolada, não dá pra ver que ela vai aparecer entre o banner e a equipe, nem em que posição.
+4. **Tudo num único formulão rolável** — Conteúdo, Imagem, Botão, Cards e Aparência misturados.
 
-Hoje o admin (`/gestao/site/*`) tem apenas **Equipe** e **Depoimentos**. Vamos adicionar **Serviços** e **Layout** (com Banners, Seções e Rodapé), todos com CRUD completo, mantendo o visual atual da Home.
+## O que vou mudar
 
-## 1. Novo menu lateral em "Admin do Site"
+### 1. Reorganizar o diálogo em 2 colunas equilibradas + abas
 
 ```
-Admin do Site
-├── Equipe              (já existe)
-├── Depoimentos         (já existe)
-├── Serviços            (NOVO)
-└── Layout              (NOVO)
-    ├── Banner / Hero
-    ├── Seções da Home
-    └── Rodapé
+┌─────────────────────────┬──────────────────────────────┐
+│  [Conteúdo] [Mídia]     │  Prévia em tempo real        │
+│  [Botão]   [Aparência]  │  ┌──────────────────────┐    │
+│                         │  │ [Desktop] [Mobile]   │    │
+│  título                 │  │                      │    │
+│  descrição              │  │   ← seção aqui →     │    │
+│  …                      │  │                      │    │
+│                         │  └──────────────────────┘    │
+│  ⓘ Aparecerá na posição │  Aparecerá entre:            │
+│     3 de 5, entre       │  ▸ Banner principal          │
+│     "Banner" e "Equipe" │  ▸ Próxima: Nossa equipe     │
+└─────────────────────────┴──────────────────────────────┘
 ```
 
-## 2. Serviços (`/gestao/site/servicos`)
+- Largura do diálogo aumenta para `sm:max-w-6xl`, colunas `[1.1fr_1.4fr]`.
+- Abas substituem a rolagem gigante: **Conteúdo** (etiqueta, título, descrição, parágrafo extra), **Mídia** (imagem), **Botão** (texto + link), **Cards** (só aparece em grade-cards), **Aparência** (fundo + visível no site).
+- Cada aba mostra um badge vermelho com a contagem de erros daquela aba — você vê de longe onde corrigir.
 
-CRUD de cards de serviço usados na Home e na página de Serviços.
+### 2. Prévia que nunca fica vazia
 
-Campos por serviço:
-- Título, descrição curta, ícone/imagem, ordem, ativo (on/off)
-- Link interno opcional (ex.: `/servicos/psicologia`)
+- Quando o campo está vazio, a prévia mostra um **placeholder fantasma** com a forma certa: retângulo tracejado "Sua imagem aqui", linha cinza "Seu título aqui", duas linhas "Sua descrição aqui". Assim você sempre vê o layout do modelo escolhido, mesmo antes de preencher.
+- Toggle **Desktop / Mobile** no topo da prévia, mudando a largura simulada (1280 / 390 px) com o mesmo escalonamento atual.
+- Prévia fica **sticky** no topo da coluna direita, então rolar o formulário não esconde o resultado.
 
-UI: lista com drag-to-reorder, botão "Novo serviço", modal de edição com upload de imagem (mesmo padrão de Equipe).
+### 3. Contexto da Home
 
-## 3. Layout > Banner / Hero (`/gestao/site/layout/hero`)
+Abaixo da prévia da seção, um mini-mapa da Home mostrando a ordem real das seções (já temos `items` carregados):
 
-Formulário único (não é lista) para editar o Hero da Home:
-- Título principal, subtítulo, texto do CTA, link do CTA
-- Imagem de fundo (upload)
-- Toggle "mostrar selo/destaque"
+```
+Banner principal
+─────────────────
+Nossa abordagem         ← outras seções
+─────────────────
+► Esta seção (#3)       ← destacada
+─────────────────
+Quando procurar ajuda
+─────────────────
+Nossa equipe
+Depoimentos
+Rodapé
+```
 
-## 4. Layout > Seções da Home (`/gestao/site/layout/secoes`)
+Cada item é clicável: ao clicar, abre direto o editor daquela seção. Isso responde "como vai aparecer na home" sem precisar sair da página.
 
-**Aqui está a parte central do pedido**: dar liberdade de criar/editar/remover seções extras na Home, sempre seguindo modelos visuais pré-definidos para não quebrar o design.
+Botão extra **"Abrir Home em nova aba"** no rodapé do diálogo para ver no site real após salvar.
 
-Cada seção tem:
-- **Tipo de layout** (escolhido em uma lista fechada de templates já existentes):
-  - `texto-imagem-esquerda` (estilo "Nossa Abordagem")
-  - `texto-imagem-direita`
-  - `grade-cards` (estilo "Quando buscar ajuda")
-  - `destaque-centralizado` (banner com título + texto + CTA)
-- Título, subtítulo, descrição (rich text simples)
-- Imagem (upload, quando o template usa)
-- Lista de itens/cards filhos (quando o template é grade)
-- CTA opcional (texto + link)
-- Ordem na Home, ativo on/off
+### 4. Listagem da página (fora do diálogo)
 
-UI: lista ordenável das seções com preview do tipo, botão "Nova seção" que abre um seletor visual de template e depois o formulário com apenas os campos relevantes daquele template.
+- Cada card de seção ganha:
+  - Número de posição grande à esquerda (#1, #2…)
+  - Miniatura maior (96×64) com o tipo do modelo sobreposto
+  - Linha de status: ✓ Pronta · ⚠ 2 avisos · ✕ 1 erro (revalidando com a mesma `computeBlockingErrors`)
+- Botão **"Pré-visualizar a Home completa"** no topo da página, abrindo `/` numa nova aba.
+- Texto explicativo curto no topo: "As seções abaixo aparecem na Home, na ordem listada, entre o banner e a equipe."
 
-As seções fixas atuais (Equipe, Depoimentos, Contato) continuam controladas pelos seus próprios admins; o que entra aqui são seções **adicionais** entre elas, posicionadas por `order`.
+### 5. Detalhes técnicos (resumido)
 
-## 5. Layout > Rodapé (`/gestao/site/layout/rodape`)
+- Arquivo único editado: `src/components/gestao/site/SecoesManager.tsx`.
+- Componente de placeholder/fantasma novo dentro do mesmo arquivo, sem dependências.
+- Reuso de `computeBlockingErrors` + a derivação `fieldIssues` que já existem; apenas redistribui em `Tabs` (shadcn `@/components/ui/tabs`).
+- Sem mudança em `DynamicSection.tsx`, banco de dados, RLS ou rotas.
 
-Formulário único:
-- Texto institucional curto
-- Endereço, telefone, e-mail, horário
-- Redes sociais (lista: tipo + URL)
-- Links rápidos (lista: rótulo + URL)
-- Texto de copyright
+## Fora do escopo
 
-## 6. Banco de dados (novas tabelas)
+- Editor visual drag-and-drop na própria Home.
+- Salvar rascunho/versionamento de seções.
+- Novos modelos de seção (mantemos os 3 atuais).
 
-Todas em `public` com `GRANT`s corretos, RLS habilitada, leitura pública (`anon SELECT enabled = true`) e escrita só para `authenticated` com role admin (via `has_role`).
-
-- `site_servicos` (id, titulo, descricao, imagem_url, link, order, enabled)
-- `site_hero` (singleton: id fixo, titulo, subtitulo, cta_texto, cta_link, imagem_url, badge_enabled)
-- `site_secoes` (id, tipo, titulo, subtitulo, descricao, imagem_url, cta_texto, cta_link, order, enabled)
-- `site_secao_itens` (id, secao_id FK, titulo, descricao, icone, order) — para templates de grade
-- `site_rodape` (singleton: textos + JSONB para redes/links)
-
-Imagens vão para o bucket de storage já usado por Equipe.
-
-## 7. Renderização na Home
-
-`src/routes/index.tsx` passa a montar a Home a partir do CMS:
-- Hero → lê `site_hero`
-- Seções fixas atuais (`WhenToSeekHelp`, `OurApproach`) são migradas como linhas-semente em `site_secoes` para que o admin possa editá-las sem perder o visual
-- Loop de `site_secoes` ordenadas, renderizando um componente por `tipo`
-- `TeamSection`, `Testimonials`, `Contact` permanecem como hoje
-- `Footer` passa a ler `site_rodape`
-
-Cache em `src/lib/cms.ts` extendido com `fetchHero`, `fetchSecoes`, `fetchServicos`, `fetchRodape` (mesmo padrão TTL/inflight).
-
-## 8. Detalhes técnicos
-
-- Novos arquivos de rota: `gestao.site.servicos.tsx`, `gestao.site.layout.tsx` (layout pai com sub-abas), `gestao.site.layout.hero.tsx`, `gestao.site.layout.secoes.tsx`, `gestao.site.layout.rodape.tsx`
-- Novos componentes em `src/components/gestao/site/{servicos,layout}/`
-- Novos componentes de render em `src/components/site/sections/dynamic/` — um por tipo de template
-- Migração SQL única criando as 5 tabelas + grants + policies + seed das seções atuais
-- Invalidar caches do `cms.ts` após cada save no admin
-
-## 9. Entrega sugerida em duas fases
-
-1. **Fase 1**: Serviços + Layout/Hero + Layout/Rodapé (formulários simples, ganho imediato).
-2. **Fase 2**: Layout/Seções dinâmicas com templates (mais complexo, exige os componentes de render).
-
-Confirma se quer que eu siga nessa ordem, ou prefere já entregar tudo de uma vez?
+Confirma que sigo nessa direção?
