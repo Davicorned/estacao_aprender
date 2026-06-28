@@ -8,6 +8,7 @@ import { OurApproach } from "@/components/site/sections/OurApproach";
 import { TeamSection } from "@/components/site/sections/TeamSection";
 import { Testimonials } from "@/components/site/sections/Testimonials";
 import { Contact } from "@/components/site/sections/Contact";
+import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -42,6 +43,7 @@ function Index() {
         <Hero />
         <WhenToSeekHelp />
         <OurApproach />
+        <DynamicSections />
         <TeamSection />
         <Testimonials />
         <Contact />
