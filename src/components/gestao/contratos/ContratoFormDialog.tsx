@@ -732,7 +732,7 @@ function Stepper({
           );
         })}
       </div>
-      <Progress value={((step + 1) / STEP_TITLES.length) * 100} className="h-1" />
+      <Progress value={((step + 1) / STEP_TITLES.length) * 100} className="h-1" indicatorClassName="bg-brand" />
     </div>
   );
 }
