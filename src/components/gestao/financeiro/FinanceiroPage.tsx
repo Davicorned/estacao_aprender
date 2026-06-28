@@ -140,6 +140,30 @@ export function FinanceiroPage() {
     }
   }
 
+  async function handleBulkDelete() {
+    const ids = Array.from(selecionados);
+    if (ids.length === 0) return;
+    if (!confirm(`Excluir ${ids.length} lançamento(s)? Esta ação não pode ser desfeita.`)) return;
+    try {
+      const results = await Promise.allSettled(ids.map((id) => deleteLancamento(id)));
+      const ok = results.filter((r) => r.status === "fulfilled").length;
+      const fail = results.length - ok;
+      if (ok > 0) toast.success(`${ok} lançamento(s) excluído(s)`);
+      if (fail > 0) toast.error(`${fail} falharam ao excluir`);
+      setSelecionados(new Set());
+      carregar();
+    } catch (e: any) {
+      toast.error(e.message ?? "Erro");
+    }
+  }
+
+  function toggleSelAll() {
+    setSelecionados((s) => {
+      if (s.size === filtrados.length && filtrados.length > 0) return new Set();
+      return new Set(filtrados.map((l) => l.id));
+    });
+  }
+
   async function handleAlterarStatus(id: string, novo: LancamentoStatus) {
     try {
       await alterarStatusLancamento(id, novo);
@@ -212,6 +236,16 @@ export function FinanceiroPage() {
         />
 
         <div className="ml-auto flex gap-2">
+          {selecionados.size > 0 && (
+            <Button
+              variant="outline"
+              onClick={handleBulkDelete}
+              className="border-red-600 text-red-700 hover:bg-red-50"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir ({selecionados.size})
+            </Button>
+          )}
           {pendentesSelecionados.length > 0 && (
             <Button
               variant="outline"
@@ -236,7 +270,13 @@ export function FinanceiroPage() {
         <table className="w-full text-sm">
           <thead className="bg-amber-50 text-amber-900">
             <tr>
-              <th className="px-3 py-3 w-8"></th>
+              <th className="px-3 py-3 w-8">
+                <Checkbox
+                  checked={filtrados.length > 0 && selecionados.size === filtrados.length}
+                  onCheckedChange={toggleSelAll}
+                  aria-label="Selecionar todos"
+                />
+              </th>
               <th className="px-3 py-3 text-left">Vencimento</th>
               <th className="px-3 py-3 text-left">Paciente</th>
               <th className="px-3 py-3 text-left">Descrição</th>
@@ -257,12 +297,10 @@ export function FinanceiroPage() {
                 return (
                   <tr key={l.id} className="border-t border-amber-50 hover:bg-amber-50/40">
                     <td className="px-3 py-2">
-                      {l.status === "pendente" && (
-                        <Checkbox
-                          checked={selecionados.has(l.id)}
-                          onCheckedChange={() => toggleSel(l.id)}
-                        />
-                      )}
+                      <Checkbox
+                        checked={selecionados.has(l.id)}
+                        onCheckedChange={() => toggleSel(l.id)}
+                      />
                     </td>
                     <td className="px-3 py-2">{l.data_vencimento.split("-").reverse().join("/")}</td>
                     <td className="px-3 py-2">{l.paciente?.nome ?? "—"}</td>
