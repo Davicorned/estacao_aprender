@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, Pencil, Search, UserPlus } from "lucide-react";
-import { GestaoShell } from "@/components/gestao/GestaoShell";
 import { PacienteAvatar } from "@/components/gestao/pacientes/PacienteAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,8 +94,7 @@ function PacientesListPage() {
   });
 
   return (
-    <GestaoShell title="Pacientes">
-      <div className="space-y-6">
+    <div className="space-y-6">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-2xl font-bold text-gray-900">Pacientes</h2>
           <Button
@@ -254,8 +252,7 @@ function PacientesListPage() {
             </PaginationContent>
           </Pagination>
         )}
-      </div>
-    </GestaoShell>
+    </div>
   );
 }
 
