@@ -426,12 +426,19 @@ export function SecoesManager() {
             {items.length} seção{items.length !== 1 ? "es" : ""} cadastrada{items.length !== 1 ? "s" : ""}.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Estas seções aparecem na Home, entre o banner e a equipe, na ordem definida abaixo.
+            Estas seções aparecem na Home, entre <strong>Nossa abordagem</strong> e <strong>Nossa equipe</strong>, na ordem definida abaixo.
           </p>
         </div>
-        <Button onClick={() => setPickTipo(true)} className="bg-[#D67F43] hover:bg-[#B85A24]">
-          <Plus className="mr-2 h-4 w-4" /> Nova seção
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button asChild variant="outline" size="sm">
+            <a href="/" target="_blank" rel="noreferrer">
+              <ExternalLink className="mr-2 h-4 w-4" /> Ver Home
+            </a>
+          </Button>
+          <Button onClick={() => setPickTipo(true)} className="bg-[#D67F43] hover:bg-[#B85A24]">
+            <Plus className="mr-2 h-4 w-4" /> Nova seção
+          </Button>
+        </div>
       </div>
 
       {loading ? (
@@ -442,34 +449,66 @@ export function SecoesManager() {
         </div>
       ) : (
         <div className="space-y-2">
-          {items.map((s, idx) => (
-            <div key={s.id} className="flex items-center gap-4 rounded-xl border border-border bg-card p-3">
-              <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-[#FEF3E8]">
-                {s.imagem_url ? (
-                  <img src={s.imagem_url} alt={s.titulo ?? ""} className="h-full w-full object-cover" />
-                ) : (
-                  <div className="flex h-full w-full items-center justify-center text-[10px] text-[#D67F43]">
-                    sem img
+          {items.map((s, idx) => {
+            const tmpForm: FormState = {
+              tipo: s.tipo, eyebrow: s.eyebrow ?? "", titulo: s.titulo ?? "",
+              descricao: s.descricao ?? "", descricao_extra: s.descricao_extra ?? "",
+              imagem_url: s.imagem_url, cta_texto: s.cta_texto ?? "",
+              cta_link: s.cta_link ?? "", bg_style: s.bg_style ?? "branco",
+              enabled: s.enabled, itens: s.itens.map((it) => ({
+                titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
+              })),
+            };
+            const errs = computeBlockingErrors(tmpForm);
+            return (
+              <div key={s.id} className="flex items-center gap-4 rounded-xl border border-border bg-card p-3">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-muted text-base font-semibold text-muted-foreground">
+                  {idx + 1}
+                </div>
+                <div className="h-16 w-24 shrink-0 overflow-hidden rounded-lg bg-[#FEF3E8] dark:bg-amber-950/30 relative">
+                  {s.imagem_url ? (
+                    <img src={s.imagem_url} alt={s.titulo ?? ""} className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-[10px] text-[#D67F43]">
+                      sem imagem
+                    </div>
+                  )}
+                  <span className="absolute bottom-1 left-1 rounded bg-black/60 px-1.5 py-0.5 text-[9px] uppercase tracking-wide text-white">
+                    {tipoLabel(s.tipo)}
+                  </span>
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium">{s.titulo || s.eyebrow || "(sem título)"}</p>
+                  <div className="mt-1 flex items-center gap-3 text-xs">
+                    {!s.enabled && (
+                      <span className="inline-flex items-center gap-1 text-muted-foreground">
+                        <EyeOff className="h-3.5 w-3.5" /> Oculta
+                      </span>
+                    )}
+                    {errs.length > 0 ? (
+                      <span className="inline-flex items-center gap-1 text-red-600 dark:text-red-400">
+                        <AlertCircle className="h-3.5 w-3.5" /> {errs.length} erro{errs.length > 1 ? "s" : ""}
+                      </span>
+                    ) : s.enabled ? (
+                      <span className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Pronta
+                      </span>
+                    ) : null}
+                    <span className="text-muted-foreground">· {s.itens.length} item(s)</span>
                   </div>
-                )}
+                </div>
+                <div className="flex items-center gap-1">
+                  <Button size="icon" variant="ghost" onClick={() => move(s.id, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => move(s.id, 1)} disabled={idx === items.length - 1}><ArrowDown className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => toggleEnabled(s)} title={s.enabled ? "Ocultar" : "Mostrar"}>
+                    {s.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                  </Button>
+                  <Button size="icon" variant="ghost" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                  <Button size="icon" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                </div>
               </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate font-medium">{s.titulo || s.eyebrow || "(sem título)"}</p>
-                <p className="truncate text-xs text-muted-foreground">
-                  {tipoLabel(s.tipo)} · {s.itens.length} item(s)
-                </p>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button size="icon" variant="ghost" onClick={() => move(s.id, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" onClick={() => move(s.id, 1)} disabled={idx === items.length - 1}><ArrowDown className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" onClick={() => toggleEnabled(s)} title={s.enabled ? "Ocultar" : "Mostrar"}>
-                  {s.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
-                </Button>
-                <Button size="icon" variant="ghost" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
-                <Button size="icon" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
