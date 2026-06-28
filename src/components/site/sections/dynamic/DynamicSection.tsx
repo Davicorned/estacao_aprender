@@ -59,7 +59,7 @@ function TextoImagem({ secao, reverse }: { secao: SiteSecao; reverse: boolean })
           <FadeUp delay={0.15} className={reverse ? "lg:order-2" : "lg:order-1"}>
             {secao.imagem_url && (
               <div className="overflow-hidden rounded-3xl shadow-xl">
-                <img src={secao.imagem_url} alt={secao.titulo ?? ""} className="h-full w-full object-cover" />
+                <img src={secao.imagem_url ?? undefined} alt={secao.titulo ?? ""} className="h-full w-full object-cover" />
               </div>
             )}
           </FadeUp>
