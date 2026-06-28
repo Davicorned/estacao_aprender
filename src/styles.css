@@ -166,3 +166,33 @@
 .animate-loading-bar {
   animation: loading-bar 1.2s ease-in-out infinite;
 }
+
+/*
+ * Dark-mode safety net for management pages.
+ *
+ * Many gestao pages use hardcoded utilities like `bg-white` and `text-gray-*`.
+ * Rather than refactor every component, we remap the most common ones to
+ * semantic tokens whenever the .dark class is active. shadcn primitives
+ * (Card, Button, Input) already use tokens, so they are unaffected.
+ */
+.dark .bg-white { background-color: var(--color-card) !important; }
+.dark .bg-gray-50 { background-color: var(--color-background) !important; }
+.dark .bg-gray-100 { background-color: var(--color-muted) !important; }
+.dark .bg-gray-200 { background-color: var(--color-accent) !important; }
+
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-black { color: var(--color-foreground) !important; }
+.dark .text-gray-700,
+.dark .text-gray-600 { color: var(--color-foreground) !important; opacity: 0.9; }
+.dark .text-gray-500,
+.dark .text-gray-400 { color: var(--color-muted-foreground) !important; }
+
+.dark .border-gray-200,
+.dark .border-gray-300,
+.dark .border-gray-100 { border-color: var(--color-border) !important; }
+
+.dark .divide-gray-200 > * + * { border-color: var(--color-border) !important; }
+
+.dark .hover\:bg-gray-50:hover,
+.dark .hover\:bg-gray-100:hover { background-color: var(--color-accent) !important; }
