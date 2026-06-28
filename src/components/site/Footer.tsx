@@ -42,7 +42,7 @@ export function Footer() {
           <h4 className="text-sm font-semibold uppercase tracking-wider">Navegação</h4>
           <ul className="mt-4 space-y-3 text-sm">
             {[
-              ["O Espaço", "/Particular"],
+              ["O Espaço", "/"],
               ["Quem Somos", "/QuemSomos"],
               ["Serviços", "/Servicos"],
               ["Atendimento", "/Atendimento"],

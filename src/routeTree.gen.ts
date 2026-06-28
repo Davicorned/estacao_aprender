@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as ServicosRouteImport } from './routes/Servicos'
 import { Route as QuemSomosRouteImport } from './routes/QuemSomos'
-import { Route as ParticularRouteImport } from './routes/Particular'
 import { Route as ContatoRouteImport } from './routes/Contato'
 import { Route as AtendimentoRouteImport } from './routes/Atendimento'
 import { Route as IndexRouteImport } from './routes/index'
@@ -44,11 +43,6 @@ const ServicosRoute = ServicosRouteImport.update({
 const QuemSomosRoute = QuemSomosRouteImport.update({
   id: '/QuemSomos',
   path: '/QuemSomos',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ParticularRoute = ParticularRouteImport.update({
-  id: '/Particular',
-  path: '/Particular',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ContatoRoute = ContatoRouteImport.update({
@@ -141,7 +135,6 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
-  '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
   '/gestao': typeof GestaoRouteWithChildren
@@ -164,7 +157,6 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
-  '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
@@ -186,7 +178,6 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
-  '/Particular': typeof ParticularRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
   '/gestao': typeof GestaoRouteWithChildren
@@ -211,7 +202,6 @@ export interface FileRouteTypes {
     | '/'
     | '/Atendimento'
     | '/Contato'
-    | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
     | '/gestao'
@@ -234,7 +224,6 @@ export interface FileRouteTypes {
     | '/'
     | '/Atendimento'
     | '/Contato'
-    | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
     | '/gestao/agenda'
@@ -255,7 +244,6 @@ export interface FileRouteTypes {
     | '/'
     | '/Atendimento'
     | '/Contato'
-    | '/Particular'
     | '/QuemSomos'
     | '/Servicos'
     | '/gestao'
@@ -279,7 +267,6 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AtendimentoRoute: typeof AtendimentoRoute
   ContatoRoute: typeof ContatoRoute
-  ParticularRoute: typeof ParticularRoute
   QuemSomosRoute: typeof QuemSomosRoute
   ServicosRoute: typeof ServicosRoute
   GestaoRoute: typeof GestaoRouteWithChildren
@@ -307,13 +294,6 @@ declare module '@tanstack/react-router' {
       path: '/QuemSomos'
       fullPath: '/QuemSomos'
       preLoaderRoute: typeof QuemSomosRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/Particular': {
-      id: '/Particular'
-      path: '/Particular'
-      fullPath: '/Particular'
-      preLoaderRoute: typeof ParticularRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/Contato': {
@@ -487,7 +467,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AtendimentoRoute: AtendimentoRoute,
   ContatoRoute: ContatoRoute,
-  ParticularRoute: ParticularRoute,
   QuemSomosRoute: QuemSomosRoute,
   ServicosRoute: ServicosRoute,
   GestaoRoute: GestaoRouteWithChildren,
@@ -496,13 +475,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

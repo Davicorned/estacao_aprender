@@ -78,7 +78,7 @@ function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
   return (
     <div className="space-y-1 border-t border-gray-200 p-3">
       <a
-        href="/Particular"
+        href="/"
         target="_blank"
         rel="noreferrer"
         className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"

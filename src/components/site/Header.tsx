@@ -7,7 +7,7 @@ import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 const LOGO = logoAsset.url;
 
 const NAV = [
-  { label: "O Espaço", to: "/Particular" },
+  { label: "O Espaço", to: "/" },
   { label: "Quem Somos", to: "/QuemSomos" },
   { label: "Serviços", to: "/Servicos" },
   { label: "Atendimento", to: "/Atendimento" },
@@ -21,7 +21,7 @@ export function Header() {
     <header className="sticky top-0 z-40 border-b border-gray-100 bg-white/95 backdrop-blur">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
-          <Link to="/Particular" className="flex items-center gap-3">
+          <Link to="/" className="flex items-center gap-3">
             <img src={LOGO} alt="Estação Aprender" className="h-12 w-auto" />
             <span className="hidden font-semibold text-gray-900 sm:inline">
               Estação Aprender
