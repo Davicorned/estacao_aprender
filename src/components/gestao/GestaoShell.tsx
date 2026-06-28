@@ -16,6 +16,8 @@ import {
   Sun,
   Moon,
   Monitor,
+  Sparkles,
+  Palette,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -45,6 +47,8 @@ const MAIN: NavItem[] = [
 const SITE: NavItem[] = [
   { to: "/gestao/site/equipe", label: "Equipe", icon: UserCog },
   { to: "/gestao/site/depoimentos", label: "Depoimentos", icon: MessageSquareQuote },
+  { to: "/gestao/site/servicos", label: "Serviços", icon: Sparkles },
+  { to: "/gestao/site/layout", label: "Layout", icon: Palette },
 ];
 
 const TITLE_MAP: { match: RegExp; title: string }[] = [
@@ -58,6 +62,11 @@ const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/configuracoes/, title: "Configurações" },
   { match: /^\/gestao\/site\/equipe/, title: "Equipe (site)" },
   { match: /^\/gestao\/site\/depoimentos/, title: "Depoimentos (site)" },
+  { match: /^\/gestao\/site\/servicos/, title: "Serviços (site)" },
+  { match: /^\/gestao\/site\/layout\/hero/, title: "Layout · Banner" },
+  { match: /^\/gestao\/site\/layout\/secoes/, title: "Layout · Seções" },
+  { match: /^\/gestao\/site\/layout\/rodape/, title: "Layout · Rodapé" },
+  { match: /^\/gestao\/site\/layout/, title: "Layout do site" },
 ];
 
 function deriveTitle(pathname: string): string {

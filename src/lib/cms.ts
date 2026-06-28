@@ -21,11 +21,67 @@ export type Testimonial = {
   enabled: boolean;
 };
 
+export type SiteServico = {
+  id: string;
+  titulo: string;
+  descricao: string | null;
+  imagem_url: string | null;
+  link: string | null;
+  order: number;
+  enabled: boolean;
+};
+
+export type SiteHero = {
+  id: "singleton";
+  titulo: string | null;
+  titulo_destaque: string | null;
+  subtitulo: string | null;
+  cta_primario_texto: string | null;
+  cta_primario_link: string | null;
+  cta_secundario_texto: string | null;
+  cta_secundario_link: string | null;
+  imagem_url: string | null;
+  badge_enabled: boolean;
+  badge_titulo: string | null;
+  badge_subtitulo: string | null;
+};
+
+export type RedeSocial = { tipo: string; url: string };
+export type LinkItem = { label: string; href: string };
+
+export type SiteRodape = {
+  id: "singleton";
+  texto_institucional: string | null;
+  telefone: string | null;
+  telefone_link: string | null;
+  email: string | null;
+  endereco_titulo: string | null;
+  endereco_texto: string | null;
+  copyright: string | null;
+  redes_sociais: RedeSocial[];
+  links_rapidos: LinkItem[];
+  links_servicos: LinkItem[];
+};
+
 let teamCache: { data: TeamMember[]; at: number } | null = null;
 let teamInflight: Promise<TeamMember[]> | null = null;
 let testimonialsCache: { data: Testimonial[]; at: number } | null = null;
 let testimonialsInflight: Promise<Testimonial[]> | null = null;
+let servicosCache: { data: SiteServico[]; at: number } | null = null;
+let servicosInflight: Promise<SiteServico[]> | null = null;
+let heroCache: { data: SiteHero | null; at: number } | null = null;
+let heroInflight: Promise<SiteHero | null> | null = null;
+let rodapeCache: { data: SiteRodape | null; at: number } | null = null;
+let rodapeInflight: Promise<SiteRodape | null> | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
+
+export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape") {
+  if (!which || which === "team") teamCache = null;
+  if (!which || which === "testimonials") testimonialsCache = null;
+  if (!which || which === "servicos") servicosCache = null;
+  if (!which || which === "hero") heroCache = null;
+  if (!which || which === "rodape") rodapeCache = null;
+}
 
 export async function fetchTeam(includeDisabled = false): Promise<TeamMember[]> {
   if (!includeDisabled) {
@@ -80,4 +136,84 @@ export async function fetchTestimonials(includeDisabled = false): Promise<Testim
     return testimonialsInflight;
   }
   return run;
+}
+
+export async function fetchServicos(includeDisabled = false): Promise<SiteServico[]> {
+  if (!includeDisabled) {
+    if (servicosCache && Date.now() - servicosCache.at < CACHE_TTL_MS) return servicosCache.data;
+    if (servicosInflight) return servicosInflight;
+  }
+  const query = supabase
+    .from("site_servicos")
+    .select("id, titulo, descricao, imagem_url, link, order, enabled")
+    .order("order", { ascending: true });
+  const run = (async () => {
+    const { data, error } = includeDisabled ? await query : await query.eq("enabled", true);
+    if (error) {
+      console.error("fetchServicos error", error);
+      return [];
+    }
+    const mapped = (data ?? []).map((s) => ({
+      ...s,
+      imagem_url: publicImageUrl(s.imagem_url),
+    })) as SiteServico[];
+    if (!includeDisabled) servicosCache = { data: mapped, at: Date.now() };
+    return mapped;
+  })();
+  if (!includeDisabled) {
+    servicosInflight = run.finally(() => { servicosInflight = null; });
+    return servicosInflight;
+  }
+  return run;
+}
+
+export async function fetchHero(): Promise<SiteHero | null> {
+  if (heroCache && Date.now() - heroCache.at < CACHE_TTL_MS) return heroCache.data;
+  if (heroInflight) return heroInflight;
+  const run = (async () => {
+    const { data, error } = await supabase
+      .from("site_hero")
+      .select("*")
+      .eq("id", "singleton")
+      .maybeSingle();
+    if (error) {
+      console.error("fetchHero error", error);
+      return null;
+    }
+    const mapped = data
+      ? ({ ...data, imagem_url: publicImageUrl(data.imagem_url) } as SiteHero)
+      : null;
+    heroCache = { data: mapped, at: Date.now() };
+    return mapped;
+  })();
+  heroInflight = run.finally(() => { heroInflight = null; });
+  return heroInflight;
+}
+
+export async function fetchRodape(): Promise<SiteRodape | null> {
+  if (rodapeCache && Date.now() - rodapeCache.at < CACHE_TTL_MS) return rodapeCache.data;
+  if (rodapeInflight) return rodapeInflight;
+  const run = (async () => {
+    const { data, error } = await supabase
+      .from("site_rodape")
+      .select("*")
+      .eq("id", "singleton")
+      .maybeSingle();
+    if (error) {
+      console.error("fetchRodape error", error);
+      return null;
+    }
+    const mapped = data
+      ? ({
+          ...data,
+          redes_sociais: (data.redes_sociais ?? []) as RedeSocial[],
+          links_rapidos: (data.links_rapidos ?? []) as LinkItem[],
+          links_servicos: (data.links_servicos ?? []) as LinkItem[],
+        } as SiteRodape)
+      : null;
+    rodapeCache = { data: mapped, at: Date.now() };
+    return mapped;
+  })();
+  rodapeInflight = run.finally(() => { rodapeInflight = null; });
+  return rodapeInflight;
 }
