@@ -538,100 +538,121 @@ export function SecoesManager() {
 
       {/* Form principal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
+        <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-6xl">
           <DialogHeader>
             <DialogTitle>
               {form.id ? "Editar seção" : "Nova seção"} — {tipoLabel(form.tipo)}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-            <div className="space-y-5">
-            <div className="space-y-2">
-              <Label>Imagem da seção</Label>
-              <div className="flex items-center gap-4">
-                <div className={`h-24 w-32 overflow-hidden rounded-lg bg-[#FEF3E8] ${fieldIssues.imagem ? (fieldIssues.imagem.level === "error" ? "ring-2 ring-red-400" : "ring-2 ring-amber-400") : ""}`}>
-                  {form.imagem_url ? (
-                    <img src={publicImageUrl(form.imagem_url) ?? ""} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">sem imagem</div>
-                  )}
+          <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
+            {/* ============ COLUNA: FORMULÁRIO COM ABAS ============ */}
+            <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="min-w-0">
+              <TabsList className="grid w-full grid-cols-5">
+                <TabsTrigger value="conteudo" className="relative">
+                  Conteúdo
+                  {tabErrors.conteudo > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.conteudo}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="midia" className="relative">
+                  Mídia
+                  {tabErrors.midia > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.midia}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="botao" className="relative">
+                  Botão
+                  {tabErrors.botao > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.botao}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="cards" disabled={form.tipo !== "grade-cards"} className="relative">
+                  Cards
+                  {tabErrors.cards > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.cards}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="aparencia">Aparência</TabsTrigger>
+              </TabsList>
+
+              {/* --- CONTEÚDO --- */}
+              <TabsContent value="conteudo" className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Etiqueta (laranja, acima do título)</Label>
+                  <Input className={fieldCls(fieldIssues.eyebrow)} value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} placeholder="Ex: Nossa abordagem" />
+                  <FieldMsg issue={fieldIssues.eyebrow} />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => {
-                    const f = e.target.files?.[0]; if (f) void handleUpload(f); e.target.value = "";
-                  }} />
-                  <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
-                    <Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar imagem"}
-                  </Button>
-                  {form.imagem_url && (
-                    <Button type="button" size="sm" variant="ghost" onClick={() => setForm((f) => ({ ...f, imagem_url: null }))}>
-                      <X className="mr-2 h-4 w-4" /> Remover
+                <div className="space-y-2">
+                  <Label>Título</Label>
+                  <Input className={fieldCls(fieldIssues.titulo)} value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} placeholder="Ex: Cuidamos da saúde emocional…" />
+                  <FieldMsg issue={fieldIssues.titulo} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Descrição</Label>
+                  <Textarea rows={5} className={fieldCls(fieldIssues.descricao)} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} placeholder="Texto principal da seção." />
+                  <FieldMsg issue={fieldIssues.descricao} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Parágrafo extra (opcional)</Label>
+                  <Textarea rows={3} value={form.descricao_extra} onChange={(e) => setForm({ ...form, descricao_extra: e.target.value })} placeholder="Um parágrafo adicional, se quiser." />
+                </div>
+              </TabsContent>
+
+              {/* --- MÍDIA --- */}
+              <TabsContent value="midia" className="space-y-3 pt-4">
+                <Label>Imagem da seção</Label>
+                <div className="flex items-center gap-4">
+                  <div className={`h-32 w-44 overflow-hidden rounded-lg bg-[#FEF3E8] dark:bg-amber-950/30 ${fieldIssues.imagem ? (fieldIssues.imagem.level === "error" ? "ring-2 ring-red-400" : "ring-2 ring-amber-400") : ""}`}>
+                    {form.imagem_url ? (
+                      <img src={publicImageUrl(form.imagem_url) ?? ""} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">sem imagem</div>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => {
+                      const f = e.target.files?.[0]; if (f) void handleUpload(f); e.target.value = "";
+                    }} />
+                    <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                      <Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar imagem"}
                     </Button>
-                  )}
+                    {form.imagem_url && (
+                      <Button type="button" size="sm" variant="ghost" onClick={() => setForm((f) => ({ ...f, imagem_url: null }))}>
+                        <X className="mr-2 h-4 w-4" /> Remover
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <FieldMsg issue={fieldIssues.imagem} />
-            </div>
+                <FieldMsg issue={fieldIssues.imagem} />
+                <p className="text-xs text-muted-foreground">
+                  {form.tipo === "grade-cards"
+                    ? "Opcional neste modelo — sem imagem, os cards ficam centralizados."
+                    : "A imagem aparece ao lado do texto da seção."}
+                </p>
+              </TabsContent>
 
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Etiqueta (laranja, em cima do título)</Label>
-                <Input className={fieldCls(fieldIssues.eyebrow)} value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} placeholder="Nossa abordagem" />
-                <FieldMsg issue={fieldIssues.eyebrow} />
-              </div>
-              <div className="space-y-2">
-                <Label>Fundo</Label>
-                <Select value={form.bg_style} onValueChange={(v) => setForm({ ...form, bg_style: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="branco">Branco</SelectItem>
-                    <SelectItem value="gradiente">Cinza suave (gradiente)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+              {/* --- BOTÃO --- */}
+              <TabsContent value="botao" className="space-y-4 pt-4">
+                <p className="text-xs text-muted-foreground">Deixe ambos vazios para não exibir botão.</p>
+                <div className="space-y-2">
+                  <Label>Texto do botão</Label>
+                  <Input className={fieldCls(fieldIssues.cta_texto)} value={form.cta_texto} onChange={(e) => setForm({ ...form, cta_texto: e.target.value })} placeholder="Ex: Agendar avaliação" />
+                  <FieldMsg issue={fieldIssues.cta_texto} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Link do botão</Label>
+                  <Input className={fieldCls(fieldIssues.cta_link)} value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
+                  <FieldMsg issue={fieldIssues.cta_link} />
+                </div>
+              </TabsContent>
 
-            <div className="space-y-2">
-              <Label>Título</Label>
-              <Input className={fieldCls(fieldIssues.titulo)} value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
-              <FieldMsg issue={fieldIssues.titulo} />
-            </div>
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Textarea rows={4} className={fieldCls(fieldIssues.descricao)} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
-              <FieldMsg issue={fieldIssues.descricao} />
-            </div>
-            <div className="space-y-2">
-              <Label>Parágrafo extra (opcional)</Label>
-              <Textarea rows={3} value={form.descricao_extra} onChange={(e) => setForm({ ...form, descricao_extra: e.target.value })} />
-            </div>
-
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label>Botão — texto (opcional)</Label>
-                <Input className={fieldCls(fieldIssues.cta_texto)} value={form.cta_texto} onChange={(e) => setForm({ ...form, cta_texto: e.target.value })} />
-                <FieldMsg issue={fieldIssues.cta_texto} />
-              </div>
-              <div className="space-y-2">
-                <Label>Botão — link</Label>
-                <Input className={fieldCls(fieldIssues.cta_link)} value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
-                <FieldMsg issue={fieldIssues.cta_link} />
-              </div>
-            </div>
-
-            {form.tipo === "grade-cards" && (
-              <div className="space-y-3 rounded-xl border border-border p-4">
+              {/* --- CARDS --- */}
+              <TabsContent value="cards" className="space-y-3 pt-4">
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm font-medium">Cards / itens</p>
-                    <p className="text-xs text-muted-foreground">Cada card mostra um ícone, título e descrição curta.</p>
+                    <p className="text-xs text-muted-foreground">Cada card mostra ícone, título e descrição curta.</p>
                   </div>
                   <Button size="sm" variant="outline" onClick={addItem}><Plus className="mr-1 h-4 w-4" /> Item</Button>
                 </div>
                 <FieldMsg issue={fieldIssues.itens} />
                 {form.itens.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">Nenhum item ainda.</p>
+                  <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+                    Nenhum card ainda. Clique em <strong>Item</strong> para adicionar.
+                  </div>
                 ) : (
                   form.itens.map((it, idx) => (
                     <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
@@ -654,44 +675,64 @@ export function SecoesManager() {
                     </div>
                   ))
                 )}
-              </div>
-            )}
+              </TabsContent>
 
-            <div className="flex items-center justify-between rounded-lg border border-border p-3">
-              <div>
-                <p className="text-sm font-medium">Visível no site</p>
-                <p className="text-xs text-muted-foreground">Desligue para ocultar sem apagar.</p>
-              </div>
-              <Switch checked={form.enabled} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
-            </div>
-            </div>
+              {/* --- APARÊNCIA --- */}
+              <TabsContent value="aparencia" className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Fundo</Label>
+                  <Select value={form.bg_style} onValueChange={(v) => setForm({ ...form, bg_style: v })}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="branco">Branco</SelectItem>
+                      <SelectItem value="gradiente">Cinza suave (gradiente)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex items-center justify-between rounded-lg border border-border p-3">
+                  <div>
+                    <p className="text-sm font-medium">Visível no site</p>
+                    <p className="text-xs text-muted-foreground">Desligue para ocultar sem apagar.</p>
+                  </div>
+                  <Switch checked={form.enabled} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
+                </div>
+              </TabsContent>
+            </Tabs>
 
-            <div className="space-y-2">
+            {/* ============ COLUNA: PRÉVIA + MINI-MAPA ============ */}
+            <div className="space-y-3 lg:sticky lg:top-2 lg:self-start">
               <div className="flex items-center justify-between">
                 <Label>Prévia em tempo real</Label>
-                <span className="text-xs text-muted-foreground">
-                  Como aparecerá na Home
-                </span>
+                <div className="inline-flex rounded-lg border border-border p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("desktop")}
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs ${previewDevice === "desktop" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <Monitor className="h-3.5 w-3.5" /> Desktop
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewDevice("mobile")}
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs ${previewDevice === "mobile" ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                  >
+                    <Smartphone className="h-3.5 w-3.5" /> Mobile
+                  </button>
+                </div>
               </div>
-              {/* Painel de validação */}
-              <div
-                className={
-                  "rounded-xl border p-3 text-sm " +
-                  (hasErrors
-                    ? "border-red-300 bg-red-50 dark:bg-red-950/30"
-                    : issues.length > 0
-                      ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30"
-                      : "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30")
-                }
-              >
-                {issues.length === 0 ? (
-                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span>Tudo certo — pronto para publicar.</span>
-                  </div>
-                ) : (
-                  <ul className="space-y-1.5">
-                    {issues.map((it, i) => (
+
+              {/* Painel de validação compacto */}
+              {issues.length > 0 && (
+                <div
+                  className={
+                    "rounded-xl border p-3 text-xs " +
+                    (hasErrors
+                      ? "border-red-300 bg-red-50 dark:bg-red-950/30"
+                      : "border-amber-300 bg-amber-50 dark:bg-amber-950/30")
+                  }
+                >
+                  <ul className="space-y-1">
+                    {issues.slice(0, 4).map((it, i) => (
                       <li
                         key={i}
                         className={
@@ -702,39 +743,80 @@ export function SecoesManager() {
                         }
                       >
                         {it.level === "error" ? (
-                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         ) : (
-                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                          <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                         )}
                         <span>{it.msg}</span>
                       </li>
                     ))}
+                    {issues.length > 4 && (
+                      <li className="text-muted-foreground">+ {issues.length - 4} aviso(s)…</li>
+                    )}
                   </ul>
-                )}
-              </div>
+                </div>
+              )}
+              {issues.length === 0 && (
+                <div className="flex items-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 p-2.5 text-xs text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>Tudo certo — pronto para publicar.</span>
+                </div>
+              )}
+
+              {/* Frame da prévia */}
               <div
                 ref={previewWrapRef}
-                className="overflow-hidden rounded-xl border border-border bg-white"
-                style={{ height: Math.round(720 * previewScale) }}
+                className={`overflow-hidden rounded-xl border border-border bg-white ${previewDevice === "mobile" ? "mx-auto max-w-[420px]" : ""}`}
+                style={{ height: Math.round((previewDevice === "mobile" ? 780 : 600) * previewScale) }}
               >
                 <div
                   className="pointer-events-none origin-top-left"
                   style={{
-                    width: 1280,
+                    width: previewDevice === "desktop" ? 1280 : 390,
                     transform: `scale(${previewScale})`,
                   }}
-                  key={`${form.tipo}-${form.imagem_url ?? "x"}`}
+                  key={`${form.tipo}-${form.imagem_url ?? "x"}-${previewDevice}`}
                 >
                   <DynamicSection secao={previewSecao} />
                 </div>
               </div>
               <p className="text-[11px] text-muted-foreground">
-                A prévia atualiza automaticamente conforme você edita os campos.
+                Campos vazios aparecem como exemplo cinza para você visualizar o layout do modelo.
               </p>
+
+              {/* Mini-mapa da Home */}
+              <div className="rounded-xl border border-border bg-muted/30 p-3">
+                <p className="mb-2 text-xs font-medium">Onde aparece na Home</p>
+                <ol className="space-y-1 text-xs">
+                  {homeMap.map((item) => (
+                    <li
+                      key={item.key}
+                      className={
+                        "flex items-center gap-2 rounded px-2 py-1 " +
+                        (item.isCurrent
+                          ? "bg-[#D67F43]/15 font-medium text-[#B85A24] dark:text-amber-300 ring-1 ring-[#D67F43]/40"
+                          : item.fixed
+                            ? "text-muted-foreground"
+                            : "text-foreground")
+                      }
+                    >
+                      <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />
+                      <span className="truncate">{item.label}</span>
+                      {item.isCurrent && <span className="ml-auto text-[10px] uppercase tracking-wide">esta seção</span>}
+                      {item.fixed && <span className="ml-auto text-[10px] uppercase tracking-wide opacity-60">fixa</span>}
+                    </li>
+                  ))}
+                </ol>
+              </div>
             </div>
           </div>
 
           <DialogFooter>
+            <Button asChild variant="ghost" className="mr-auto">
+              <a href="/" target="_blank" rel="noreferrer">
+                <ExternalLink className="mr-2 h-4 w-4" /> Abrir Home
+              </a>
+            </Button>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button
               onClick={save}
