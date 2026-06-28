@@ -15,7 +15,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { GestaoShell } from "@/components/gestao/GestaoShell";
 import { fetchClinica, fetchProfissionais, fetchServicos } from "@/lib/configuracoes";
 import {
   blocoPosicao,
@@ -129,7 +128,7 @@ export function AgendaPage() {
     .sort((a, b) => a.hora_inicio.localeCompare(b.hora_inicio));
 
   return (
-    <GestaoShell title="Agenda">
+    <>
       <div className="flex h-[calc(100vh-7rem)] flex-col gap-4">
         {/* Header */}
         <div className="flex flex-wrap items-center gap-2 rounded-lg border border-gray-200 bg-white p-3">
@@ -259,7 +258,7 @@ export function AgendaPage() {
         onOpenChange={setDetailsOpen}
         onEdit={abrirEdicao}
       />
-    </GestaoShell>
+    </>
   );
 }
 

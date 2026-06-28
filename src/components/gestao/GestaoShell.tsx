@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "@tanstack/react-router";
 import {
   LayoutDashboard,
@@ -35,6 +35,36 @@ const SITE: NavItem[] = [
   { to: "/gestao/site/equipe", label: "Equipe", icon: UserCog },
   { to: "/gestao/site/depoimentos", label: "Depoimentos", icon: MessageSquareQuote },
 ];
+
+const TITLE_MAP: { match: RegExp; title: string }[] = [
+  { match: /^\/gestao\/dashboard/, title: "Dashboard" },
+  { match: /^\/gestao\/agenda/, title: "Agenda" },
+  { match: /^\/gestao\/pacientes\/novo/, title: "Novo Paciente" },
+  { match: /^\/gestao\/pacientes\/[^/]+/, title: "Paciente" },
+  { match: /^\/gestao\/pacientes/, title: "Pacientes" },
+  { match: /^\/gestao\/contratos/, title: "Contratos" },
+  { match: /^\/gestao\/financeiro/, title: "Financeiro" },
+  { match: /^\/gestao\/configuracoes/, title: "Configurações" },
+  { match: /^\/gestao\/site\/equipe/, title: "Equipe (site)" },
+  { match: /^\/gestao\/site\/depoimentos/, title: "Depoimentos (site)" },
+];
+
+function deriveTitle(pathname: string): string {
+  return TITLE_MAP.find((t) => t.match.test(pathname))?.title ?? "Gestão";
+}
+
+const GestaoTitleContext = createContext<{
+  setTitle: (t: string | null) => void;
+} | null>(null);
+
+export function useGestaoTitle(title: string | null | undefined) {
+  const ctx = useContext(GestaoTitleContext);
+  useEffect(() => {
+    if (!ctx) return;
+    ctx.setTitle(title ?? null);
+    return () => ctx.setTitle(null);
+  }, [ctx, title]);
+}
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const location = useLocation();
@@ -101,10 +131,14 @@ function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
   );
 }
 
-export function GestaoShell({ title, children }: { title: string; children: ReactNode }) {
+export function GestaoShell({ title, children }: { title?: string; children: ReactNode }) {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
+  const [override, setOverride] = useState<string | null>(null);
+  const ctxValue = useMemo(() => ({ setTitle: setOverride }), []);
+  const effectiveTitle = title ?? override ?? deriveTitle(location.pathname);
 
   async function handleSignOut() {
     await signOut();
@@ -112,6 +146,7 @@ export function GestaoShell({ title, children }: { title: string; children: Reac
   }
 
   return (
+    <GestaoTitleContext.Provider value={ctxValue}>
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop sidebar */}
       <aside className="hidden w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex">
@@ -144,7 +179,7 @@ export function GestaoShell({ title, children }: { title: string; children: Reac
                 <SidebarFooter onSignOut={handleSignOut} />
               </SheetContent>
             </Sheet>
-            <h1 className="text-lg font-semibold text-gray-900">{title}</h1>
+            <h1 className="text-lg font-semibold text-gray-900">{effectiveTitle}</h1>
           </div>
           <div className="hidden items-center gap-3 md:flex">
             <span className="text-sm text-gray-500">{user?.email}</span>
@@ -156,5 +191,6 @@ export function GestaoShell({ title, children }: { title: string; children: Reac
         <div className="p-6">{children}</div>
       </main>
     </div>
+    </GestaoTitleContext.Provider>
   );
 }
