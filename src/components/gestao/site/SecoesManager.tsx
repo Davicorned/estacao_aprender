@@ -260,6 +260,44 @@ export function SecoesManager() {
 
   const tipoLabel = (t: SecaoTipo) => TIPOS.find((x) => x.value === t)?.label ?? t;
 
+  // ---- Validação para a prévia ----
+  type Issue = { level: "error" | "warning"; msg: string };
+  function validate(): Issue[] {
+    const out: Issue[] = [];
+    if (!form.titulo.trim() && !form.eyebrow.trim()) {
+      out.push({ level: "error", msg: "Informe um título ou uma etiqueta — a seção precisa de pelo menos um deles." });
+    }
+    if (!form.titulo.trim()) {
+      out.push({ level: "warning", msg: "Sem título principal: a seção fica apenas com a etiqueta laranja." });
+    }
+    if (!form.descricao.trim()) {
+      out.push({ level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." });
+    }
+    if (form.tipo !== "grade-cards" && !form.imagem_url) {
+      out.push({ level: "error", msg: "Este modelo exige uma imagem ao lado do texto." });
+    }
+    if (form.tipo === "grade-cards" && !form.imagem_url && form.itens.length === 0) {
+      out.push({ level: "warning", msg: "Sem imagem e sem cards — adicione pelo menos um para a seção ter conteúdo." });
+    }
+    if (form.cta_texto.trim() && !form.cta_link.trim()) {
+      out.push({ level: "error", msg: "Botão sem link: preencha o link ou remova o texto do botão." });
+    }
+    if (!form.cta_texto.trim() && form.cta_link.trim()) {
+      out.push({ level: "error", msg: "Link do botão sem texto: preencha o texto ou remova o link." });
+    }
+    if (form.tipo === "grade-cards") {
+      form.itens.forEach((it, i) => {
+        if (!it.titulo.trim()) out.push({ level: "warning", msg: `Card ${i + 1} sem título.` });
+      });
+    }
+    if (!form.enabled) {
+      out.push({ level: "warning", msg: "Seção marcada como oculta — não aparecerá na Home até ser reativada." });
+    }
+    return out;
+  }
+  const issues = validate();
+  const hasErrors = issues.some((i) => i.level === "error");
+
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
