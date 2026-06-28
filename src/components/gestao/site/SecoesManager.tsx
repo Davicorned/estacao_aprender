@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Plus, Pencil, Trash2, ArrowUp, ArrowDown, Upload, X, Eye, EyeOff,
-  LayoutTemplate, Image as ImageIcon, Grid3x3,
+  LayoutTemplate, Image as ImageIcon, Grid3x3, AlertCircle, AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
