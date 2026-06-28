@@ -93,7 +93,7 @@ function GradeCards({ secao }: { secao: SiteSecao }) {
           {hasImage && (
             <FadeUp>
               <div className="overflow-hidden rounded-3xl shadow-xl">
-                <img src={secao.imagem_url} alt={secao.titulo ?? ""} className="h-full w-full object-cover" />
+                <img src={secao.imagem_url ?? undefined} alt={secao.titulo ?? ""} className="h-full w-full object-cover" />
               </div>
             </FadeUp>
           )}
