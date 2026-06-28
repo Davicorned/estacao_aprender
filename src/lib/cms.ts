@@ -63,6 +63,36 @@ export type SiteRodape = {
   links_servicos: LinkItem[];
 };
 
+export type SecaoTipo =
+  | "texto-imagem-esquerda"
+  | "texto-imagem-direita"
+  | "grade-cards";
+
+export type SiteSecaoItem = {
+  id: string;
+  secao_id: string;
+  titulo: string;
+  descricao: string | null;
+  icone: string | null;
+  order: number;
+};
+
+export type SiteSecao = {
+  id: string;
+  tipo: SecaoTipo;
+  eyebrow: string | null;
+  titulo: string | null;
+  descricao: string | null;
+  descricao_extra: string | null;
+  imagem_url: string | null;
+  cta_texto: string | null;
+  cta_link: string | null;
+  bg_style: string | null;
+  order: number;
+  enabled: boolean;
+  itens: SiteSecaoItem[];
+};
+
 let teamCache: { data: TeamMember[]; at: number } | null = null;
 let teamInflight: Promise<TeamMember[]> | null = null;
 let testimonialsCache: { data: Testimonial[]; at: number } | null = null;
@@ -73,14 +103,17 @@ let heroCache: { data: SiteHero | null; at: number } | null = null;
 let heroInflight: Promise<SiteHero | null> | null = null;
 let rodapeCache: { data: SiteRodape | null; at: number } | null = null;
 let rodapeInflight: Promise<SiteRodape | null> | null = null;
+let secoesCache: { data: SiteSecao[]; at: number } | null = null;
+let secoesInflight: Promise<SiteSecao[]> | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape") {
+export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes") {
   if (!which || which === "team") teamCache = null;
   if (!which || which === "testimonials") testimonialsCache = null;
   if (!which || which === "servicos") servicosCache = null;
   if (!which || which === "hero") heroCache = null;
   if (!which || which === "rodape") rodapeCache = null;
+  if (!which || which === "secoes") secoesCache = null;
 }
 
 export async function fetchTeam(includeDisabled = false): Promise<TeamMember[]> {
@@ -216,4 +249,37 @@ export async function fetchRodape(): Promise<SiteRodape | null> {
   })();
   rodapeInflight = run.finally(() => { rodapeInflight = null; });
   return rodapeInflight;
+}
+
+export async function fetchSecoes(includeDisabled = false): Promise<SiteSecao[]> {
+  if (!includeDisabled) {
+    if (secoesCache && Date.now() - secoesCache.at < CACHE_TTL_MS) return secoesCache.data;
+    if (secoesInflight) return secoesInflight;
+  }
+  const run = (async () => {
+    let q = supabase
+      .from("site_secoes")
+      .select("*, itens:site_secao_itens(*)")
+      .order("order", { ascending: true });
+    if (!includeDisabled) q = q.eq("enabled", true);
+    const { data, error } = await q;
+    if (error) {
+      console.error("fetchSecoes error", error);
+      return [];
+    }
+    const mapped = (data ?? []).map((s: any) => ({
+      ...s,
+      imagem_url: publicImageUrl(s.imagem_url),
+      itens: ((s.itens ?? []) as SiteSecaoItem[])
+        .slice()
+        .sort((a, b) => a.order - b.order),
+    })) as SiteSecao[];
+    if (!includeDisabled) secoesCache = { data: mapped, at: Date.now() };
+    return mapped;
+  })();
+  if (!includeDisabled) {
+    secoesInflight = run.finally(() => { secoesInflight = null; });
+    return secoesInflight;
+  }
+  return run;
 }

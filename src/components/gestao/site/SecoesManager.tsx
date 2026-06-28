@@ -1,0 +1,435 @@
+import { useEffect, useRef, useState } from "react";
+import {
+  Plus, Pencil, Trash2, ArrowUp, ArrowDown, Upload, X, Eye, EyeOff,
+  LayoutTemplate, Image as ImageIcon, Grid3x3,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
+import { toast } from "sonner";
+import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
+import {
+  fetchSecoes, invalidateCmsCache,
+  type SiteSecao, type SiteSecaoItem, type SecaoTipo,
+} from "@/lib/cms";
+
+type ItemForm = { id?: string; titulo: string; descricao: string; icone: string };
+
+type FormState = {
+  id?: string;
+  tipo: SecaoTipo;
+  eyebrow: string;
+  titulo: string;
+  descricao: string;
+  descricao_extra: string;
+  imagem_url: string | null;
+  cta_texto: string;
+  cta_link: string;
+  bg_style: string;
+  enabled: boolean;
+  itens: ItemForm[];
+};
+
+const empty: FormState = {
+  tipo: "texto-imagem-esquerda",
+  eyebrow: "",
+  titulo: "",
+  descricao: "",
+  descricao_extra: "",
+  imagem_url: null,
+  cta_texto: "",
+  cta_link: "",
+  bg_style: "branco",
+  enabled: true,
+  itens: [],
+};
+
+const TIPOS: { value: SecaoTipo; label: string; desc: string; Icon: any }[] = [
+  { value: "texto-imagem-esquerda", label: "Imagem à esquerda", desc: "Texto à direita, imagem grande à esquerda.", Icon: ImageIcon },
+  { value: "texto-imagem-direita", label: "Imagem à direita", desc: "Texto à esquerda, imagem grande à direita.", Icon: LayoutTemplate },
+  { value: "grade-cards", label: "Grade de cards", desc: "Imagem + texto + cards (ícones).", Icon: Grid3x3 },
+];
+
+const ICONES_SUGERIDOS = [
+  "BookOpen", "Heart", "Brain", "TrendingDown", "Sparkles", "Star",
+  "Users", "Calendar", "Smile", "Shield", "Sun", "Award",
+];
+
+export function SecoesManager() {
+  const [items, setItems] = useState<SiteSecao[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const [pickTipo, setPickTipo] = useState(false);
+  const [form, setForm] = useState<FormState>(empty);
+  const [saving, setSaving] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement | null>(null);
+
+  async function load() {
+    setLoading(true);
+    invalidateCmsCache("secoes");
+    const data = await fetchSecoes(true);
+    // Re-fetch raw paths for editing (publicImageUrl converts paths to URLs in fetchSecoes)
+    setItems(data);
+    setLoading(false);
+  }
+
+  useEffect(() => { void load(); }, []);
+
+  function openNew(tipo: SecaoTipo) {
+    setForm({ ...empty, tipo });
+    setPickTipo(false);
+    setOpen(true);
+  }
+
+  async function openEdit(s: SiteSecao) {
+    // Need raw image path, not the public URL — re-read the row
+    const { data } = await supabase.from("site_secoes").select("imagem_url").eq("id", s.id).maybeSingle();
+    setForm({
+      id: s.id,
+      tipo: s.tipo,
+      eyebrow: s.eyebrow ?? "",
+      titulo: s.titulo ?? "",
+      descricao: s.descricao ?? "",
+      descricao_extra: s.descricao_extra ?? "",
+      imagem_url: (data?.imagem_url as string | null) ?? null,
+      cta_texto: s.cta_texto ?? "",
+      cta_link: s.cta_link ?? "",
+      bg_style: s.bg_style ?? "branco",
+      enabled: s.enabled,
+      itens: s.itens.map((it) => ({
+        id: it.id, titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
+      })),
+    });
+    setOpen(true);
+  }
+
+  async function handleUpload(file: File) {
+    setUploading(true);
+    const ext = file.name.split(".").pop() ?? "jpg";
+    const path = `secoes/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage
+      .from(SITE_IMAGES_BUCKET).upload(path, file, { upsert: false, cacheControl: "3600" });
+    setUploading(false);
+    if (error) return toast.error("Falha no upload: " + error.message);
+    setForm((f) => ({ ...f, imagem_url: path }));
+    toast.success("Imagem enviada");
+  }
+
+  async function save() {
+    if (!form.titulo.trim() && !form.eyebrow.trim()) return toast.error("Informe pelo menos um título");
+    setSaving(true);
+    const payload = {
+      tipo: form.tipo,
+      eyebrow: form.eyebrow.trim() || null,
+      titulo: form.titulo.trim() || null,
+      descricao: form.descricao.trim() || null,
+      descricao_extra: form.descricao_extra.trim() || null,
+      imagem_url: form.imagem_url,
+      cta_texto: form.cta_texto.trim() || null,
+      cta_link: form.cta_link.trim() || null,
+      bg_style: form.bg_style,
+      enabled: form.enabled,
+      updated_at: new Date().toISOString(),
+    };
+
+    let secaoId = form.id;
+    if (secaoId) {
+      const { error } = await supabase.from("site_secoes").update(payload).eq("id", secaoId);
+      if (error) { setSaving(false); return toast.error(error.message); }
+    } else {
+      const nextOrder = items.length ? Math.max(...items.map((i) => i.order)) + 1 : 0;
+      const { data, error } = await supabase
+        .from("site_secoes").insert({ ...payload, order: nextOrder }).select("id").single();
+      if (error || !data) { setSaving(false); return toast.error(error?.message ?? "Erro"); }
+      secaoId = data.id as string;
+    }
+
+    // Sync filhos: estratégia simples — apaga tudo e reinsere
+    if (form.tipo === "grade-cards") {
+      await supabase.from("site_secao_itens").delete().eq("secao_id", secaoId);
+      if (form.itens.length > 0) {
+        const rows = form.itens.map((it, idx) => ({
+          secao_id: secaoId,
+          titulo: it.titulo.trim() || "Item",
+          descricao: it.descricao.trim() || null,
+          icone: it.icone || "Sparkles",
+          order: idx,
+        }));
+        const { error } = await supabase.from("site_secao_itens").insert(rows);
+        if (error) { setSaving(false); return toast.error("Itens: " + error.message); }
+      }
+    }
+
+    setSaving(false);
+    toast.success("Seção salva");
+    setOpen(false);
+    void load();
+  }
+
+  async function remove(id: string) {
+    if (!confirm("Remover esta seção e seus itens?")) return;
+    await supabase.from("site_secao_itens").delete().eq("secao_id", id);
+    const { error } = await supabase.from("site_secoes").delete().eq("id", id);
+    if (error) return toast.error(error.message);
+    toast.success("Removida");
+    void load();
+  }
+
+  async function move(id: string, dir: -1 | 1) {
+    const idx = items.findIndex((i) => i.id === id);
+    const swap = idx + dir;
+    if (idx < 0 || swap < 0 || swap >= items.length) return;
+    const a = items[idx], b = items[swap];
+    const r1 = await supabase.from("site_secoes").update({ order: b.order }).eq("id", a.id);
+    const r2 = await supabase.from("site_secoes").update({ order: a.order }).eq("id", b.id);
+    if (r1.error || r2.error) return toast.error("Falha ao reordenar");
+    void load();
+  }
+
+  async function toggleEnabled(s: SiteSecao) {
+    const { error } = await supabase.from("site_secoes").update({ enabled: !s.enabled }).eq("id", s.id);
+    if (error) return toast.error(error.message);
+    void load();
+  }
+
+  function addItem() {
+    setForm((f) => ({ ...f, itens: [...f.itens, { titulo: "", descricao: "", icone: "Sparkles" }] }));
+  }
+  function updateItem(idx: number, patch: Partial<ItemForm>) {
+    setForm((f) => ({ ...f, itens: f.itens.map((it, i) => i === idx ? { ...it, ...patch } : it) }));
+  }
+  function removeItem(idx: number) {
+    setForm((f) => ({ ...f, itens: f.itens.filter((_, i) => i !== idx) }));
+  }
+  function moveItem(idx: number, dir: -1 | 1) {
+    const swap = idx + dir;
+    setForm((f) => {
+      if (swap < 0 || swap >= f.itens.length) return f;
+      const arr = f.itens.slice();
+      [arr[idx], arr[swap]] = [arr[swap], arr[idx]];
+      return { ...f, itens: arr };
+    });
+  }
+
+  const tipoLabel = (t: SecaoTipo) => TIPOS.find((x) => x.value === t)?.label ?? t;
+
+  return (
+    <>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <p className="text-sm text-muted-foreground">
+            {items.length} seção{items.length !== 1 ? "es" : ""} cadastrada{items.length !== 1 ? "s" : ""}.
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Estas seções aparecem na Home, entre o banner e a equipe, na ordem definida abaixo.
+          </p>
+        </div>
+        <Button onClick={() => setPickTipo(true)} className="bg-[#D67F43] hover:bg-[#B85A24]">
+          <Plus className="mr-2 h-4 w-4" /> Nova seção
+        </Button>
+      </div>
+
+      {loading ? (
+        <p className="text-sm text-muted-foreground">Carregando…</p>
+      ) : items.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">
+          Nenhuma seção cadastrada. Clique em <strong>Nova seção</strong> para criar.
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {items.map((s, idx) => (
+            <div key={s.id} className="flex items-center gap-4 rounded-xl border border-border bg-card p-3">
+              <div className="h-14 w-20 shrink-0 overflow-hidden rounded-lg bg-[#FEF3E8]">
+                {s.imagem_url ? (
+                  <img src={s.imagem_url} alt={s.titulo ?? ""} className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-[10px] text-[#D67F43]">
+                    sem img
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate font-medium">{s.titulo || s.eyebrow || "(sem título)"}</p>
+                <p className="truncate text-xs text-muted-foreground">
+                  {tipoLabel(s.tipo)} · {s.itens.length} item(s)
+                </p>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button size="icon" variant="ghost" onClick={() => move(s.id, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" onClick={() => move(s.id, 1)} disabled={idx === items.length - 1}><ArrowDown className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" onClick={() => toggleEnabled(s)} title={s.enabled ? "Ocultar" : "Mostrar"}>
+                  {s.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
+                </Button>
+                <Button size="icon" variant="ghost" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                <Button size="icon" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Seletor de template */}
+      <Dialog open={pickTipo} onOpenChange={setPickTipo}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader><DialogTitle>Escolha um modelo</DialogTitle></DialogHeader>
+          <div className="grid gap-3">
+            {TIPOS.map((t) => (
+              <button
+                key={t.value}
+                onClick={() => openNew(t.value)}
+                className="flex items-start gap-3 rounded-xl border border-border p-4 text-left hover:bg-accent transition-colors"
+              >
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FEF3E8] text-[#D67F43]">
+                  <t.Icon className="h-5 w-5" />
+                </div>
+                <div>
+                  <p className="font-medium">{t.label}</p>
+                  <p className="text-xs text-muted-foreground">{t.desc}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Form principal */}
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>
+              {form.id ? "Editar seção" : "Nova seção"} — {tipoLabel(form.tipo)}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-5">
+            <div className="space-y-2">
+              <Label>Imagem da seção</Label>
+              <div className="flex items-center gap-4">
+                <div className="h-24 w-32 overflow-hidden rounded-lg bg-[#FEF3E8]">
+                  {form.imagem_url ? (
+                    <img src={publicImageUrl(form.imagem_url) ?? ""} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">sem imagem</div>
+                  )}
+                </div>
+                <div className="flex flex-col gap-2">
+                  <input ref={fileRef} type="file" accept="image/*" hidden onChange={(e) => {
+                    const f = e.target.files?.[0]; if (f) void handleUpload(f); e.target.value = "";
+                  }} />
+                  <Button type="button" size="sm" variant="outline" onClick={() => fileRef.current?.click()} disabled={uploading}>
+                    <Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Enviar imagem"}
+                  </Button>
+                  {form.imagem_url && (
+                    <Button type="button" size="sm" variant="ghost" onClick={() => setForm((f) => ({ ...f, imagem_url: null }))}>
+                      <X className="mr-2 h-4 w-4" /> Remover
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Etiqueta (laranja, em cima do título)</Label>
+                <Input value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} placeholder="Nossa abordagem" />
+              </div>
+              <div className="space-y-2">
+                <Label>Fundo</Label>
+                <Select value={form.bg_style} onValueChange={(v) => setForm({ ...form, bg_style: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="branco">Branco</SelectItem>
+                    <SelectItem value="gradiente">Cinza suave (gradiente)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Título</Label>
+              <Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Textarea rows={4} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label>Parágrafo extra (opcional)</Label>
+              <Textarea rows={3} value={form.descricao_extra} onChange={(e) => setForm({ ...form, descricao_extra: e.target.value })} />
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label>Botão — texto (opcional)</Label>
+                <Input value={form.cta_texto} onChange={(e) => setForm({ ...form, cta_texto: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Botão — link</Label>
+                <Input value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
+              </div>
+            </div>
+
+            {form.tipo === "grade-cards" && (
+              <div className="space-y-3 rounded-xl border border-border p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium">Cards / itens</p>
+                    <p className="text-xs text-muted-foreground">Cada card mostra um ícone, título e descrição curta.</p>
+                  </div>
+                  <Button size="sm" variant="outline" onClick={addItem}><Plus className="mr-1 h-4 w-4" /> Item</Button>
+                </div>
+                {form.itens.length === 0 ? (
+                  <p className="text-xs text-muted-foreground">Nenhum item ainda.</p>
+                ) : (
+                  form.itens.map((it, idx) => (
+                    <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
+                        <Input value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título do card" />
+                        <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
+                          <SelectTrigger><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            {ICONES_SUGERIDOS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
+                      <div className="flex justify-end gap-1">
+                        <Button size="icon" variant="ghost" onClick={() => moveItem(idx, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => moveItem(idx, 1)} disabled={idx === form.itens.length - 1}><ArrowDown className="h-4 w-4" /></Button>
+                        <Button size="icon" variant="ghost" onClick={() => removeItem(idx)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            <div className="flex items-center justify-between rounded-lg border border-border p-3">
+              <div>
+                <p className="text-sm font-medium">Visível no site</p>
+                <p className="text-xs text-muted-foreground">Desligue para ocultar sem apagar.</p>
+              </div>
+              <Switch checked={form.enabled} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
+            <Button onClick={save} disabled={saving} className="bg-[#D67F43] hover:bg-[#B85A24]">
+              {saving ? "Salvando…" : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
+}
