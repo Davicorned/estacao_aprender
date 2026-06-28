@@ -65,6 +65,24 @@ const ICONES_SUGERIDOS = [
   "Users", "Calendar", "Smile", "Shield", "Sun", "Award",
 ];
 
+/** Lista somente os ERROS bloqueantes do formulário (avisos ficam de fora). */
+function computeBlockingErrors(form: FormState): string[] {
+  const errors: string[] = [];
+  if (!form.titulo.trim() && !form.eyebrow.trim()) {
+    errors.push("Informe um título ou uma etiqueta.");
+  }
+  if (form.tipo !== "grade-cards" && !form.imagem_url) {
+    errors.push("Este modelo exige uma imagem ao lado do texto.");
+  }
+  if (form.cta_texto.trim() && !form.cta_link.trim()) {
+    errors.push("Botão sem link: preencha o link ou remova o texto do botão.");
+  }
+  if (!form.cta_texto.trim() && form.cta_link.trim()) {
+    errors.push("Link do botão sem texto: preencha o texto ou remova o link.");
+  }
+  return errors;
+}
+
 export function SecoesManager() {
   const [items, setItems] = useState<SiteSecao[]>([]);
   const [loading, setLoading] = useState(true);
