@@ -430,7 +430,7 @@ export function SecoesManager() {
             <div className="space-y-2">
               <Label>Imagem da seção</Label>
               <div className="flex items-center gap-4">
-                <div className="h-24 w-32 overflow-hidden rounded-lg bg-[#FEF3E8]">
+                <div className={`h-24 w-32 overflow-hidden rounded-lg bg-[#FEF3E8] ${fieldIssues.imagem ? (fieldIssues.imagem.level === "error" ? "ring-2 ring-red-400" : "ring-2 ring-amber-400") : ""}`}>
                   {form.imagem_url ? (
                     <img src={publicImageUrl(form.imagem_url) ?? ""} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -451,12 +451,14 @@ export function SecoesManager() {
                   )}
                 </div>
               </div>
+              <FieldMsg issue={fieldIssues.imagem} />
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Etiqueta (laranja, em cima do título)</Label>
-                <Input value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} placeholder="Nossa abordagem" />
+                <Input className={fieldCls(fieldIssues.eyebrow)} value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} placeholder="Nossa abordagem" />
+                <FieldMsg issue={fieldIssues.eyebrow} />
               </div>
               <div className="space-y-2">
                 <Label>Fundo</Label>
@@ -472,11 +474,13 @@ export function SecoesManager() {
 
             <div className="space-y-2">
               <Label>Título</Label>
-              <Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+              <Input className={fieldCls(fieldIssues.titulo)} value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+              <FieldMsg issue={fieldIssues.titulo} />
             </div>
             <div className="space-y-2">
               <Label>Descrição</Label>
-              <Textarea rows={4} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+              <Textarea rows={4} className={fieldCls(fieldIssues.descricao)} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+              <FieldMsg issue={fieldIssues.descricao} />
             </div>
             <div className="space-y-2">
               <Label>Parágrafo extra (opcional)</Label>
@@ -486,11 +490,13 @@ export function SecoesManager() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Botão — texto (opcional)</Label>
-                <Input value={form.cta_texto} onChange={(e) => setForm({ ...form, cta_texto: e.target.value })} />
+                <Input className={fieldCls(fieldIssues.cta_texto)} value={form.cta_texto} onChange={(e) => setForm({ ...form, cta_texto: e.target.value })} />
+                <FieldMsg issue={fieldIssues.cta_texto} />
               </div>
               <div className="space-y-2">
                 <Label>Botão — link</Label>
-                <Input value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
+                <Input className={fieldCls(fieldIssues.cta_link)} value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
+                <FieldMsg issue={fieldIssues.cta_link} />
               </div>
             </div>
 
@@ -503,13 +509,14 @@ export function SecoesManager() {
                   </div>
                   <Button size="sm" variant="outline" onClick={addItem}><Plus className="mr-1 h-4 w-4" /> Item</Button>
                 </div>
+                <FieldMsg issue={fieldIssues.itens} />
                 {form.itens.length === 0 ? (
                   <p className="text-xs text-muted-foreground">Nenhum item ainda.</p>
                 ) : (
                   form.itens.map((it, idx) => (
                     <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
-                        <Input value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título do card" />
+                        <Input className={fieldCls(itemIssues[idx] ?? null)} value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título do card" />
                         <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -517,6 +524,7 @@ export function SecoesManager() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <FieldMsg issue={itemIssues[idx] ?? null} />
                       <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
