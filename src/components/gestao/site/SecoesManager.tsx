@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   Plus, Pencil, Trash2, ArrowUp, ArrowDown, Upload, X, Eye, EyeOff,
-  LayoutTemplate, Image as ImageIcon, Grid3x3,
+  LayoutTemplate, Image as ImageIcon, Grid3x3, AlertCircle, AlertTriangle, CheckCircle2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -260,6 +260,44 @@ export function SecoesManager() {
 
   const tipoLabel = (t: SecaoTipo) => TIPOS.find((x) => x.value === t)?.label ?? t;
 
+  // ---- Validação para a prévia ----
+  type Issue = { level: "error" | "warning"; msg: string };
+  function validate(): Issue[] {
+    const out: Issue[] = [];
+    if (!form.titulo.trim() && !form.eyebrow.trim()) {
+      out.push({ level: "error", msg: "Informe um título ou uma etiqueta — a seção precisa de pelo menos um deles." });
+    }
+    if (!form.titulo.trim()) {
+      out.push({ level: "warning", msg: "Sem título principal: a seção fica apenas com a etiqueta laranja." });
+    }
+    if (!form.descricao.trim()) {
+      out.push({ level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." });
+    }
+    if (form.tipo !== "grade-cards" && !form.imagem_url) {
+      out.push({ level: "error", msg: "Este modelo exige uma imagem ao lado do texto." });
+    }
+    if (form.tipo === "grade-cards" && !form.imagem_url && form.itens.length === 0) {
+      out.push({ level: "warning", msg: "Sem imagem e sem cards — adicione pelo menos um para a seção ter conteúdo." });
+    }
+    if (form.cta_texto.trim() && !form.cta_link.trim()) {
+      out.push({ level: "error", msg: "Botão sem link: preencha o link ou remova o texto do botão." });
+    }
+    if (!form.cta_texto.trim() && form.cta_link.trim()) {
+      out.push({ level: "error", msg: "Link do botão sem texto: preencha o texto ou remova o link." });
+    }
+    if (form.tipo === "grade-cards") {
+      form.itens.forEach((it, i) => {
+        if (!it.titulo.trim()) out.push({ level: "warning", msg: `Card ${i + 1} sem título.` });
+      });
+    }
+    if (!form.enabled) {
+      out.push({ level: "warning", msg: "Seção marcada como oculta — não aparecerá na Home até ser reativada." });
+    }
+    return out;
+  }
+  const issues = validate();
+  const hasErrors = issues.some((i) => i.level === "error");
+
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
@@ -468,6 +506,45 @@ export function SecoesManager() {
                   Como aparecerá na Home
                 </span>
               </div>
+              {/* Painel de validação */}
+              <div
+                className={
+                  "rounded-xl border p-3 text-sm " +
+                  (hasErrors
+                    ? "border-red-300 bg-red-50 dark:bg-red-950/30"
+                    : issues.length > 0
+                      ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30"
+                      : "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30")
+                }
+              >
+                {issues.length === 0 ? (
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Tudo certo — pronto para publicar.</span>
+                  </div>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {issues.map((it, i) => (
+                      <li
+                        key={i}
+                        className={
+                          "flex items-start gap-2 " +
+                          (it.level === "error"
+                            ? "text-red-700 dark:text-red-300"
+                            : "text-amber-700 dark:text-amber-300")
+                        }
+                      >
+                        {it.level === "error" ? (
+                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                        ) : (
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                        )}
+                        <span>{it.msg}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <div
                 ref={previewWrapRef}
                 className="overflow-hidden rounded-xl border border-border bg-white"
@@ -492,7 +569,12 @@ export function SecoesManager() {
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={save} disabled={saving} className="bg-[#D67F43] hover:bg-[#B85A24]">
+            <Button
+              onClick={save}
+              disabled={saving || hasErrors}
+              title={hasErrors ? "Corrija os erros indicados na prévia antes de salvar." : undefined}
+              className="bg-[#D67F43] hover:bg-[#B85A24]"
+            >
               {saving ? "Salvando…" : "Salvar"}
             </Button>
           </DialogFooter>
