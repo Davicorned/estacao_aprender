@@ -506,6 +506,45 @@ export function SecoesManager() {
                   Como aparecerá na Home
                 </span>
               </div>
+              {/* Painel de validação */}
+              <div
+                className={
+                  "rounded-xl border p-3 text-sm " +
+                  (hasErrors
+                    ? "border-red-300 bg-red-50 dark:bg-red-950/30"
+                    : issues.length > 0
+                      ? "border-amber-300 bg-amber-50 dark:bg-amber-950/30"
+                      : "border-emerald-300 bg-emerald-50 dark:bg-emerald-950/30")
+                }
+              >
+                {issues.length === 0 ? (
+                  <div className="flex items-center gap-2 text-emerald-700 dark:text-emerald-300">
+                    <CheckCircle2 className="h-4 w-4" />
+                    <span>Tudo certo — pronto para publicar.</span>
+                  </div>
+                ) : (
+                  <ul className="space-y-1.5">
+                    {issues.map((it, i) => (
+                      <li
+                        key={i}
+                        className={
+                          "flex items-start gap-2 " +
+                          (it.level === "error"
+                            ? "text-red-700 dark:text-red-300"
+                            : "text-amber-700 dark:text-amber-300")
+                        }
+                      >
+                        {it.level === "error" ? (
+                          <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                        ) : (
+                          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
+                        )}
+                        <span>{it.msg}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
               <div
                 ref={previewWrapRef}
                 className="overflow-hidden rounded-xl border border-border bg-white"
@@ -530,7 +569,12 @@ export function SecoesManager() {
 
           <DialogFooter>
             <Button variant="ghost" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button onClick={save} disabled={saving} className="bg-[#D67F43] hover:bg-[#B85A24]">
+            <Button
+              onClick={save}
+              disabled={saving || hasErrors}
+              title={hasErrors ? "Corrija os erros indicados na prévia antes de salvar." : undefined}
+              className="bg-[#D67F43] hover:bg-[#B85A24]"
+            >
               {saving ? "Salvando…" : "Salvar"}
             </Button>
           </DialogFooter>
