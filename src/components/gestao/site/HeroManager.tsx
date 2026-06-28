@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
-import { fetchHero, invalidateCmsCache, type SiteHero } from "@/lib/cms";
+import { invalidateCmsCache, type SiteHero } from "@/lib/cms";
 
 type Form = Omit<SiteHero, "id">;
 
@@ -34,17 +34,16 @@ export function HeroManager() {
 
   useEffect(() => {
     (async () => {
-      invalidateCmsCache("hero");
-      const h = await fetchHero();
-      if (h) {
-        const { id: _id, imagem_url, ...rest } = h;
-        // Guarda o path, não a URL pública, para conseguir salvar / remover.
-        const { data } = await supabase
-          .from("site_hero")
-          .select("imagem_url")
-          .eq("id", "singleton")
-          .maybeSingle();
-        setForm({ ...rest, imagem_url: data?.imagem_url ?? imagem_url });
+      // Lê direto do banco para receber o PATH cru (não a URL pública).
+      const { data, error } = await supabase
+        .from("site_hero")
+        .select("*")
+        .eq("id", "singleton")
+        .maybeSingle();
+      if (error) console.error(error);
+      if (data) {
+        const { id: _id, updated_at: _u, ...rest } = data as Record<string, unknown>;
+        setForm({ ...empty, ...(rest as Partial<Form>) });
       }
       setLoading(false);
     })();
