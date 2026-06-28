@@ -252,7 +252,7 @@ export function DashboardPage() {
                   <div className="text-xs text-gray-500">{a.servico?.nome ?? "Atendimento"} · {a.data.split("-").reverse().join("/")}</div>
                 </div>
                 <span className="rounded-full bg-[#FEF3E8] px-2 py-0.5 text-xs text-[#7A3B14]">
-                  {a.status}
+                  {a.status ? a.status.charAt(0).toUpperCase() + a.status.slice(1) : a.status}
                 </span>
               </li>
             ))}
