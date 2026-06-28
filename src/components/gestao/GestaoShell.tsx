@@ -13,10 +13,20 @@ import {
   Menu,
   Settings,
   Loader2,
+  Sun,
+  Moon,
+  Monitor,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useGestaoTheme } from "@/components/gestao/ThemeProvider";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 
 const LOGO = logoAsset.url;
@@ -82,8 +92,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
         onClick={onNavigate}
         className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
           active
-            ? "bg-[#FEF3E8] text-[#B85A24] font-medium border-r-2 border-[#D67F43]"
-            : "text-gray-600 hover:bg-[#FEF3E8] hover:text-[#D67F43]"
+            ? "bg-[#FEF3E8] text-[#B85A24] font-medium border-r-2 border-[#D67F43] dark:bg-brand/15 dark:text-brand dark:border-brand"
+            : "text-gray-600 hover:bg-[#FEF3E8] hover:text-[#D67F43] dark:text-muted-foreground dark:hover:bg-brand/10 dark:hover:text-brand"
         }`}
       >
         <Icon className="h-4 w-4" />
@@ -95,8 +105,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   return (
     <>
       <nav className="space-y-1">{MAIN.map(renderItem)}</nav>
-      <div className="my-4 border-t border-gray-200" />
-      <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400">
+      <div className="my-4 border-t border-gray-200 dark:border-border" />
+      <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
         Admin do site
       </p>
       <nav className="space-y-1">{SITE.map(renderItem)}</nav>
@@ -104,15 +114,46 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   );
 }
 
+function ThemeToggle() {
+  const { theme, setTheme, resolved } = useGestaoTheme();
+  const Icon = resolved === "dark" ? Moon : Sun;
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          aria-label="Alternar tema"
+          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
+        >
+          <Icon className="h-4 w-4" />
+          Tema {theme === "system" ? "(sistema)" : theme === "dark" ? "(escuro)" : "(claro)"}
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" side="top" className="w-44">
+        <DropdownMenuItem onClick={() => setTheme("light")}>
+          <Sun className="mr-2 h-4 w-4" /> Claro
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("dark")}>
+          <Moon className="mr-2 h-4 w-4" /> Escuro
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={() => setTheme("system")}>
+          <Monitor className="mr-2 h-4 w-4" /> Sistema
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
 function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
   const { user } = useAuth();
   return (
-    <div className="space-y-1 border-t border-gray-200 p-3">
+    <div className="space-y-1 border-t border-gray-200 p-3 dark:border-border">
+      <ThemeToggle />
       <a
         href="/"
         target="_blank"
         rel="noreferrer"
-        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
       >
         <ExternalLink className="h-4 w-4" />
         Ver site
@@ -120,13 +161,13 @@ function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
       <button
         type="button"
         onClick={onSignOut}
-        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900"
+        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
       >
         <LogOut className="h-4 w-4" />
         Sair
       </button>
       {user?.email && (
-        <p className="px-3 pt-2 text-[11px] text-gray-400 truncate">{user.email}</p>
+        <p className="px-3 pt-2 text-[11px] text-gray-400 truncate dark:text-muted-foreground">{user.email}</p>
       )}
     </div>
   );
@@ -159,10 +200,10 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
 
   return (
     <GestaoTitleContext.Provider value={ctxValue}>
-    <div className="flex min-h-screen bg-gray-50">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-background">
       {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex">
-        <div className="flex h-16 items-center border-b border-gray-200 px-4">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex dark:border-border dark:bg-sidebar">
+        <div className="flex h-16 items-center border-b border-gray-200 px-4 dark:border-border">
           <img src={LOGO} alt="Estação Aprender" className="h-10" />
         </div>
         <div className="flex-1 overflow-y-auto p-3">
@@ -179,7 +220,7 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
           </div>
         )}
 
-        <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
+        <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6 dark:border-border dark:bg-card">
           <div className="flex items-center gap-3">
             {/* Mobile menu */}
             <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -188,8 +229,8 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
                   <Menu className="h-5 w-5" />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="left" className="flex w-72 flex-col p-0">
-                <div className="flex h-16 items-center border-b border-gray-200 px-4">
+              <SheetContent side="left" className="flex w-72 flex-col p-0 dark:bg-sidebar">
+                <div className="flex h-16 items-center border-b border-gray-200 px-4 dark:border-border">
                   <img src={LOGO} alt="Estação Aprender" className="h-10" />
                 </div>
                 <div className="flex-1 overflow-y-auto p-3">
@@ -198,10 +239,10 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
                 <SidebarFooter onSignOut={handleSignOut} />
               </SheetContent>
             </Sheet>
-            <h1 className="text-lg font-semibold text-gray-900">{effectiveTitle}</h1>
+            <h1 className="text-lg font-semibold text-gray-900 dark:text-foreground">{effectiveTitle}</h1>
           </div>
           <div className="hidden items-center gap-3 md:flex">
-            <span className="text-sm text-gray-500">{user?.email}</span>
+            <span className="text-sm text-gray-500 dark:text-muted-foreground">{user?.email}</span>
             <Button variant="outline" size="sm" onClick={handleSignOut}>
               <LogOut className="mr-2 h-4 w-4" /> Sair
             </Button>
@@ -209,7 +250,7 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
         </header>
         <div className="relative p-6">
           {showLoading && (
-            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px] dark:bg-background/60">
               <Loader2 className="h-8 w-8 animate-spin text-[#D67F43]" />
             </div>
           )}
