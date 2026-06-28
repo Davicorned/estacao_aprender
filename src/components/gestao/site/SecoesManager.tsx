@@ -380,6 +380,44 @@ export function SecoesManager() {
     return issue.level === "error" ? errBorder : warnBorder;
   }
 
+  // Erros por aba (somente "error" — avisos não bloqueiam)
+  const tabErrors = {
+    conteudo:
+      (fieldIssues.eyebrow?.level === "error" ? 1 : 0) +
+      (fieldIssues.titulo?.level === "error" ? 1 : 0) +
+      (fieldIssues.descricao?.level === "error" ? 1 : 0),
+    midia: fieldIssues.imagem?.level === "error" ? 1 : 0,
+    botao:
+      (fieldIssues.cta_texto?.level === "error" ? 1 : 0) +
+      (fieldIssues.cta_link?.level === "error" ? 1 : 0),
+    cards:
+      (fieldIssues.itens?.level === "error" ? 1 : 0) +
+      Object.values(itemIssues).filter((i) => i?.level === "error").length,
+    aparencia: 0,
+  };
+
+  // Mini-mapa da Home: ordem real das seções fixas + dinâmicas.
+  // (Mesma ordem usada em src/routes/index.tsx)
+  const homeMap: { key: string; label: string; fixed: boolean; secaoId?: string; isCurrent?: boolean }[] = [
+    { key: "hero", label: "Banner principal", fixed: true },
+    { key: "when", label: "Quando procurar ajuda", fixed: true },
+    { key: "approach", label: "Nossa abordagem", fixed: true },
+    ...items.map((s) => ({
+      key: s.id,
+      label: s.titulo || s.eyebrow || "(sem título)",
+      fixed: false,
+      secaoId: s.id,
+      isCurrent: s.id === form.id,
+    })),
+    ...(open && !form.id
+      ? [{ key: "new", label: ghostTitulo || "Nova seção", fixed: false, isCurrent: true }]
+      : []),
+    { key: "team", label: "Nossa equipe", fixed: true },
+    { key: "testimonials", label: "Depoimentos", fixed: true },
+    { key: "contact", label: "Contato", fixed: true },
+    { key: "footer", label: "Rodapé", fixed: true },
+  ];
+
   return (
     <>
       <div className="mb-6 flex items-center justify-between">
