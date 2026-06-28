@@ -96,17 +96,20 @@ export function SecoesManager() {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const previewWrapRef = useRef<HTMLDivElement | null>(null);
   const [previewScale, setPreviewScale] = useState(0.45);
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [tab, setTab] = useState<"conteudo" | "midia" | "botao" | "cards" | "aparencia">("conteudo");
 
   useLayoutEffect(() => {
     if (!open) return;
+    const targetW = previewDevice === "desktop" ? 1280 : 390;
     function recompute() {
       const w = previewWrapRef.current?.clientWidth ?? 0;
-      if (w > 0) setPreviewScale(Math.min(1, w / 1280));
+      if (w > 0) setPreviewScale(Math.min(1, w / targetW));
     }
     recompute();
     window.addEventListener("resize", recompute);
     return () => window.removeEventListener("resize", recompute);
-  }, [open]);
+  }, [open, previewDevice]);
 
   const previewSecao: SiteSecao = {
     id: form.id ?? "preview",
