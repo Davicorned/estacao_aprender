@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
 import { CalendarCheck, FileText, Loader2, Search, UserPlus } from "lucide-react";
 import {
   Dialog,
@@ -424,15 +425,14 @@ export function AgendamentoFormDialog({
                     ))}
                   </div>
                 )}
-                <a
-                  href="/gestao/pacientes/novo"
-                  target="_blank"
-                  rel="noreferrer"
+                <Link
+                  to="/gestao/pacientes/novo"
+                  onClick={() => onOpenChange(false)}
                   className="inline-flex items-center text-xs text-[#B85A24] hover:underline"
                 >
                   <UserPlus className="mr-1 h-3 w-3" />
                   Cadastrar novo paciente
-                </a>
+                </Link>
               </div>
             )}
           </div>
