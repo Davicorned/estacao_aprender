@@ -65,6 +65,24 @@ const ICONES_SUGERIDOS = [
   "Users", "Calendar", "Smile", "Shield", "Sun", "Award",
 ];
 
+/** Lista somente os ERROS bloqueantes do formulário (avisos ficam de fora). */
+function computeBlockingErrors(form: FormState): string[] {
+  const errors: string[] = [];
+  if (!form.titulo.trim() && !form.eyebrow.trim()) {
+    errors.push("Informe um título ou uma etiqueta.");
+  }
+  if (form.tipo !== "grade-cards" && !form.imagem_url) {
+    errors.push("Este modelo exige uma imagem ao lado do texto.");
+  }
+  if (form.cta_texto.trim() && !form.cta_link.trim()) {
+    errors.push("Botão sem link: preencha o link ou remova o texto do botão.");
+  }
+  if (!form.cta_texto.trim() && form.cta_link.trim()) {
+    errors.push("Link do botão sem texto: preencha o texto ou remova o link.");
+  }
+  return errors;
+}
+
 export function SecoesManager() {
   const [items, setItems] = useState<SiteSecao[]>([]);
   const [loading, setLoading] = useState(true);
@@ -163,7 +181,14 @@ export function SecoesManager() {
   }
 
   async function save() {
-    if (!form.titulo.trim() && !form.eyebrow.trim()) return toast.error("Informe pelo menos um título");
+    // Guarda dura: revalida antes de qualquer escrita, mesmo se a UI deixar escapar.
+    const errors = computeBlockingErrors(form);
+    if (errors.length > 0) {
+      toast.error(errors[0], {
+        description: errors.length > 1 ? `+${errors.length - 1} outro(s) erro(s). Veja a prévia.` : undefined,
+      });
+      return;
+    }
     setSaving(true);
     const payload = {
       tipo: form.tipo,
