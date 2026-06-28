@@ -111,20 +111,33 @@ export function SecoesManager() {
     return () => window.removeEventListener("resize", recompute);
   }, [open, previewDevice]);
 
+  // Para a prévia: injeta valores-fantasma quando o campo está vazio,
+  // assim você sempre vê a forma do modelo, mesmo antes de preencher.
+  const ghostTitulo = form.titulo || "Título da sua seção aparece aqui";
+  const ghostEyebrow = form.eyebrow || (form.titulo ? "" : "Etiqueta");
+  const ghostDescricao = form.descricao
+    || "Descrição da seção aparece aqui — escreva alguns parágrafos para apresentar o conteúdo aos visitantes da Home.";
   const previewSecao: SiteSecao = {
     id: form.id ?? "preview",
     tipo: form.tipo,
-    eyebrow: form.eyebrow || null,
-    titulo: form.titulo || null,
-    descricao: form.descricao || null,
+    eyebrow: ghostEyebrow || null,
+    titulo: ghostTitulo,
+    descricao: ghostDescricao,
     descricao_extra: form.descricao_extra || null,
     imagem_url: publicImageUrl(form.imagem_url) ?? null,
-    cta_texto: form.cta_texto || null,
-    cta_link: form.cta_link || null,
+    cta_texto: form.cta_texto || (form.cta_link ? "Botão" : null),
+    cta_link: form.cta_link || (form.cta_texto ? "#" : null),
     bg_style: form.bg_style,
     order: 0,
     enabled: form.enabled,
-    itens: form.itens.map((it, idx) => ({
+    itens: (form.tipo === "grade-cards" && form.itens.length === 0
+      ? [
+          { titulo: "Card de exemplo 1", descricao: "Descrição curta do card.", icone: "Sparkles" },
+          { titulo: "Card de exemplo 2", descricao: "Descrição curta do card.", icone: "Heart" },
+          { titulo: "Card de exemplo 3", descricao: "Descrição curta do card.", icone: "Star" },
+        ]
+      : form.itens
+    ).map((it, idx) => ({
       id: it.id ?? `prev-${idx}`,
       secao_id: form.id ?? "preview",
       titulo: it.titulo || "Item",
