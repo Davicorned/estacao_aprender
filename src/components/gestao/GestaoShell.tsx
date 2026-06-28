@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
-import { Link, useLocation, useNavigate } from "@tanstack/react-router";
+import { Link, useLocation, useNavigate, useRouterState } from "@tanstack/react-router";
 import {
   LayoutDashboard,
   Calendar,
@@ -12,6 +12,7 @@ import {
   LogOut,
   Menu,
   Settings,
+  Loader2,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -139,6 +140,17 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
   const [override, setOverride] = useState<string | null>(null);
   const ctxValue = useMemo(() => ({ setTitle: setOverride }), []);
   const effectiveTitle = title ?? override ?? deriveTitle(location.pathname);
+  const isPending = useRouterState({ select: (s) => s.status === "pending" });
+  const [showLoading, setShowLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isPending) {
+      setShowLoading(false);
+      return;
+    }
+    const timer = setTimeout(() => setShowLoading(true), 150);
+    return () => clearTimeout(timer);
+  }, [isPending]);
 
   async function handleSignOut() {
     await signOut();
@@ -159,7 +171,14 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
         <SidebarFooter onSignOut={handleSignOut} />
       </aside>
 
-      <main className="flex-1 overflow-x-hidden">
+      <main className="relative flex-1 overflow-x-hidden">
+        {/* Loading bar */}
+        {isPending && (
+          <div className="fixed top-0 left-0 right-0 z-50 h-1 overflow-hidden bg-[#D67F43]/20 md:left-64">
+            <div className="h-full w-1/2 animate-loading-bar bg-[#D67F43]" />
+          </div>
+        )}
+
         <header className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
           <div className="flex items-center gap-3">
             {/* Mobile menu */}
@@ -188,7 +207,14 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
             </Button>
           </div>
         </header>
-        <div className="p-6">{children}</div>
+        <div className="relative p-6">
+          {showLoading && (
+            <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/60 backdrop-blur-[1px]">
+              <Loader2 className="h-8 w-8 animate-spin text-[#D67F43]" />
+            </div>
+          )}
+          {children}
+        </div>
       </main>
     </div>
     </GestaoTitleContext.Provider>
