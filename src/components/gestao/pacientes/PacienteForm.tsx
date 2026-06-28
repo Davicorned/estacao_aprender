@@ -717,7 +717,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
               </span>
               <span>{Math.round(progress)}%</span>
             </div>
-            <Progress value={progress} className="h-1.5" />
+            <Progress value={progress} className="h-1.5" indicatorClassName="bg-brand" />
             <div className="mt-4 hidden gap-2 sm:flex">
               {wizardSteps.map((s, i) => {
                 const done = i < step;
