@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2 } from "lucide-react";
-import { GestaoShell } from "@/components/gestao/GestaoShell";
+import { useGestaoTitle } from "@/components/gestao/GestaoShell";
 import { PacienteForm } from "@/components/gestao/pacientes/PacienteForm";
 import { Button } from "@/components/ui/button";
 import { getPaciente } from "@/lib/pacientes";
@@ -16,10 +16,10 @@ function PacienteFichaPage() {
     queryKey: ["paciente", id],
     queryFn: () => getPaciente(id),
   });
+  useGestaoTitle(data?.nome ?? null);
 
   return (
-    <GestaoShell title={data?.nome ?? "Paciente"}>
-      <div className="space-y-4">
+    <div className="space-y-4">
         <div className="flex items-center gap-3">
           <Button asChild variant="ghost" size="sm">
             <Link to="/gestao/pacientes">
@@ -47,7 +47,6 @@ function PacienteFichaPage() {
           </div>
         )}
         {data && <PacienteForm paciente={data} />}
-      </div>
-    </GestaoShell>
+    </div>
   );
 }
