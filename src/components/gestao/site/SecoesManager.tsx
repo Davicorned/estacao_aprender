@@ -260,43 +260,82 @@ export function SecoesManager() {
 
   const tipoLabel = (t: SecaoTipo) => TIPOS.find((x) => x.value === t)?.label ?? t;
 
-  // ---- Validação para a prévia ----
+  // ---- Validação (resumo + por campo) ----
   type Issue = { level: "error" | "warning"; msg: string };
-  function validate(): Issue[] {
-    const out: Issue[] = [];
-    if (!form.titulo.trim() && !form.eyebrow.trim()) {
-      out.push({ level: "error", msg: "Informe um título ou uma etiqueta — a seção precisa de pelo menos um deles." });
-    }
-    if (!form.titulo.trim()) {
-      out.push({ level: "warning", msg: "Sem título principal: a seção fica apenas com a etiqueta laranja." });
-    }
-    if (!form.descricao.trim()) {
-      out.push({ level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." });
-    }
-    if (form.tipo !== "grade-cards" && !form.imagem_url) {
-      out.push({ level: "error", msg: "Este modelo exige uma imagem ao lado do texto." });
-    }
-    if (form.tipo === "grade-cards" && !form.imagem_url && form.itens.length === 0) {
-      out.push({ level: "warning", msg: "Sem imagem e sem cards — adicione pelo menos um para a seção ter conteúdo." });
-    }
-    if (form.cta_texto.trim() && !form.cta_link.trim()) {
-      out.push({ level: "error", msg: "Botão sem link: preencha o link ou remova o texto do botão." });
-    }
-    if (!form.cta_texto.trim() && form.cta_link.trim()) {
-      out.push({ level: "error", msg: "Link do botão sem texto: preencha o texto ou remova o link." });
-    }
-    if (form.tipo === "grade-cards") {
-      form.itens.forEach((it, i) => {
-        if (!it.titulo.trim()) out.push({ level: "warning", msg: `Card ${i + 1} sem título.` });
-      });
-    }
-    if (!form.enabled) {
-      out.push({ level: "warning", msg: "Seção marcada como oculta — não aparecerá na Home até ser reativada." });
-    }
-    return out;
+  type FieldKey =
+    | "imagem" | "eyebrow" | "titulo" | "descricao"
+    | "cta_texto" | "cta_link" | "itens";
+  const fieldIssues: Record<FieldKey, Issue | null> = {
+    imagem: null, eyebrow: null, titulo: null, descricao: null,
+    cta_texto: null, cta_link: null, itens: null,
+  };
+  const itemIssues: Record<number, Issue | null> = {};
+  const summary: Issue[] = [];
+
+  const tituloVazio = !form.titulo.trim();
+  const eyebrowVazio = !form.eyebrow.trim();
+  if (tituloVazio && eyebrowVazio) {
+    const msg = "Informe um título ou uma etiqueta.";
+    fieldIssues.titulo = { level: "error", msg };
+    fieldIssues.eyebrow = { level: "error", msg };
+    summary.push({ level: "error", msg: "Informe um título ou uma etiqueta — a seção precisa de pelo menos um deles." });
+  } else if (tituloVazio) {
+    fieldIssues.titulo = { level: "warning", msg: "Sem título: a seção fica apenas com a etiqueta laranja." };
+    summary.push({ level: "warning", msg: "Sem título principal: a seção fica apenas com a etiqueta laranja." });
   }
-  const issues = validate();
+  if (!form.descricao.trim()) {
+    fieldIssues.descricao = { level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." };
+    summary.push({ level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." });
+  }
+  if (form.tipo !== "grade-cards" && !form.imagem_url) {
+    fieldIssues.imagem = { level: "error", msg: "Imagem obrigatória neste modelo." };
+    summary.push({ level: "error", msg: "Este modelo exige uma imagem ao lado do texto." });
+  }
+  if (form.tipo === "grade-cards" && !form.imagem_url && form.itens.length === 0) {
+    fieldIssues.itens = { level: "warning", msg: "Adicione uma imagem ou pelo menos um card." };
+    summary.push({ level: "warning", msg: "Sem imagem e sem cards — adicione pelo menos um para a seção ter conteúdo." });
+  }
+  if (form.cta_texto.trim() && !form.cta_link.trim()) {
+    fieldIssues.cta_link = { level: "error", msg: "Preencha o link ou remova o texto do botão." };
+    summary.push({ level: "error", msg: "Botão sem link: preencha o link ou remova o texto do botão." });
+  }
+  if (!form.cta_texto.trim() && form.cta_link.trim()) {
+    fieldIssues.cta_texto = { level: "error", msg: "Preencha o texto ou remova o link do botão." };
+    summary.push({ level: "error", msg: "Link do botão sem texto: preencha o texto ou remova o link." });
+  }
+  if (form.tipo === "grade-cards") {
+    form.itens.forEach((it, i) => {
+      if (!it.titulo.trim()) {
+        itemIssues[i] = { level: "warning", msg: "Card sem título." };
+        summary.push({ level: "warning", msg: `Card ${i + 1} sem título.` });
+      }
+    });
+  }
+  if (!form.enabled) {
+    summary.push({ level: "warning", msg: "Seção marcada como oculta — não aparecerá na Home até ser reativada." });
+  }
+  const issues = summary;
   const hasErrors = issues.some((i) => i.level === "error");
+
+  function FieldMsg({ issue }: { issue: Issue | null }) {
+    if (!issue) return null;
+    const cls = issue.level === "error"
+      ? "text-red-600 dark:text-red-400"
+      : "text-amber-600 dark:text-amber-400";
+    const Icon = issue.level === "error" ? AlertCircle : AlertTriangle;
+    return (
+      <p className={`mt-1 flex items-start gap-1.5 text-xs ${cls}`}>
+        <Icon className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+        <span>{issue.msg}</span>
+      </p>
+    );
+  }
+  const errBorder = "border-red-400 focus-visible:ring-red-400";
+  const warnBorder = "border-amber-400 focus-visible:ring-amber-400";
+  function fieldCls(issue: Issue | null) {
+    if (!issue) return "";
+    return issue.level === "error" ? errBorder : warnBorder;
+  }
 
   return (
     <>
@@ -391,7 +430,7 @@ export function SecoesManager() {
             <div className="space-y-2">
               <Label>Imagem da seção</Label>
               <div className="flex items-center gap-4">
-                <div className="h-24 w-32 overflow-hidden rounded-lg bg-[#FEF3E8]">
+                <div className={`h-24 w-32 overflow-hidden rounded-lg bg-[#FEF3E8] ${fieldIssues.imagem ? (fieldIssues.imagem.level === "error" ? "ring-2 ring-red-400" : "ring-2 ring-amber-400") : ""}`}>
                   {form.imagem_url ? (
                     <img src={publicImageUrl(form.imagem_url) ?? ""} alt="" className="h-full w-full object-cover" />
                   ) : (
@@ -412,12 +451,14 @@ export function SecoesManager() {
                   )}
                 </div>
               </div>
+              <FieldMsg issue={fieldIssues.imagem} />
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Etiqueta (laranja, em cima do título)</Label>
-                <Input value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} placeholder="Nossa abordagem" />
+                <Input className={fieldCls(fieldIssues.eyebrow)} value={form.eyebrow} onChange={(e) => setForm({ ...form, eyebrow: e.target.value })} placeholder="Nossa abordagem" />
+                <FieldMsg issue={fieldIssues.eyebrow} />
               </div>
               <div className="space-y-2">
                 <Label>Fundo</Label>
@@ -433,11 +474,13 @@ export function SecoesManager() {
 
             <div className="space-y-2">
               <Label>Título</Label>
-              <Input value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+              <Input className={fieldCls(fieldIssues.titulo)} value={form.titulo} onChange={(e) => setForm({ ...form, titulo: e.target.value })} />
+              <FieldMsg issue={fieldIssues.titulo} />
             </div>
             <div className="space-y-2">
               <Label>Descrição</Label>
-              <Textarea rows={4} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+              <Textarea rows={4} className={fieldCls(fieldIssues.descricao)} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
+              <FieldMsg issue={fieldIssues.descricao} />
             </div>
             <div className="space-y-2">
               <Label>Parágrafo extra (opcional)</Label>
@@ -447,11 +490,13 @@ export function SecoesManager() {
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Botão — texto (opcional)</Label>
-                <Input value={form.cta_texto} onChange={(e) => setForm({ ...form, cta_texto: e.target.value })} />
+                <Input className={fieldCls(fieldIssues.cta_texto)} value={form.cta_texto} onChange={(e) => setForm({ ...form, cta_texto: e.target.value })} />
+                <FieldMsg issue={fieldIssues.cta_texto} />
               </div>
               <div className="space-y-2">
                 <Label>Botão — link</Label>
-                <Input value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
+                <Input className={fieldCls(fieldIssues.cta_link)} value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
+                <FieldMsg issue={fieldIssues.cta_link} />
               </div>
             </div>
 
@@ -464,13 +509,14 @@ export function SecoesManager() {
                   </div>
                   <Button size="sm" variant="outline" onClick={addItem}><Plus className="mr-1 h-4 w-4" /> Item</Button>
                 </div>
+                <FieldMsg issue={fieldIssues.itens} />
                 {form.itens.length === 0 ? (
                   <p className="text-xs text-muted-foreground">Nenhum item ainda.</p>
                 ) : (
                   form.itens.map((it, idx) => (
                     <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
-                        <Input value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título do card" />
+                        <Input className={fieldCls(itemIssues[idx] ?? null)} value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título do card" />
                         <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
                           <SelectTrigger><SelectValue /></SelectTrigger>
                           <SelectContent>
@@ -478,6 +524,7 @@ export function SecoesManager() {
                           </SelectContent>
                         </Select>
                       </div>
+                      <FieldMsg issue={itemIssues[idx] ?? null} />
                       <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
