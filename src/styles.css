@@ -196,3 +196,71 @@
 
 .dark .hover\:bg-gray-50:hover,
 .dark .hover\:bg-gray-100:hover { background-color: var(--color-accent) !important; }
+
+/*
+ * Warm tints (amber/yellow/orange/cream backgrounds used on table headers,
+ * highlighted rows, info cards) read as glaring cream patches in dark mode.
+ * Remap them to the semantic surface tokens so headers and zebra rows blend
+ * with the rest of the panel.
+ */
+.dark .bg-amber-50,
+.dark .bg-yellow-50,
+.dark .bg-orange-50,
+.dark .bg-amber-100,
+.dark .bg-yellow-100,
+.dark .bg-orange-100 { background-color: var(--color-muted) !important; }
+
+.dark .hover\:bg-amber-50:hover,
+.dark .hover\:bg-amber-50\/40:hover,
+.dark .hover\:bg-amber-100:hover,
+.dark .hover\:bg-yellow-50:hover,
+.dark .hover\:bg-orange-50:hover { background-color: var(--color-accent) !important; }
+
+.dark [class*="bg-amber-50\/"],
+.dark [class*="bg-yellow-50\/"],
+.dark [class*="bg-orange-50\/"] { background-color: var(--color-muted) !important; }
+
+.dark .text-amber-900,
+.dark .text-amber-800,
+.dark .text-amber-700,
+.dark .text-yellow-900,
+.dark .text-orange-900 { color: var(--color-foreground) !important; }
+
+.dark .text-amber-600,
+.dark .text-amber-500,
+.dark .text-yellow-600,
+.dark .text-orange-600 { color: var(--brand) !important; }
+
+.dark .border-amber-50,
+.dark .border-amber-100,
+.dark .border-amber-200,
+.dark .border-amber-300,
+.dark .border-yellow-100,
+.dark .border-yellow-200,
+.dark .border-orange-100,
+.dark .border-orange-200 { border-color: var(--color-border) !important; }
+
+/*
+ * Outlines & focus rings: a few buttons/inputs use raw white/gray rings that
+ * appear as harsh light halos. Force them through the semantic ring token.
+ */
+.dark .ring-white,
+.dark .ring-gray-200,
+.dark .ring-gray-300 { --tw-ring-color: var(--color-ring) !important; }
+
+/*
+ * Disabled state contrast — default 50% opacity on dark backgrounds drops
+ * below AA. Raise to 65% and use muted-foreground for the label.
+ */
+.dark [disabled],
+.dark .disabled\:opacity-50:disabled { opacity: 0.65 !important; }
+
+/*
+ * Link contrast: anchors using text-blue-600/700 fall under AA on the dark
+ * warm-gray background. Lift to a brighter blue.
+ */
+.dark .text-blue-600,
+.dark .text-blue-700,
+.dark .text-blue-800 { color: oklch(0.78 0.13 245) !important; }
+.dark .hover\:text-blue-700:hover,
+.dark .hover\:text-blue-800:hover { color: oklch(0.85 0.12 245) !important; }
