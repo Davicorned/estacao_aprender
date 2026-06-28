@@ -1,61 +1,57 @@
-## Simplificar ações do dialog "Detalhes do Agendamento"
+## Objetivo
+Adicionar um botão de alternância de tema (claro/escuro) no painel de gestão, com paleta de modo escuro confortável para usuários sensíveis a brilho.
 
-Reduzir as 6 ações soltas em **2 ações principais (positiva / negativa)** mais **Remarcar** acima, e mover **Editar / Excluir** para uma linha secundária discreta no rodapé.
+## Escopo
+Aplicável a todas as rotas `/gestao/*` (Dashboard, Agenda, Pacientes, Contratos, Financeiro, Configurações, etc.). O site público continua em modo claro — o toggle é exclusivo do painel.
 
-### Nova hierarquia visual
+## Implementação
+
+### 1. ThemeProvider
+Criar `src/components/gestao/ThemeProvider.tsx`:
+- Contexto `theme` com valores `light` | `dark` | `system`.
+- Persiste em `localStorage` (`gestao-theme`).
+- Aplica classe `.dark` em `<html>`.
+- Respeita `prefers-color-scheme` quando `system`.
+- Evita flash inicial via inline script lendo o localStorage antes do render (em `__root.tsx`).
+
+### 2. Botão no GestaoShell
+Em `src/components/gestao/GestaoShell.tsx`:
+- Adicionar `ThemeToggle` no rodapé do menu lateral, próximo de "Ver site" / "Sair".
+- Ícones `Sun` / `Moon` (lucide), com `DropdownMenu` para escolher Claro / Escuro / Sistema.
+- `aria-label="Alternar tema"`.
+
+### 3. Paleta de modo escuro (suave, não puro)
+Já existe `.dark` em `src/styles.css` com tons azulados frios. Vou ajustar para **cinza-quente, baixo contraste, confortável** — evitando preto puro e branco puro que cansam a vista:
 
 ```text
-┌────────────────────────────────────────────┐
-│  [ Detalhes do Agendamento ]            ✕  │
-│  (dados do agendamento — sem alterações)   │
-│                                            │
-│  ┌──────────────────┬──────────────────┐   │ ← AÇÃO PRIMÁRIA
-│  │  ✓ Atendido      │  ✕ Faltou        │   │   (positiva / negativa,
-│  └──────────────────┴──────────────────┘   │    contextual ao status)
-│                                            │
-│  ┌────────────────────────────────────┐    │ ← AÇÃO SECUNDÁRIA
-│  │  🗓  Remarcar                      │    │   (outline largura total)
-│  └────────────────────────────────────┘    │
-│                                            │
-│  ─────────────────────────────────────     │
-│  Editar      Excluir              Fechar   │ ← rodapé minimalista
-└────────────────────────────────────────────┘
+--background:        oklch(0.22 0.005 260)   /* cinza-grafite suave */
+--foreground:        oklch(0.92 0.005 260)   /* off-white, não branco puro */
+--card:              oklch(0.26 0.006 260)   /* leve elevação */
+--card-foreground:   oklch(0.92 0.005 260)
+--popover:           oklch(0.26 0.006 260)
+--muted:             oklch(0.30 0.006 260)
+--muted-foreground:  oklch(0.70 0.010 260)
+--secondary:         oklch(0.30 0.006 260)
+--accent:            oklch(0.32 0.008 260)
+--border:            oklch(1 0 0 / 8%)
+--input:             oklch(1 0 0 / 12%)
+--sidebar:           oklch(0.20 0.005 260)
+--sidebar-accent:    oklch(0.28 0.007 260)
+--brand:             oklch(0.72 0.13 53)     /* laranja levemente mais claro p/ contraste AA */
+--destructive:       oklch(0.65 0.18 22)
+--ring:              oklch(0.55 0.02 260)
 ```
 
-### Comportamento contextual das 2 ações principais
+Princípios: luminosidade do `background` ~0.22 (não 0.13), foreground ~0.92 (não 0.98), reduzindo contraste extremo. Tons levemente quentes (chroma baixo no eixo azul) para reduzir fadiga visual.
 
-A dupla muda conforme o status atual — sempre uma positiva (verde/laranja) e uma negativa (vermelha clara):
+### 4. Ajustes pontuais
+- Auditar cores hardcoded (`bg-white`, `text-black`, `text-gray-*`) em componentes-chave do gestão (Dashboard cards, Agenda, FinanceiroPage, headers de seção) e trocar por tokens semânticos (`bg-card`, `text-foreground`, `text-muted-foreground`).
+- Sombras: aumentar opacidade levemente em dark via classe condicional onde necessário.
 
-| Status atual         | Ação positiva (esquerda)   | Ação negativa (direita)  |
-| -------------------- | -------------------------- | ------------------------ |
-| `agendado`           | Confirmar                  | Cancelar                 |
-| `confirmado`         | Marcar como atendido       | Paciente faltou          |
-| `em_atendimento`     | Finalizar atendimento      | Paciente faltou          |
-| `atendido`           | — (oculta dupla)           | —                        |
-| `cancelado` / `faltou` | — (oculta dupla)         | —                        |
+### 5. Escopo do toggle
+- Só ativa `.dark` enquanto o usuário estiver em rotas `/gestao/*`. Ao navegar para o site público, removemos a classe automaticamente (efeito no `GestaoShell` mount/unmount, com cleanup).
 
-O fluxo "Iniciar atendimento" deixa de existir como botão dedicado — vira parte do mesmo botão "Marcar como atendido" (transição direta `confirmado → atendido`), que é como a clínica realmente trata no fim do dia. Se quiser preservar o passo intermediário, posso manter "Iniciar atendimento" como ação positiva quando o status for `confirmado` em vez de "Atendido" — me diga na implementação.
-
-### Remarcar
-
-Botão único de largura total abaixo da dupla, com ícone de calendário. Reaproveita o handler `onEdit` que já abre o `AgendamentoFormDialog` (lá dentro o usuário muda data/hora).
-
-### Rodapé (Editar / Excluir / Fechar)
-
-- **Editar** — `variant="ghost"`, abre o mesmo dialog de edição (mesmo `onEdit`). Útil para corrigir profissional, serviço, observações sem ser uma "remarcação".
-- **Excluir** — `variant="ghost"` em vermelho discreto, mantém o `AlertDialog` de confirmação.
-- **Fechar** — `variant="outline"` à direita.
-
-Layout: `flex justify-between` — esquerda agrupa Editar + Excluir; direita fica Fechar.
-
-### Detalhes técnicos
-
-Arquivo único: `src/components/gestao/agenda/AgendamentoDetalhesDialog.tsx`.
-
-- Substituir o grid `grid-cols-2 gap-2` (linhas 158–187) pelo novo bloco com 2 botões primários + 1 secundário, derivados de um helper `acoesPorStatus(status)` que retorna `{ positiva?, negativa? }`.
-- Botão positivo: `bg-[#B85A24] text-white hover:bg-[#a04d1e]` (laranja da marca, já usado no app).
-- Botão negativo: `variant="outline"` + `text-red-600 border-red-200 hover:bg-red-50`.
-- Botão Remarcar: `variant="outline"` largura total, ícone `CalendarClock` de `lucide-react`.
-- Reescrever o `DialogFooter` para conter Editar (ghost) + Excluir (ghost vermelho) à esquerda e Fechar à direita.
-- Manter intactos: `AlertDialog` de cancelamento (com motivo), `AlertDialog` de exclusão, `AlertDialog` pós-finalização, e toda a lógica de `mudarStatus` / `handleDelete`.
-- Nenhuma mudança em `src/lib/agendamentos.ts`, nenhuma migração SQL.
+## Verificação
+- Capturar screenshots via Playwright em Dashboard, Agenda, Pacientes (lista), Financeiro, Configurações nos dois temas.
+- Conferir contraste mínimo AA em texto sobre cards.
+- Garantir que o site público (`/`) permaneça claro independente da escolha.
