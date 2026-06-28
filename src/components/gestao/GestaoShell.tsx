@@ -149,7 +149,7 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
     <GestaoTitleContext.Provider value={ctxValue}>
     <div className="flex min-h-screen bg-gray-50">
       {/* Desktop sidebar */}
-      <aside className="hidden w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex">
+      <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex">
         <div className="flex h-16 items-center border-b border-gray-200 px-4">
           <img src={LOGO} alt="Estação Aprender" className="h-10" />
         </div>
