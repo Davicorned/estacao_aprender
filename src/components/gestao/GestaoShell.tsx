@@ -203,7 +203,7 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
     <div className="flex min-h-screen bg-gray-50 dark:bg-background">
       {/* Desktop sidebar */}
       <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-r border-gray-200 bg-white md:flex dark:border-border dark:bg-sidebar">
-        <div className="flex h-16 items-center border-b border-gray-200 px-4 dark:border-border">
+        <div className="flex h-16 items-center justify-center border-b border-gray-200 px-4 dark:border-border">
           <img src={LOGO} alt="Estação Aprender" className="h-10" />
         </div>
         <div className="flex-1 overflow-y-auto p-3">
@@ -230,7 +230,7 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
                 </Button>
               </SheetTrigger>
               <SheetContent side="left" className="flex w-72 flex-col p-0 dark:bg-sidebar">
-                <div className="flex h-16 items-center border-b border-gray-200 px-4 dark:border-border">
+                <div className="flex h-16 items-center justify-center border-b border-gray-200 px-4 dark:border-border">
                   <img src={LOGO} alt="Estação Aprender" className="h-10" />
                 </div>
                 <div className="flex-1 overflow-y-auto p-3">
