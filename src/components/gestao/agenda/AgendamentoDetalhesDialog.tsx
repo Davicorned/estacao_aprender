@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { toast } from "sonner";
+import { CalendarClock, Check, Pencil, Trash2, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -91,6 +92,36 @@ export function AgendamentoDetalhesDialog({
 
   const { paciente, profissional, servico, status, data, hora_inicio, hora_fim, tipo } = agendamento;
 
+  type AcaoDupla = {
+    positiva?: { label: string; onClick: () => void };
+    negativa?: { label: string; onClick: () => void };
+  };
+
+  const acoes: AcaoDupla = (() => {
+    if (status === "agendado") {
+      return {
+        positiva: { label: "Confirmar", onClick: () => mudarStatus("confirmado") },
+        negativa: { label: "Cancelar", onClick: () => setCancelOpen(true) },
+      };
+    }
+    if (status === "confirmado") {
+      return {
+        positiva: { label: "Marcar como atendido", onClick: () => mudarStatus("atendido") },
+        negativa: { label: "Paciente faltou", onClick: () => mudarStatus("faltou") },
+      };
+    }
+    if (status === "em_atendimento") {
+      return {
+        positiva: { label: "Finalizar atendimento", onClick: () => mudarStatus("atendido") },
+        negativa: { label: "Paciente faltou", onClick: () => mudarStatus("faltou") },
+      };
+    }
+    return {};
+  })();
+
+  const temAcoes = !!(acoes.positiva || acoes.negativa);
+  const podeRemarcar = status !== "atendido" && status !== "cancelado";
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-md">
@@ -155,47 +186,70 @@ export function AgendamentoDetalhesDialog({
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 pt-2">
-          {status === "agendado" && (
-            <Button size="sm" variant="outline" disabled={busy} onClick={() => mudarStatus("confirmado")}>
-              Confirmar
-            </Button>
-          )}
-          {(status === "agendado" || status === "confirmado") && (
-            <Button size="sm" variant="outline" disabled={busy} onClick={() => mudarStatus("em_atendimento")}>
-              Iniciar atendimento
-            </Button>
-          )}
-          {status === "em_atendimento" && (
-            <Button size="sm" variant="outline" disabled={busy} onClick={() => mudarStatus("atendido")}>
-              Finalizar
-            </Button>
-          )}
-          {status !== "atendido" && status !== "cancelado" && (
-            <Button size="sm" variant="outline" disabled={busy} onClick={() => mudarStatus("faltou")}>
-              Paciente faltou
-            </Button>
-          )}
-          {status !== "cancelado" && (
-            <Button size="sm" variant="outline" disabled={busy} onClick={() => setCancelOpen(true)}>
-              Cancelar
-            </Button>
-          )}
-          <Button size="sm" variant="outline" disabled={busy} onClick={() => onEdit(agendamento)}>
-            Editar / Remarcar
-          </Button>
-        </div>
+        {temAcoes && (
+          <div className="grid grid-cols-2 gap-2 pt-2">
+            {acoes.positiva && (
+              <Button
+                disabled={busy}
+                onClick={acoes.positiva.onClick}
+                className="bg-[#B85A24] text-white hover:bg-[#a04d1e]"
+              >
+                <Check className="mr-1.5 h-4 w-4" />
+                {acoes.positiva.label}
+              </Button>
+            )}
+            {acoes.negativa && (
+              <Button
+                variant="outline"
+                disabled={busy}
+                onClick={acoes.negativa.onClick}
+                className="border-red-200 text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <X className="mr-1.5 h-4 w-4" />
+                {acoes.negativa.label}
+              </Button>
+            )}
+          </div>
+        )}
 
-        <DialogFooter className="flex-row justify-between sm:justify-between">
+        {podeRemarcar && (
           <Button
-            variant="ghost"
-            className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            variant="outline"
             disabled={busy}
-            onClick={() => setDeleteOpen(true)}
+            onClick={() => onEdit(agendamento)}
+            className="w-full"
           >
-            Excluir
+            <CalendarClock className="mr-1.5 h-4 w-4" />
+            Remarcar
           </Button>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+        )}
+
+        <DialogFooter className="mt-2 flex-row items-center justify-between border-t pt-3 sm:justify-between">
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => onEdit(agendamento)}
+              className="text-gray-600 hover:text-gray-900"
+            >
+              <Pencil className="mr-1.5 h-3.5 w-3.5" />
+              Editar
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              disabled={busy}
+              onClick={() => setDeleteOpen(true)}
+              className="text-red-600 hover:bg-red-50 hover:text-red-700"
+            >
+              <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+              Excluir
+            </Button>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
+            Fechar
+          </Button>
         </DialogFooter>
 
         {/* Cancel motivo */}

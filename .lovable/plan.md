@@ -1,50 +1,61 @@
-# Última sessão e Próx. agendamento na lista de Pacientes
+## Simplificar ações do dialog "Detalhes do Agendamento"
 
-## Diagnóstico
+Reduzir as 6 ações soltas em **2 ações principais (positiva / negativa)** mais **Remarcar** acima, e mover **Editar / Excluir** para uma linha secundária discreta no rodapé.
 
-Hoje as duas colunas mostram sempre `—` porque estão hardcoded em `src/routes/gestao.pacientes.index.tsx` (linhas 260-261) e no card mobile (linha 301). Não há consulta a `agendamentos`.
+### Nova hierarquia visual
 
-## O que vou implementar
-
-### 1. Novo serverFn `getPacientesAgendamentoStats`
-Em `src/lib/pacientes.ts` (ou novo `pacientes.functions.ts`), recebe `pacienteIds: string[]` e retorna `Record<id, { ultima_sessao: string|null, proximo_agendamento: string|null }>`.
-
-Lógica (1 query cada, agregada por paciente):
-- **ultima_sessao**: maior `data + hora_inicio` em `agendamentos` onde `paciente_id IN (...)` e `status = 'atendido'` e `data <= hoje`.
-- **proximo_agendamento**: menor `data + hora_inicio` em `agendamentos` onde `paciente_id IN (...)`, `status != 'cancelado'`, e `(data, hora_inicio) >= agora`.
-
-Implementação simples no client: dois `.select("paciente_id, data, hora_inicio").in("paciente_id", ids)` com os filtros acima, ordenados, depois reduzidos em JS para pegar o primeiro/último por paciente. Evita N+1 — sempre 2 queries por página (20 pacientes).
-
-### 2. Hook na página
-Em `gestao.pacientes.index.tsx`, depois do `useQuery` de pacientes:
-
-```ts
-const ids = pacientes.map(p => p.id);
-const { data: stats } = useQuery({
-  queryKey: ["pacientes-stats", ids],
-  queryFn: () => getPacientesAgendamentoStats(ids),
-  enabled: ids.length > 0,
-});
+```text
+┌────────────────────────────────────────────┐
+│  [ Detalhes do Agendamento ]            ✕  │
+│  (dados do agendamento — sem alterações)   │
+│                                            │
+│  ┌──────────────────┬──────────────────┐   │ ← AÇÃO PRIMÁRIA
+│  │  ✓ Atendido      │  ✕ Faltou        │   │   (positiva / negativa,
+│  └──────────────────┴──────────────────┘   │    contextual ao status)
+│                                            │
+│  ┌────────────────────────────────────┐    │ ← AÇÃO SECUNDÁRIA
+│  │  🗓  Remarcar                      │    │   (outline largura total)
+│  └────────────────────────────────────┘    │
+│                                            │
+│  ─────────────────────────────────────     │
+│  Editar      Excluir              Fechar   │ ← rodapé minimalista
+└────────────────────────────────────────────┘
 ```
 
-### 3. Renderização
-Substituir os `—` por uma função `formatRelativo(date)`:
-- hoje → "Hoje"
-- ontem / amanhã → "Ontem" / "Amanhã"
-- passado: "há N dias", "há N semanas", "há N meses"
-- futuro: "em N dias", "em N semanas", "em N meses"
-- vazio → `—`
+### Comportamento contextual das 2 ações principais
 
-Aplicar tanto na `PacienteRow` (desktop) quanto no `PacienteCard` (mobile, trocando "Último agendamento: —" por duas linhas: última/próxima).
+A dupla muda conforme o status atual — sempre uma positiva (verde/laranja) e uma negativa (vermelha clara):
 
-## Detalhes técnicos
+| Status atual         | Ação positiva (esquerda)   | Ação negativa (direita)  |
+| -------------------- | -------------------------- | ------------------------ |
+| `agendado`           | Confirmar                  | Cancelar                 |
+| `confirmado`         | Marcar como atendido       | Paciente faltou          |
+| `em_atendimento`     | Finalizar atendimento      | Paciente faltou          |
+| `atendido`           | — (oculta dupla)           | —                        |
+| `cancelado` / `faltou` | — (oculta dupla)         | —                        |
 
-- Status usado: `'atendido'` (é o nome real no enum `AgendamentoStatus`, não "realizado").
-- "Próximo" inclui `agendado`, `confirmado`, `em_atendimento`, `atendido`, `faltou` — exclui apenas `cancelado`, como você pediu.
-- Tudo via `supabase` browser client (RLS já garante o escopo da clínica).
-- Sem alterações de schema ou migrations.
+O fluxo "Iniciar atendimento" deixa de existir como botão dedicado — vira parte do mesmo botão "Marcar como atendido" (transição direta `confirmado → atendido`), que é como a clínica realmente trata no fim do dia. Se quiser preservar o passo intermediário, posso manter "Iniciar atendimento" como ação positiva quando o status for `confirmado` em vez de "Atendido" — me diga na implementação.
 
-## Arquivos
+### Remarcar
 
-- `src/lib/pacientes.ts` — adicionar `getPacientesAgendamentoStats` + helper `formatRelativo`
-- `src/routes/gestao.pacientes.index.tsx` — query de stats e render nas duas colunas (desktop + mobile)
+Botão único de largura total abaixo da dupla, com ícone de calendário. Reaproveita o handler `onEdit` que já abre o `AgendamentoFormDialog` (lá dentro o usuário muda data/hora).
+
+### Rodapé (Editar / Excluir / Fechar)
+
+- **Editar** — `variant="ghost"`, abre o mesmo dialog de edição (mesmo `onEdit`). Útil para corrigir profissional, serviço, observações sem ser uma "remarcação".
+- **Excluir** — `variant="ghost"` em vermelho discreto, mantém o `AlertDialog` de confirmação.
+- **Fechar** — `variant="outline"` à direita.
+
+Layout: `flex justify-between` — esquerda agrupa Editar + Excluir; direita fica Fechar.
+
+### Detalhes técnicos
+
+Arquivo único: `src/components/gestao/agenda/AgendamentoDetalhesDialog.tsx`.
+
+- Substituir o grid `grid-cols-2 gap-2` (linhas 158–187) pelo novo bloco com 2 botões primários + 1 secundário, derivados de um helper `acoesPorStatus(status)` que retorna `{ positiva?, negativa? }`.
+- Botão positivo: `bg-[#B85A24] text-white hover:bg-[#a04d1e]` (laranja da marca, já usado no app).
+- Botão negativo: `variant="outline"` + `text-red-600 border-red-200 hover:bg-red-50`.
+- Botão Remarcar: `variant="outline"` largura total, ícone `CalendarClock` de `lucide-react`.
+- Reescrever o `DialogFooter` para conter Editar (ghost) + Excluir (ghost vermelho) à esquerda e Fechar à direita.
+- Manter intactos: `AlertDialog` de cancelamento (com motivo), `AlertDialog` de exclusão, `AlertDialog` pós-finalização, e toda a lógica de `mudarStatus` / `handleDelete`.
+- Nenhuma mudança em `src/lib/agendamentos.ts`, nenhuma migração SQL.
