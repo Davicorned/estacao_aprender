@@ -181,7 +181,14 @@ export function SecoesManager() {
   }
 
   async function save() {
-    if (!form.titulo.trim() && !form.eyebrow.trim()) return toast.error("Informe pelo menos um título");
+    // Guarda dura: revalida antes de qualquer escrita, mesmo se a UI deixar escapar.
+    const errors = computeBlockingErrors(form);
+    if (errors.length > 0) {
+      toast.error(errors[0], {
+        description: errors.length > 1 ? `+${errors.length - 1} outro(s) erro(s). Veja a prévia.` : undefined,
+      });
+      return;
+    }
     setSaving(true);
     const payload = {
       tipo: form.tipo,
