@@ -20,6 +20,8 @@ import {
   fetchSecoes, invalidateCmsCache,
   type SiteSecao, type SiteSecaoItem, type SecaoTipo,
 } from "@/lib/cms";
+import { DynamicSection } from "@/components/site/sections/dynamic/DynamicSection";
+import { useLayoutEffect } from "react";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string };
 
@@ -72,6 +74,42 @@ export function SecoesManager() {
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const previewWrapRef = useRef<HTMLDivElement | null>(null);
+  const [previewScale, setPreviewScale] = useState(0.45);
+
+  useLayoutEffect(() => {
+    if (!open) return;
+    function recompute() {
+      const w = previewWrapRef.current?.clientWidth ?? 0;
+      if (w > 0) setPreviewScale(Math.min(1, w / 1280));
+    }
+    recompute();
+    window.addEventListener("resize", recompute);
+    return () => window.removeEventListener("resize", recompute);
+  }, [open]);
+
+  const previewSecao: SiteSecao = {
+    id: form.id ?? "preview",
+    tipo: form.tipo,
+    eyebrow: form.eyebrow || null,
+    titulo: form.titulo || null,
+    descricao: form.descricao || null,
+    descricao_extra: form.descricao_extra || null,
+    imagem_url: publicImageUrl(form.imagem_url) ?? null,
+    cta_texto: form.cta_texto || null,
+    cta_link: form.cta_link || null,
+    bg_style: form.bg_style,
+    order: 0,
+    enabled: form.enabled,
+    itens: form.itens.map((it, idx) => ({
+      id: it.id ?? `prev-${idx}`,
+      secao_id: form.id ?? "preview",
+      titulo: it.titulo || "Item",
+      descricao: it.descricao || null,
+      icone: it.icone || "Sparkles",
+      order: idx,
+    })),
+  };
 
   async function load() {
     setLoading(true);
@@ -303,14 +341,15 @@ export function SecoesManager() {
 
       {/* Form principal */}
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>
               {form.id ? "Editar seção" : "Nova seção"} — {tipoLabel(form.tipo)}
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-5">
+          <div className="grid gap-6 lg:grid-cols-[1fr_1.1fr]">
+            <div className="space-y-5">
             <div className="space-y-2">
               <Label>Imagem da seção</Label>
               <div className="flex items-center gap-4">
@@ -419,6 +458,35 @@ export function SecoesManager() {
                 <p className="text-xs text-muted-foreground">Desligue para ocultar sem apagar.</p>
               </div>
               <Switch checked={form.enabled} onCheckedChange={(v) => setForm({ ...form, enabled: v })} />
+            </div>
+            </div>
+
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <Label>Prévia em tempo real</Label>
+                <span className="text-xs text-muted-foreground">
+                  Como aparecerá na Home
+                </span>
+              </div>
+              <div
+                ref={previewWrapRef}
+                className="overflow-hidden rounded-xl border border-border bg-white"
+                style={{ height: Math.round(720 * previewScale) }}
+              >
+                <div
+                  className="pointer-events-none origin-top-left"
+                  style={{
+                    width: 1280,
+                    transform: `scale(${previewScale})`,
+                  }}
+                  key={`${form.tipo}-${form.imagem_url ?? "x"}`}
+                >
+                  <DynamicSection secao={previewSecao} />
+                </div>
+              </div>
+              <p className="text-[11px] text-muted-foreground">
+                A prévia atualiza automaticamente conforme você edita os campos.
+              </p>
             </div>
           </div>
 
