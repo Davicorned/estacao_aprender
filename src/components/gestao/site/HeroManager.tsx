@@ -184,9 +184,9 @@ export function HeroManager() {
         <ColorField
           label="Fundo do banner"
           value={form.bg_cor}
-          onChange={(v) => setForm({ ...form, bg_cor: v })}
+          onChange={(v) => setForm((f) => ({ ...f, bg_cor: v }))}
           value2={form.bg_cor_2}
-          onChange2={(v) => setForm({ ...form, bg_cor_2: v })}
+          onChange2={(v) => setForm((f) => ({ ...f, bg_cor_2: v }))}
           allowGradient
           presets={["#FEF3E8", "#FDDFC4", "#FFFFFF", "#F3F4F6", "#0F172A", "#D67F43"]}
           helperText="Deixe em branco para usar o gradiente creme padrão da Home."

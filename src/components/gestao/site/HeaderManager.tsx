@@ -233,9 +233,9 @@ export function HeaderManager() {
               <ColorField
                 label="Cor de fundo"
                 value={form.bg_cor}
-                onChange={(v) => setForm({ ...form, bg_cor: v })}
+                onChange={(v) => setForm((f) => ({ ...f, bg_cor: v }))}
                 value2={form.bg_cor_2}
-                onChange2={(v) => setForm({ ...form, bg_cor_2: v })}
+                onChange2={(v) => setForm((f) => ({ ...f, bg_cor_2: v }))}
                 allowGradient
                 presets={["#FFFFFF", "#FEF3E8", "#0F172A", "#1F2937", "#D67F43", "#FFFFFFCC"]}
                 helperText="Deixe em branco para usar o branco translúcido padrão."
@@ -255,7 +255,7 @@ export function HeaderManager() {
               <ColorField
                 label="Cor de destaque (CTA e hover dos links)"
                 value={form.cor_destaque}
-                onChange={(v) => setForm({ ...form, cor_destaque: v })}
+                onChange={(v) => setForm((f) => ({ ...f, cor_destaque: v }))}
                 presets={["#D67F43", "#B85A24", "#0EA5E9", "#16A34A", "#9333EA", "#0F172A"]}
               />
             </section>
