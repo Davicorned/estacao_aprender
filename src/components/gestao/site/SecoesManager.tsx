@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import * as LucideIcons from "lucide-react";
 import {
   Plus, Pencil, Trash2, ArrowUp, ArrowDown, Upload, X, Eye, EyeOff,
-  LayoutTemplate, Image as ImageIcon, Grid3x3, AlertCircle, AlertTriangle, CheckCircle2,
-  Monitor, Smartphone, ExternalLink,
+  AlertCircle, AlertTriangle, CheckCircle2,
+  Monitor, Smartphone, ExternalLink, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +26,13 @@ import {
 import { DynamicSection } from "@/components/site/sections/dynamic/DynamicSection";
 import { useLayoutEffect } from "react";
 import { ColorField } from "./ColorField";
+import {
+  SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
+  ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
+  type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
+} from "@/lib/site-templates";
 
-type ItemForm = { id?: string; titulo: string; descricao: string; icone: string };
+type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
 
 type FormState = {
   id?: string;
@@ -47,6 +53,7 @@ type FormState = {
   card_borda_cor: string | null;
   enabled: boolean;
   itens: ItemForm[];
+  dados: Record<string, any>;
 };
 
 const empty: FormState = {
@@ -67,33 +74,52 @@ const empty: FormState = {
   card_borda_cor: null,
   enabled: true,
   itens: [],
+  dados: {},
 };
 
-const TIPOS: { value: SecaoTipo; label: string; desc: string; Icon: any }[] = [
-  { value: "texto-imagem-esquerda", label: "Imagem à esquerda", desc: "Texto à direita, imagem grande à esquerda.", Icon: ImageIcon },
-  { value: "texto-imagem-direita", label: "Imagem à direita", desc: "Texto à esquerda, imagem grande à direita.", Icon: LayoutTemplate },
-  { value: "grade-cards", label: "Grade de cards", desc: "Imagem + texto + cards (ícones).", Icon: Grid3x3 },
-];
+function getLucide(name: string): any {
+  const I = (LucideIcons as unknown as Record<string, any>)[name];
+  return I ?? Sparkles;
+}
 
-const ICONES_SUGERIDOS = [
-  "BookOpen", "Heart", "Brain", "TrendingDown", "Sparkles", "Star",
-  "Users", "Calendar", "Smile", "Shield", "Sun", "Award",
-];
+function templateHas(tipo: SecaoTipo, campo: string): boolean {
+  const t = SECTION_TEMPLATES_BY_TIPO[tipo];
+  return !!t && t.campos.includes(campo as any);
+}
+
+function itemConfig(tipo: SecaoTipo) {
+  return SECTION_TEMPLATES_BY_TIPO[tipo]?.item;
+}
+
+function defaultDadosForTipo(tipo: SecaoTipo): Record<string, any> {
+  const schema = SECTION_TEMPLATES_BY_TIPO[tipo]?.dadosSchema;
+  if (schema === "modalidades") return { ...DEFAULT_MODALIDADES };
+  if (schema === "contato-mapa") return { ...DEFAULT_CONTATO_MAPA };
+  return {};
+}
 
 /** Lista somente os ERROS bloqueantes do formulário (avisos ficam de fora). */
 function computeBlockingErrors(form: FormState): string[] {
   const errors: string[] = [];
-  if (!form.titulo.trim() && !form.eyebrow.trim()) {
-    errors.push("Informe um título ou uma etiqueta.");
+  const tmpl = SECTION_TEMPLATES_BY_TIPO[form.tipo];
+  const hasEyebrow = tmpl?.campos.includes("eyebrow");
+  const hasTitulo = tmpl?.campos.includes("titulo");
+  if (hasTitulo && !form.titulo.trim() && (!hasEyebrow || !form.eyebrow.trim())) {
+    errors.push("Informe um título" + (hasEyebrow ? " ou uma etiqueta." : "."));
   }
-  if (form.tipo !== "grade-cards" && !form.imagem_url) {
+  if (
+    (form.tipo === "texto-imagem-esquerda" || form.tipo === "texto-imagem-direita") &&
+    !form.imagem_url
+  ) {
     errors.push("Este modelo exige uma imagem ao lado do texto.");
   }
-  if (form.cta_texto.trim() && !form.cta_link.trim()) {
-    errors.push("Botão sem link: preencha o link ou remova o texto do botão.");
-  }
-  if (!form.cta_texto.trim() && form.cta_link.trim()) {
-    errors.push("Link do botão sem texto: preencha o texto ou remova o link.");
+  if (tmpl?.campos.includes("cta")) {
+    if (form.cta_texto.trim() && !form.cta_link.trim()) {
+      errors.push("Botão sem link: preencha o link ou remova o texto do botão.");
+    }
+    if (!form.cta_texto.trim() && form.cta_link.trim()) {
+      errors.push("Link do botão sem texto: preencha o texto ou remova o link.");
+    }
   }
   return errors;
 }
