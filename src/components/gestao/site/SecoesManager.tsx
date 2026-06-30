@@ -749,30 +749,50 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
               <TabsContent value="cards" className="space-y-3 pt-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Cards / itens</p>
-                    <p className="text-xs text-muted-foreground">Cada card mostra ícone, título e descrição curta.</p>
+                    <p className="text-sm font-medium">Itens</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cada item exibe título{itemConfig(form.tipo)?.icone ? ", ícone" : ""}
+                      {itemConfig(form.tipo)?.descricao ? ", descrição" : ""}
+                      {itemConfig(form.tipo)?.link ? " e link opcional" : ""}.
+                    </p>
                   </div>
                   <Button size="sm" variant="outline" onClick={addItem}><Plus className="mr-1 h-4 w-4" /> Item</Button>
                 </div>
                 <FieldMsg issue={fieldIssues.itens} />
                 {form.itens.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-                    Nenhum card ainda. Clique em <strong>Item</strong> para adicionar.
+                    Nenhum item ainda. Clique em <strong>Item</strong> para adicionar.
                   </div>
                 ) : (
                   form.itens.map((it, idx) => (
                     <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
-                        <Input className={fieldCls(itemIssues[idx] ?? null)} value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título do card" />
-                        <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {ICONES_SUGERIDOS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                      <div className={`grid grid-cols-1 gap-2 ${itemConfig(form.tipo)?.icone ? "sm:grid-cols-[1fr_180px]" : ""}`}>
+                        <Input className={fieldCls(itemIssues[idx] ?? null)} value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título" />
+                        {itemConfig(form.tipo)?.icone && (
+                          <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {ICONES_SUGERIDOS.map((i) => {
+                                const I = getLucide(i);
+                                return (
+                                  <SelectItem key={i} value={i}>
+                                    <span className="inline-flex items-center gap-2">
+                                      <I className="h-3.5 w-3.5" /> {i}
+                                    </span>
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                       <FieldMsg issue={itemIssues[idx] ?? null} />
-                      <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
+                      {itemConfig(form.tipo)?.descricao && (
+                        <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
+                      )}
+                      {itemConfig(form.tipo)?.link && (
+                        <Input value={it.link} onChange={(e) => updateItem(idx, { link: e.target.value })} placeholder="Link (opcional) — ex: /atendimento ou https://..." />
+                      )}
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, 1)} disabled={idx === form.itens.length - 1}><ArrowDown className="h-4 w-4" /></Button>
@@ -780,6 +800,22 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
                       </div>
                     </div>
                   ))
+                )}
+              </TabsContent>
+
+              {/* --- DADOS (modalidades / contato-mapa) --- */}
+              <TabsContent value="dados" className="space-y-4 pt-4">
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "modalidades" && (
+                  <DadosModalidadesEditor
+                    value={(form.dados as Partial<DadosModalidades>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
+                )}
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "contato-mapa" && (
+                  <DadosContatoMapaEditor
+                    value={(form.dados as Partial<DadosContatoMapa>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
                 )}
               </TabsContent>
 
