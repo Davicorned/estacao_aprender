@@ -10,7 +10,7 @@ export function QuickChoiceCards() {
         <div className="mx-auto max-w-2xl">
           {/* Particular */}
           <FadeUp>
-            <div className="rounded-xl border-2 border-[#FBCF9E] bg-gradient-to-br from-[#FEF3E8] to-[#FDDFC4] p-6 shadow">
+            <div className="rounded-xl border-2 border-[#FBCF9E] bg-gradient-to-br from-[var(--site-eyebrow)] to-[#FDDFC4] p-6 shadow">
               <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500">
                 <Phone className="h-7 w-7 text-white" />
               </div>

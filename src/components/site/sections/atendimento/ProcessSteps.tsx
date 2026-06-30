@@ -13,7 +13,7 @@ export function ProcessSteps() {
     <section className="bg-gray-50 py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="mb-16 text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
+          <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-primary)]">
             Processo
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -25,11 +25,11 @@ export function ProcessSteps() {
           {steps.map(({ icon: Icon, title, desc }, i) => (
             <FadeUp key={title} delay={i * 0.08}>
               <div className="relative h-full rounded-xl border-0 bg-white p-6 text-center shadow-lg">
-                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[#D67F43] to-[#C4682E] text-xl font-bold text-white">
+                <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--site-primary)] to-[var(--site-primary-hover)] text-xl font-bold text-white">
                   {i + 1}
                 </div>
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[#FEF3E8]">
-                  <Icon className="h-7 w-7 text-[#D67F43]" />
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--site-eyebrow)]">
+                  <Icon className="h-7 w-7 text-[var(--site-primary)]" />
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">{title}</h3>
                 <p className="text-sm leading-relaxed text-gray-600">{desc}</p>

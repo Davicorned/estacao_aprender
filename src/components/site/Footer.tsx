@@ -104,7 +104,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={r.tipo}
-                  className={`flex h-10 w-10 items-center justify-center rounded-full ${cls.chip} transition-colors hover:bg-[#D67F43] hover:text-white`}
+                  className={`flex h-10 w-10 items-center justify-center rounded-full ${cls.chip} transition-colors hover:bg-[var(--site-primary)] hover:text-white`}
                 >
                   <Icon className="h-5 w-5" />
                 </a>
@@ -138,7 +138,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
           <h4 className="text-sm font-semibold uppercase tracking-wider">Contato</h4>
           <ul className={`mt-4 space-y-4 text-sm ${cls.muted}`}>
             <li className="flex items-start gap-3">
-              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#D67F43]" />
+              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
               <a
                 id="whatsapp_start"
                 href={data.telefone_link ?? "#"}
@@ -150,13 +150,13 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
               </a>
             </li>
             <li className="flex items-start gap-3">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#D67F43]" />
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
               <a href={`mailto:${data.email ?? ""}`} className={`break-all ${cls.hover}`}>
                 {data.email}
               </a>
             </li>
             <li className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D67F43]" />
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
               <span>
                 <strong className={`block ${cls.strong}`}>{data.endereco_titulo}</strong>
                 {data.endereco_texto}

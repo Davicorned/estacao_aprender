@@ -22,8 +22,8 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
     .toUpperCase();
 
   return (
-    <div className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md transition-all duration-300 hover:shadow-xl hover:shadow-[#D67F43]/10">
-      <div className="aspect-square overflow-hidden bg-[#FEF3E8]">
+    <div className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md transition-all duration-300 hover:shadow-xl hover:shadow-[var(--site-primary)]/10">
+      <div className="aspect-square overflow-hidden bg-[var(--site-eyebrow)]">
         {foto ? (
           <img
             src={foto}
@@ -32,24 +32,24 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center">
-            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[#D67F43] to-[#C4682E] text-4xl font-bold text-white">
+            <div className="flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-[var(--site-primary)] to-[var(--site-primary-hover)] text-4xl font-bold text-white">
               {iniciais}
             </div>
           </div>
         )}
       </div>
 
-      <div className="h-1 bg-gradient-to-r from-[#D67F43] to-[#C4682E]" />
+      <div className="h-1 bg-gradient-to-r from-[var(--site-primary)] to-[var(--site-primary-hover)]" />
 
       <div className="p-5">
         <h3 className="mb-1 text-base font-semibold text-gray-900">{nome}</h3>
-        <p className="mb-3 text-sm font-medium text-[#D67F43]">{titulo}</p>
+        <p className="mb-3 text-sm font-medium text-[var(--site-primary)]">{titulo}</p>
 
         <div className="mb-3 flex flex-wrap gap-1.5">
           {especialidades.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="rounded-full bg-[#FEF3E8] px-2.5 py-1 text-xs font-medium text-[#B85A24]"
+              className="rounded-full bg-[var(--site-eyebrow)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
             >
               {tag}
             </span>
@@ -59,7 +59,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-[#D67F43]"
+          className="flex items-center gap-1.5 text-sm text-gray-400 transition-colors hover:text-[var(--site-primary)]"
         >
           <span>{open ? "Menos detalhes" : "Ver detalhes"}</span>
           <ChevronDown
@@ -101,7 +101,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
                 {especialidades.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full bg-[#FEF3E8] px-2.5 py-1 text-xs font-medium text-[#B85A24]"
+                    className="rounded-full bg-[var(--site-eyebrow)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
                   >
                     {tag}
                   </span>
@@ -162,7 +162,7 @@ export function TeamSection() {
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="mb-16 text-center">
-          <span className="text-sm font-medium uppercase tracking-wider text-[#D67F43]">
+          <span className="text-sm font-medium uppercase tracking-wider text-[var(--site-primary)]">
             Nossa equipe
           </span>
           <h2 className="mt-3 mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
@@ -202,7 +202,7 @@ export function TeamSection() {
               type="button"
               onClick={() => scrollByCard(-1)}
               aria-label="Anterior"
-              className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-[#D67F43] shadow-lg backdrop-blur transition-all hover:bg-white sm:flex ${
+              className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-[var(--site-primary)] shadow-lg backdrop-blur transition-all hover:bg-white sm:flex ${
                 canLeft ? "opacity-100" : "pointer-events-none opacity-0"
               }`}
             >
@@ -212,7 +212,7 @@ export function TeamSection() {
               type="button"
               onClick={() => scrollByCard(1)}
               aria-label="Próximo"
-              className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-[#D67F43] shadow-lg backdrop-blur transition-all hover:bg-white sm:flex ${
+              className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-[var(--site-primary)] shadow-lg backdrop-blur transition-all hover:bg-white sm:flex ${
                 canRight ? "opacity-100" : "pointer-events-none opacity-0"
               }`}
             >

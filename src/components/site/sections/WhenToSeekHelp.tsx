@@ -23,7 +23,7 @@ export function WhenToSeekHelp() {
           </FadeUp>
 
           <FadeUp delay={0.15}>
-            <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
+            <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-primary)]">
               Atenção aos sinais
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -43,9 +43,9 @@ export function WhenToSeekHelp() {
               {items.map(({ icon: Icon, label }) => (
                 <div
                   key={label}
-                  className="flex items-center gap-3 rounded-xl bg-[#FEF3E8] p-3"
+                  className="flex items-center gap-3 rounded-xl bg-[var(--site-eyebrow)] p-3"
                 >
-                  <Icon className="h-5 w-5 shrink-0 text-[#D67F43]" />
+                  <Icon className="h-5 w-5 shrink-0 text-[var(--site-primary)]" />
                   <span className="text-sm font-medium text-gray-700">{label}</span>
                 </div>
               ))}

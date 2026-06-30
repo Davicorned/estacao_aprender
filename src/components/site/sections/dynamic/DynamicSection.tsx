@@ -7,7 +7,7 @@ import { buildBackground } from "@/components/gestao/site/ColorField";
 function Eyebrow({ text }: { text?: string | null }) {
   if (!text) return null;
   return (
-    <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
+    <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-primary)]">
       {text}
     </span>
   );
@@ -21,7 +21,7 @@ function Cta({ texto, link }: { texto?: string | null; link?: string | null }) {
       href={link}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
-      className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-7 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E]"
+      className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[var(--site-primary)] to-[var(--site-primary-hover)] px-7 text-sm font-medium text-white shadow-lg shadow-[var(--site-primary)]/25 transition-all hover:from-[var(--site-primary-hover)] hover:to-[var(--site-primary-hover)]"
     >
       <Calendar className="h-4 w-4" />
       {texto}
@@ -165,10 +165,10 @@ function GradeCards({ secao }: { secao: SiteSecao }) {
                   return (
                     <div
                       key={it.id}
-                      className={`flex ${compact ? "items-center" : "items-start"} gap-3 rounded-xl p-3 text-left ${cardStyle ? "" : "bg-[#FEF3E8]"}`}
+                      className={`flex ${compact ? "items-center" : "items-start"} gap-3 rounded-xl p-3 text-left ${cardStyle ? "" : "bg-[var(--site-eyebrow)]"}`}
                       style={cardStyle}
                     >
-                      <Icon className={`h-5 w-5 shrink-0 text-[#D67F43] ${compact ? "" : "mt-0.5"}`} />
+                      <Icon className={`h-5 w-5 shrink-0 text-[var(--site-primary)] ${compact ? "" : "mt-0.5"}`} />
                       <div>
                         <p
                           className={`text-sm font-medium ${cardText ? "" : "text-gray-700"}`}

@@ -13,10 +13,10 @@ export function Testimonials() {
   if (items.length === 0) return null;
 
   return (
-    <section className="bg-gradient-to-b from-[#FEF3E8] to-white py-20">
+    <section className="bg-gradient-to-b from-[var(--site-eyebrow)] to-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="mb-16 text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
+          <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-primary)]">
             Depoimentos
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
