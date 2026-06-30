@@ -43,7 +43,7 @@ function Index() {
         <Hero />
         <WhenToSeekHelp />
         <OurApproach />
-        <DynamicSections />
+        <DynamicSections paginaSlug="home" />
         <TeamSection />
         <Testimonials />
         <Contact />
