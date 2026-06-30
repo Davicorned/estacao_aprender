@@ -183,7 +183,7 @@ export function RodapeManager() {
         <ColorField
           label="Cor de fundo do rodapé"
           value={form.bg_cor}
-          onChange={(v) => setForm({ ...form, bg_cor: v })}
+          onChange={(v) => setForm((f) => ({ ...f, bg_cor: v }))}
           presets={["#0F172A", "#111827", "#1F2937", "#FFFFFF", "#FEF3E8", "#D67F43"]}
           helperText="Deixe em branco para usar o cinza escuro padrão."
         />
