@@ -17,6 +17,7 @@ import {
 import { PreviewFrame } from "./PreviewFrame";
 import { Header } from "@/components/site/Header";
 import { ColorField } from "./ColorField";
+import { LinkField } from "./LinkField";
 
 type Form = Omit<SiteHeader, "id">;
 
@@ -197,13 +198,15 @@ export function HeaderManager() {
               </div>
               <div className="space-y-2">
                 {form.itens.map((it, i) => (
-                  <div key={it.id} className="grid grid-cols-[1fr_1fr_auto_auto_auto_auto] items-center gap-2">
-                    <Input placeholder="Rótulo" value={it.label} onChange={(e) => setItem(i, { label: e.target.value })} />
-                    <Input placeholder="/destino" value={it.to} onChange={(e) => setItem(i, { to: e.target.value })} />
-                    <Switch checked={it.visivel} onCheckedChange={(v) => setItem(i, { visivel: v })} />
-                    <Button size="icon" variant="ghost" onClick={() => moveItem(i, -1)} disabled={i === 0}><ArrowUp className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => moveItem(i, 1)} disabled={i === form.itens.length - 1}><ArrowDown className="h-4 w-4" /></Button>
-                    <Button size="icon" variant="ghost" onClick={() => removeItem(i)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                  <div key={it.id} className="rounded-lg border border-border p-3 space-y-2">
+                    <div className="grid grid-cols-[1fr_auto_auto_auto_auto] items-center gap-2">
+                      <Input placeholder="Rótulo" value={it.label} onChange={(e) => setItem(i, { label: e.target.value })} />
+                      <Switch checked={it.visivel} onCheckedChange={(v) => setItem(i, { visivel: v })} />
+                      <Button size="icon" variant="ghost" onClick={() => moveItem(i, -1)} disabled={i === 0}><ArrowUp className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => moveItem(i, 1)} disabled={i === form.itens.length - 1}><ArrowDown className="h-4 w-4" /></Button>
+                      <Button size="icon" variant="ghost" onClick={() => removeItem(i)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+                    </div>
+                    <LinkField label="Destino" value={it.to ?? ""} onChange={(v) => setItem(i, { to: v })} />
                   </div>
                 ))}
                 {form.itens.length === 0 && (
@@ -223,10 +226,7 @@ export function HeaderManager() {
                     <Label>Texto</Label>
                     <Input value={form.cta_label ?? ""} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} />
                   </div>
-                  <div className="space-y-2">
-                    <Label>Destino</Label>
-                    <Input value={form.cta_to ?? ""} onChange={(e) => setForm({ ...form, cta_to: e.target.value })} />
-                  </div>
+                  <LinkField label="Destino" value={form.cta_to ?? ""} onChange={(v) => setForm({ ...form, cta_to: v })} />
                 </div>
               )}
             </section>
