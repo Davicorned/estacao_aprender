@@ -23,6 +23,7 @@ import {
 } from "@/lib/cms";
 import { PreviewFrame } from "./PreviewFrame";
 import { Footer } from "@/components/site/Footer";
+import { ColorField } from "./ColorField";
 
 type Form = Omit<SiteRodape, "id">;
 
@@ -175,6 +176,33 @@ export function RodapeManager() {
       <section className="rounded-xl border border-border bg-card p-5 space-y-2">
         <Label>Texto de copyright</Label>
         <Input value={form.copyright ?? ""} onChange={(e) => setForm({ ...form, copyright: e.target.value })} />
+      </section>
+
+      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Aparência</h2>
+        <ColorField
+          label="Cor de fundo do rodapé"
+          value={form.bg_cor}
+          onChange={(v) => setForm({ ...form, bg_cor: v })}
+          presets={["#0F172A", "#111827", "#1F2937", "#FFFFFF", "#FEF3E8", "#D67F43"]}
+          helperText="Deixe em branco para usar o cinza escuro padrão."
+        />
+        <div className="space-y-2">
+          <Label>Contraste do texto</Label>
+          <Select
+            value={form.texto_cor ?? "claro"}
+            onValueChange={(v) => setForm({ ...form, texto_cor: v as "claro" | "escuro" })}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="claro">Texto claro (para fundo escuro)</SelectItem>
+              <SelectItem value="escuro">Texto escuro (para fundo claro)</SelectItem>
+            </SelectContent>
+          </Select>
+          <p className="text-[11px] text-muted-foreground">
+            Use “Texto escuro” quando escolher cores de fundo claras (creme, branco) para manter a legibilidade.
+          </p>
+        </div>
       </section>
 
       <div className="flex justify-end">
