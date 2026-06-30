@@ -35,7 +35,12 @@ export function HeaderManager() {
   useEffect(() => {
     (async () => {
       invalidateCmsCache("header");
-      const h = await fetchHeader();
+      // Timeout de segurança: se a tabela ainda não existir (migração não rodada)
+      // ou a rede travar, abrimos o editor com os valores padrão.
+      const h = await Promise.race<SiteHeader | null>([
+        fetchHeader(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 4000)),
+      ]);
       if (h) {
         const { id: _id, ...rest } = h;
         setForm({
