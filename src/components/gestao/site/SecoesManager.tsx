@@ -479,6 +479,10 @@ export function SecoesManager() {
               imagem_url: s.imagem_url, cta_texto: s.cta_texto ?? "",
               cta_link: s.cta_link ?? "", bg_style: s.bg_style ?? "branco",
               bg_cor: s.bg_cor ?? null, bg_cor_2: s.bg_cor_2 ?? null,
+              texto_cor: s.texto_cor ?? null,
+              card_bg_cor: s.card_bg_cor ?? null,
+              card_texto_cor: s.card_texto_cor ?? null,
+              card_borda_cor: s.card_borda_cor ?? null,
               enabled: s.enabled, itens: s.itens.map((it) => ({
                 titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
               })),
