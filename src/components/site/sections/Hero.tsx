@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Calendar, ArrowRight, CheckCircle2 } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 import { fetchHero, HERO_DEFAULTS, type SiteHero } from "@/lib/cms";
+import { buildBackground } from "@/components/gestao/site/ColorField";
 
 type HeroData = Omit<SiteHero, "id">;
 
@@ -18,6 +19,8 @@ function mergeHero(h: Partial<HeroData> | null | undefined): HeroData {
     badge_enabled: h?.badge_enabled ?? HERO_DEFAULTS.badge_enabled,
     badge_titulo: h?.badge_titulo || HERO_DEFAULTS.badge_titulo,
     badge_subtitulo: h?.badge_subtitulo || HERO_DEFAULTS.badge_subtitulo,
+    bg_cor: h?.bg_cor ?? HERO_DEFAULTS.bg_cor,
+    bg_cor_2: h?.bg_cor_2 ?? HERO_DEFAULTS.bg_cor_2,
   };
 }
 
@@ -32,7 +35,10 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
   }, [override]);
 
   return (
-    <section className="relative overflow-hidden bg-gradient-to-br from-[#FEF3E8] via-[#FDDFC4] to-white">
+    <section
+      className={`relative overflow-hidden ${hero.bg_cor ? "" : "bg-gradient-to-br from-[#FEF3E8] via-[#FDDFC4] to-white"}`}
+      style={hero.bg_cor ? { background: buildBackground(hero.bg_cor, hero.bg_cor_2) } : undefined}
+    >
       {/* Decorative blobs */}
       <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-[#FBCF9E]/30 blur-3xl" />
       <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[#FBCF9E]/30 blur-3xl" />
