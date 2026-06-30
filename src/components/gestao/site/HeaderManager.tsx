@@ -226,7 +226,9 @@ export function HeaderManager() {
                     <Label>Texto</Label>
                     <Input value={form.cta_label ?? ""} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} />
                   </div>
-                  <LinkField label="Destino" value={form.cta_to ?? ""} onChange={(v) => setForm({ ...form, cta_to: v })} />
+                  <div className="min-w-0">
+                    <LinkField label="Destino" value={form.cta_to ?? ""} onChange={(v) => setForm({ ...form, cta_to: v })} />
+                  </div>
                 </div>
               )}
             </section>

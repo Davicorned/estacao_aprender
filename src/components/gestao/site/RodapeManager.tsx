@@ -170,7 +170,9 @@ export function RodapeManager() {
                 <Input placeholder="Rótulo" className="flex-1" value={l.label} onChange={(e) => updateLink(field, i, { label: e.target.value })} />
                 <Button size="icon" variant="ghost" onClick={() => removeLink(field, i)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
               </div>
-              <LinkField label="Destino" value={l.href ?? ""} onChange={(v) => updateLink(field, i, { href: v })} />
+              <div className="min-w-0">
+                <LinkField label="Destino" value={l.href ?? ""} onChange={(v) => updateLink(field, i, { href: v })} />
+              </div>
             </div>
           ))}
         </section>

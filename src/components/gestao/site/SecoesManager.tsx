@@ -869,7 +869,7 @@ export function SecoesManager({
                   <Input className={fieldCls(fieldIssues.cta_texto)} value={form.cta_texto} onChange={(e) => setForm({ ...form, cta_texto: e.target.value })} placeholder="Ex: Agendar avaliação" />
                   <FieldMsg issue={fieldIssues.cta_texto} />
                 </div>
-                <div className="space-y-2">
+                <div className="min-w-0 space-y-2">
                   <LinkField label="Link do botão" value={form.cta_link} onChange={(v) => setForm({ ...form, cta_link: v })} />
                   <FieldMsg issue={fieldIssues.cta_link} />
                 </div>
@@ -921,7 +921,9 @@ export function SecoesManager({
                         <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
                       )}
                       {itemConfig(form.tipo)?.link && (
-                        <LinkField label="Link (opcional)" value={it.link} onChange={(v) => updateItem(idx, { link: v })} />
+                        <div className="min-w-0">
+                          <LinkField label="Link (opcional)" value={it.link} onChange={(v) => updateItem(idx, { link: v })} />
+                        </div>
                       )}
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
@@ -1245,7 +1247,9 @@ function DadosModalidadesEditor({
             placeholder="Um item por linha"
           />
           <Input value={c.cta_texto ?? ""} onChange={(e) => patchCard(idx, { cta_texto: e.target.value })} placeholder="Texto do botão" />
-          <LinkField label="Link do botão" value={c.cta_link ?? ""} onChange={(v) => patchCard(idx, { cta_link: v })} />
+          <div className="min-w-0">
+            <LinkField label="Link do botão" value={c.cta_link ?? ""} onChange={(v) => patchCard(idx, { cta_link: v })} />
+          </div>
           <Input value={c.cor ?? ""} onChange={(e) => patchCard(idx, { cor: e.target.value })} placeholder="Cor de destaque (hex, opcional)" />
         </div>
       ))}
@@ -1272,7 +1276,9 @@ function DadosContatoMapaEditor({
   return (
     <div className="space-y-3">
       <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone exibido (ex: (11) 99999-9999)" />
-      <LinkField label="Destino ao clicar no telefone" value={v.telefone_link} onChange={(val) => patch({ telefone_link: val })} />
+      <div className="min-w-0">
+        <LinkField label="Destino ao clicar no telefone" value={v.telefone_link} onChange={(val) => patch({ telefone_link: val })} />
+      </div>
       <Input value={v.email} onChange={(e) => patch({ email: e.target.value })} placeholder="E-mail" />
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Input value={v.endereco_titulo} onChange={(e) => patch({ endereco_titulo: e.target.value })} placeholder="Título do endereço" />
