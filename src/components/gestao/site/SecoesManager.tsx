@@ -851,7 +851,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
                   presets={["#0F172A", "#1F2937", "#FFFFFF", "#475569", "#D67F43", "#FEF3E8"]}
                   helperText="Aplica em título, descrição e textos do corpo."
                 />
-                {form.tipo === "grade-cards" && (
+                {(templateHas(form.tipo, "itens") || SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "modalidades") && (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <ColorField
                       label="Fundo dos cards"
