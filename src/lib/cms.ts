@@ -99,6 +99,30 @@ export type SiteSecao = {
   itens: SiteSecaoItem[];
 };
 
+export type SiteHeaderItem = {
+  id: string;
+  label: string;
+  to: string;
+  order: number;
+  visivel: boolean;
+};
+
+export type SiteHeader = {
+  id: "singleton";
+  logo_url: string | null;
+  mostrar_nome: boolean;
+  nome_marca: string | null;
+  cta_visivel: boolean;
+  cta_label: string | null;
+  cta_to: string | null;
+  bg_cor: string | null;
+  bg_cor_2: string | null;
+  texto_cor: string | null; // 'claro' | 'escuro' | null
+  cor_destaque: string | null;
+  sticky: boolean;
+  itens: SiteHeaderItem[];
+};
+
 // Defaults usados como fallback quando o banco está vazio. Ficam aqui
 // como fonte única para o site público e o admin enxergarem o mesmo.
 export const HERO_DEFAULTS: Omit<SiteHero, "id"> = {
@@ -149,6 +173,27 @@ export const RODAPE_DEFAULTS: Omit<SiteRodape, "id"> = {
   texto_cor: null,
 };
 
+export const HEADER_DEFAULTS: Omit<SiteHeader, "id"> = {
+  logo_url: null,
+  mostrar_nome: true,
+  nome_marca: "Estação Aprender",
+  cta_visivel: true,
+  cta_label: "Agendar Atendimento",
+  cta_to: "/Contato",
+  bg_cor: null,
+  bg_cor_2: null,
+  texto_cor: null,
+  cor_destaque: "#D67F43",
+  sticky: true,
+  itens: [
+    { id: "d1", label: "O Espaço", to: "/", order: 0, visivel: true },
+    { id: "d2", label: "Quem Somos", to: "/QuemSomos", order: 1, visivel: true },
+    { id: "d3", label: "Serviços", to: "/Servicos", order: 2, visivel: true },
+    { id: "d4", label: "Atendimento", to: "/Atendimento", order: 3, visivel: true },
+    { id: "d5", label: "Contato", to: "/Contato", order: 4, visivel: true },
+  ],
+};
+
 let teamCache: { data: TeamMember[]; at: number } | null = null;
 let teamInflight: Promise<TeamMember[]> | null = null;
 let testimonialsCache: { data: Testimonial[]; at: number } | null = null;
@@ -161,15 +206,18 @@ let rodapeCache: { data: SiteRodape | null; at: number } | null = null;
 let rodapeInflight: Promise<SiteRodape | null> | null = null;
 let secoesCache: { data: SiteSecao[]; at: number } | null = null;
 let secoesInflight: Promise<SiteSecao[]> | null = null;
+let headerCache: { data: SiteHeader | null; at: number } | null = null;
+let headerInflight: Promise<SiteHeader | null> | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes") {
+export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header") {
   if (!which || which === "team") teamCache = null;
   if (!which || which === "testimonials") testimonialsCache = null;
   if (!which || which === "servicos") servicosCache = null;
   if (!which || which === "hero") heroCache = null;
   if (!which || which === "rodape") rodapeCache = null;
   if (!which || which === "secoes") secoesCache = null;
+  if (!which || which === "header") headerCache = null;
 }
 
 export async function fetchTeam(includeDisabled = false): Promise<TeamMember[]> {
