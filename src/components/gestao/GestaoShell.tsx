@@ -226,7 +226,7 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
         <SidebarFooter onSignOut={handleSignOut} />
       </aside>
 
-      <main className="relative flex-1 overflow-x-hidden">
+      <main className="relative flex-1 overflow-x-clip">
         {/* Loading bar */}
         {isPending && (
           <div className="fixed top-0 left-0 right-0 z-50 h-1 overflow-hidden bg-[#D67F43]/20 md:left-64">
