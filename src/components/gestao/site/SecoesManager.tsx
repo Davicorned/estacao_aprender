@@ -41,6 +41,10 @@ type FormState = {
   bg_style: string;
   bg_cor: string | null;
   bg_cor_2: string | null;
+  texto_cor: string | null;
+  card_bg_cor: string | null;
+  card_texto_cor: string | null;
+  card_borda_cor: string | null;
   enabled: boolean;
   itens: ItemForm[];
 };
@@ -57,6 +61,10 @@ const empty: FormState = {
   bg_style: "branco",
   bg_cor: null,
   bg_cor_2: null,
+  texto_cor: null,
+  card_bg_cor: null,
+  card_texto_cor: null,
+  card_borda_cor: null,
   enabled: true,
   itens: [],
 };
@@ -135,6 +143,10 @@ export function SecoesManager() {
     bg_style: form.bg_style,
     bg_cor: form.bg_cor,
     bg_cor_2: form.bg_cor_2,
+    texto_cor: form.texto_cor,
+    card_bg_cor: form.card_bg_cor,
+    card_texto_cor: form.card_texto_cor,
+    card_borda_cor: form.card_borda_cor,
     order: 0,
     enabled: form.enabled,
     itens: (form.tipo === "grade-cards" && form.itens.length === 0
