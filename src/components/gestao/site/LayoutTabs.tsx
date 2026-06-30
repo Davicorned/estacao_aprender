@@ -1,7 +1,8 @@
 import { Link, useLocation } from "@tanstack/react-router";
-import { Image as ImageIcon, Layout as LayoutIcon, PanelBottom } from "lucide-react";
+import { Image as ImageIcon, Layout as LayoutIcon, PanelBottom, PanelTop } from "lucide-react";
 
 const TABS = [
+  { to: "/gestao/site/layout/header", label: "Cabeçalho", icon: PanelTop },
   { to: "/gestao/site/layout/hero", label: "Banner", icon: ImageIcon },
   { to: "/gestao/site/layout/secoes", label: "Seções", icon: LayoutIcon },
   { to: "/gestao/site/layout/rodape", label: "Rodapé", icon: PanelBottom },
