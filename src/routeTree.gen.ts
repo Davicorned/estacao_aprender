@@ -24,6 +24,7 @@ import { Route as GestaoDashboardRouteImport } from './routes/gestao.dashboard'
 import { Route as GestaoContratosRouteImport } from './routes/gestao.contratos'
 import { Route as GestaoConfiguracoesRouteImport } from './routes/gestao.configuracoes'
 import { Route as GestaoAgendaRouteImport } from './routes/gestao.agenda'
+import { Route as GestaoSiteIndexRouteImport } from './routes/gestao.site.index'
 import { Route as GestaoPacientesIndexRouteImport } from './routes/gestao.pacientes.index'
 import { Route as GestaoSiteServicosRouteImport } from './routes/gestao.site.servicos'
 import { Route as GestaoSitePaginasRouteImport } from './routes/gestao.site.paginas'
@@ -113,6 +114,11 @@ const GestaoConfiguracoesRoute = GestaoConfiguracoesRouteImport.update({
 const GestaoAgendaRoute = GestaoAgendaRouteImport.update({
   id: '/agenda',
   path: '/agenda',
+  getParentRoute: () => GestaoRoute,
+} as any)
+const GestaoSiteIndexRoute = GestaoSiteIndexRouteImport.update({
+  id: '/site/',
+  path: '/site/',
   getParentRoute: () => GestaoRoute,
 } as any)
 const GestaoPacientesIndexRoute = GestaoPacientesIndexRouteImport.update({
@@ -215,6 +221,7 @@ export interface FileRoutesByFullPath {
   '/gestao/site/paginas': typeof GestaoSitePaginasRoute
   '/gestao/site/servicos': typeof GestaoSiteServicosRoute
   '/gestao/pacientes/': typeof GestaoPacientesIndexRoute
+  '/gestao/site/': typeof GestaoSiteIndexRoute
   '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
   '/gestao/site/layout/header': typeof GestaoSiteLayoutHeaderRoute
   '/gestao/site/layout/hero': typeof GestaoSiteLayoutHeroRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/gestao/site/paginas': typeof GestaoSitePaginasRoute
   '/gestao/site/servicos': typeof GestaoSiteServicosRoute
   '/gestao/pacientes': typeof GestaoPacientesIndexRoute
+  '/gestao/site': typeof GestaoSiteIndexRoute
   '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
   '/gestao/site/layout/header': typeof GestaoSiteLayoutHeaderRoute
   '/gestao/site/layout/hero': typeof GestaoSiteLayoutHeroRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/gestao/site/paginas': typeof GestaoSitePaginasRoute
   '/gestao/site/servicos': typeof GestaoSiteServicosRoute
   '/gestao/pacientes/': typeof GestaoPacientesIndexRoute
+  '/gestao/site/': typeof GestaoSiteIndexRoute
   '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
   '/gestao/site/layout/header': typeof GestaoSiteLayoutHeaderRoute
   '/gestao/site/layout/hero': typeof GestaoSiteLayoutHeroRoute
@@ -311,6 +320,7 @@ export interface FileRouteTypes {
     | '/gestao/site/paginas'
     | '/gestao/site/servicos'
     | '/gestao/pacientes/'
+    | '/gestao/site/'
     | '/api/public/file-proxy/$'
     | '/gestao/site/layout/header'
     | '/gestao/site/layout/hero'
@@ -340,6 +350,7 @@ export interface FileRouteTypes {
     | '/gestao/site/paginas'
     | '/gestao/site/servicos'
     | '/gestao/pacientes'
+    | '/gestao/site'
     | '/api/public/file-proxy/$'
     | '/gestao/site/layout/header'
     | '/gestao/site/layout/hero'
@@ -372,6 +383,7 @@ export interface FileRouteTypes {
     | '/gestao/site/paginas'
     | '/gestao/site/servicos'
     | '/gestao/pacientes/'
+    | '/gestao/site/'
     | '/api/public/file-proxy/$'
     | '/gestao/site/layout/header'
     | '/gestao/site/layout/hero'
@@ -497,6 +509,13 @@ declare module '@tanstack/react-router' {
       path: '/agenda'
       fullPath: '/gestao/agenda'
       preLoaderRoute: typeof GestaoAgendaRouteImport
+      parentRoute: typeof GestaoRoute
+    }
+    '/gestao/site/': {
+      id: '/gestao/site/'
+      path: '/site'
+      fullPath: '/gestao/site/'
+      preLoaderRoute: typeof GestaoSiteIndexRouteImport
       parentRoute: typeof GestaoRoute
     }
     '/gestao/pacientes/': {
@@ -658,6 +677,7 @@ interface GestaoRouteChildren {
   GestaoSiteLayoutRoute: typeof GestaoSiteLayoutRouteWithChildren
   GestaoSitePaginasRoute: typeof GestaoSitePaginasRoute
   GestaoSiteServicosRoute: typeof GestaoSiteServicosRoute
+  GestaoSiteIndexRoute: typeof GestaoSiteIndexRoute
 }
 
 const GestaoRouteChildren: GestaoRouteChildren = {
@@ -674,6 +694,7 @@ const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoSiteLayoutRoute: GestaoSiteLayoutRouteWithChildren,
   GestaoSitePaginasRoute: GestaoSitePaginasRoute,
   GestaoSiteServicosRoute: GestaoSiteServicosRoute,
+  GestaoSiteIndexRoute: GestaoSiteIndexRoute,
 }
 
 const GestaoRouteWithChildren =

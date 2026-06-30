@@ -46,6 +46,7 @@ const MAIN: NavItem[] = [
 ];
 
 const SITE: NavItem[] = [
+  { to: "/gestao/site", label: "Visão geral", icon: LayoutDashboard, exact: true },
   { to: "/gestao/site/paginas", label: "Páginas", icon: FileTextIcon },
   { to: "/gestao/site/equipe", label: "Equipe", icon: UserCog },
   { to: "/gestao/site/depoimentos", label: "Depoimentos", icon: MessageSquareQuote },
@@ -70,6 +71,7 @@ const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/site\/layout\/secoes/, title: "Layout · Seções" },
   { match: /^\/gestao\/site\/layout\/rodape/, title: "Layout · Rodapé" },
   { match: /^\/gestao\/site\/layout/, title: "Layout do site" },
+  { match: /^\/gestao\/site$/, title: "Admin do site" },
 ];
 
 function deriveTitle(pathname: string): string {
