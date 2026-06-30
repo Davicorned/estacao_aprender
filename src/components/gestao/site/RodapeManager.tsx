@@ -232,7 +232,7 @@ export function RodapeManager() {
       </div>
       </div>
 
-      <div className="lg:sticky lg:top-4 lg:self-start">
+      <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
         <PreviewFrame height={520} mobileHeight={1200}>
           <Footer override={form} />
         </PreviewFrame>
