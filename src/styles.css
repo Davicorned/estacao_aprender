@@ -5,6 +5,25 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
+ * Site theme fallbacks (SSR-safe defaults).
+ * SiteThemeProvider overrides --site-primary/--site-primary-hover/etc. at
+ * runtime with values from the CMS, but SSR's first paint needs valid
+ * colors so CTAs and eyebrows don't render uncolored.
+ */
+:root {
+  --site-primary: #D67F43;
+  --site-primary-hover: #C4682E;
+  --site-secondary: #D67F43;
+  --site-text: #1A1A1A;
+  --site-bg: #FFFFFF;
+  --site-eyebrow: #D67F43;
+  --site-soft: #FEF3E8;
+  --site-soft-2: #FDDFC4;
+  --site-soft-3: #FBCF9E;
+  --site-radius: 10px;
+}
+
+/*
  * Design system definition.
  *
  * The @theme inline block maps CSS custom properties to Tailwind utility

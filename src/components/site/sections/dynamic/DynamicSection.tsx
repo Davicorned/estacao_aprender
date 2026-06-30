@@ -20,7 +20,7 @@ import {
 function Eyebrow({ text }: { text?: string | null }) {
   if (!text) return null;
   return (
-    <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-primary)]">
+    <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-eyebrow)]">
       {text}
     </span>
   );
@@ -178,7 +178,7 @@ function GradeCards({ secao }: { secao: SiteSecao }) {
                   return (
                     <div
                       key={it.id}
-                      className={`flex ${compact ? "items-center" : "items-start"} gap-3 rounded-xl p-3 text-left ${cardStyle ? "" : "bg-[var(--site-eyebrow)]"}`}
+                      className={`flex ${compact ? "items-center" : "items-start"} gap-3 rounded-xl p-3 text-left ${cardStyle ? "" : "bg-[var(--site-soft)]"}`}
                       style={cardStyle}
                     >
                       <Icon className={`h-5 w-5 shrink-0 text-[var(--site-primary)] ${compact ? "" : "mt-0.5"}`} />

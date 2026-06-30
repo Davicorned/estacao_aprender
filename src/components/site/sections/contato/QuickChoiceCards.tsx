@@ -34,7 +34,7 @@ export function QuickChoiceCards({ itens = DEFAULT_ITENS }: Props = {}) {
             const ext = external(it.link);
             return (
               <FadeUp key={`${it.titulo}-${i}`} delay={i * 0.08}>
-                <div className="rounded-xl border-2 border-[#FBCF9E] bg-gradient-to-br from-[var(--site-eyebrow)] to-[#FDDFC4] p-6 shadow">
+                <div className="rounded-xl border-2 border-[var(--site-soft-3)] bg-gradient-to-br from-[var(--site-soft)] to-[var(--site-soft-2)] p-6 shadow">
                   <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500">
                     <Icon className="h-7 w-7 text-white" />
                   </div>

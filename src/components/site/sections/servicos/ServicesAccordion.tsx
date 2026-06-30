@@ -59,9 +59,9 @@ export function ServicesAccordion({ servicos = DEFAULT_SERVICOS }: Props = {}) {
                 value={s.id}
                 className="mb-4 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm"
               >
-                <AccordionTrigger className="px-6 py-5 hover:bg-gray-50/50 hover:no-underline data-[state=open]:bg-[var(--site-eyebrow)]/50">
+                <AccordionTrigger className="px-6 py-5 hover:bg-gray-50/50 hover:no-underline data-[state=open]:bg-[var(--site-soft)]/70">
                   <div className="flex flex-1 items-center gap-4 text-left">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--site-eyebrow)] to-[#FDDFC4]">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--site-soft)] to-[var(--site-soft-2)]">
                       <Icon className="h-6 w-6 text-[var(--site-primary)]" />
                     </div>
                     <span className="text-lg font-semibold text-gray-900">{s.titulo}</span>
