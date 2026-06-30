@@ -1,43 +1,42 @@
-## Problemas
-1. Metade direita da tela fica vazia (`max-w-2xl` à esquerda) — obriga rolar.
-2. Campos aparecem em branco no admin embora a Home mostre texto, porque o site público usa fallbacks (`DEFAULT` em `Hero.tsx` / `Footer.tsx`) que o admin não conhece.
-3. "Botões de ação" sem nome no admin pelo mesmo motivo — o que aparece na Home vem do fallback, não do banco.
+## Problema
 
-## Mudanças
+A prévia do Banner e do Rodapé renderiza o conteúdo dentro de um `<div>` com `width: 1280px` (desktop) ou `390px` (mobile) e aplica `transform: scale(...)`. O problema é que as media queries do Tailwind (`sm:`, `md:`, `lg:`) usam a **viewport real do navegador** (≈1403 px), não a largura simulada da prévia.
 
-### 1. Layout em 2 colunas com prévia ao vivo (Banner e Rodapé)
-```text
-┌──────────────────────────┬───────────────────────────┐
-│ Formulário               │ Prévia ao vivo (sticky)   │
-│  Imagem / Texto / Botões │  [Desktop] [Mobile]       │
-│  Selo                    │  <Hero /> ou <Footer />   │
-│                          │  com valores atuais       │
-└──────────────────────────┴───────────────────────────┘
-```
-- `grid lg:grid-cols-[minmax(0,520px)_1fr]`, prévia `sticky top-4`.
-- Em telas <lg volta para 1 coluna (form em cima, prévia abaixo).
-- A prévia reusa os componentes reais (`<Hero />`, `<Footer />`) num wrapper escalado (mesma técnica já usada em `SecoesManager`), com toggle Desktop/Mobile.
+Resultado:
+- **Banner mobile:** `lg:` ainda dispara, então o Hero tenta usar `lg:grid-cols-2` + `lg:text-6xl` dentro de um container de 390 px — o título quebra palavra-por-palavra e o layout fica completamente estourado (a imagem da prévia 2 confirma).
+- **Rodapé desktop:** o painel direito do editor mede ≈500 px; com `width: 1280` forçado em conjunto com media queries da viewport real, o footer renderiza de forma inconsistente (colunas estreitas, e-mail quebrando letra-a-letra, como na prévia 1).
 
-### 2. Pré-preencher com defaults reais do site
-- Extrair `DEFAULT` de `Hero.tsx` e do `Footer.tsx` para `src/lib/cms.ts` como `HERO_DEFAULTS` e `RODAPE_DEFAULTS` (fonte única).
-- No `HeroManager` e `RodapeManager`, ao carregar: campos `null`/vazios herdam dos defaults antes de virem para o estado do form — o admin passa a mostrar exatamente o que aparece na Home.
-- Marcar campos herdados com um pequeno rótulo "padrão do site" e botão "Restaurar padrão".
+Em outras palavras, hoje a prévia mistura "largura simulada" com "media queries reais", e por isso nada bate com o que aparece no site.
 
-### 3. Prévia nunca vazia
-- Form mesclado com defaults é o que alimenta a prévia, então fica completa mesmo durante digitação.
-- Atualiza em tempo real (`useState`).
+## Solução
 
-## Técnico
-- Arquivos editados:
-  - `src/components/gestao/site/HeroManager.tsx`
-  - `src/components/gestao/site/RodapeManager.tsx`
-  - `src/components/site/sections/Hero.tsx` (extrair DEFAULT)
-  - `src/components/site/Footer.tsx` (extrair DEFAULT)
-  - `src/lib/cms.ts` (exportar `HERO_DEFAULTS`, `RODAPE_DEFAULTS`)
-  - Novo: `src/components/gestao/site/PreviewFrame.tsx` (wrapper escalado reutilizável)
-- Sem mudanças em banco, RLS, rotas ou funcionalidade — só reorganização visual + herdar defaults.
+Renderizar a prévia dentro de um **`<iframe>`** com largura exata da viewport simulada (1280 desktop, 390 mobile) e fazer `transform: scale(...)` no próprio iframe. Dentro do iframe, as media queries respondem à largura simulada — Hero e Footer ficam idênticos ao que o usuário verá no site real.
 
-## Fora do escopo
-- Aba "Seções" (já redesenhada).
-- Novos campos no banco.
-- Versionamento/rascunho.
+### Mudanças
+
+1. **`src/components/gestao/site/PreviewFrame.tsx`** — reescrever:
+   - Renderizar um `<iframe>` com `width = 1280` (desktop) ou `390` (mobile) e altura suficiente.
+   - Quando o iframe carrega, copiar as `<link rel="stylesheet">` e `<style>` do `document.head` para o `head` do iframe (assim o Tailwind funciona dentro).
+   - Usar `createPortal(children, iframe.contentDocument.body)` para renderizar a árvore React lá dentro.
+   - Aplicar `transform: scale(wrapperWidth / simulatedWidth)` no iframe; o wrapper externo segue com `overflow-hidden` e altura = `height * scale`.
+   - Manter o toggle Desktop/Mobile e o `useLayoutEffect` que recalcula o scale no resize.
+
+2. **`HeroManager.tsx` e `RodapeManager.tsx`** — sem mudanças de API: continuam passando `<Hero override={...} />` e `<Footer override={...} />` como children do `PreviewFrame`. Como o portal preserva o contexto do React, o `override` segue funcionando.
+
+3. **Alturas da prévia** — manter `height={620}` / `mobileHeight={900}` para Hero; aumentar `mobileHeight` do Footer para ≈1200 (mobile do footer empilha 4 colunas + barra inferior). Como agora estará dentro de iframe com layout correto, o conteúdo cabe sem clipping.
+
+### Detalhes técnicos
+
+- O iframe usa `srcDoc="<!doctype html><html><head></head><body></body></html>"` para ser same-origin (permite `contentDocument` + portal).
+- O efeito que injeta os styles roda no `onLoad` do iframe e também observa mudanças (basta clonar uma vez no mount; Tailwind no preview é estático).
+- `transform-origin: top left` no iframe; `pointer-events: none` opcional para evitar interação acidental com botões da prévia.
+
+### Validação
+
+Após aplicar:
+- Banner em mobile (390): título quebra em 2–3 linhas, imagem some (correto, `lg:hidden` no mobile real), badge no canto inferior.
+- Banner em desktop (1280): grade 2 colunas, imagem visível, badge sobreposto.
+- Rodapé em desktop: 4 colunas lado a lado, e-mail e endereço alinhados como no site.
+- Rodapé em mobile: 1 coluna empilhada, sem clipping.
+
+Sem mudanças em lógica/CMS; apenas no `PreviewFrame`.
