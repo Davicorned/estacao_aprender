@@ -16,30 +16,22 @@ import { supabase } from "@/integrations/supabase/client";
 import {
   fetchRodape,
   invalidateCmsCache,
+  RODAPE_DEFAULTS,
   type LinkItem,
   type RedeSocial,
   type SiteRodape,
 } from "@/lib/cms";
+import { PreviewFrame } from "./PreviewFrame";
+import { Footer } from "@/components/site/Footer";
 
 type Form = Omit<SiteRodape, "id">;
 
-const empty: Form = {
-  texto_institucional: "",
-  telefone: "",
-  telefone_link: "",
-  email: "",
-  endereco_titulo: "",
-  endereco_texto: "",
-  copyright: "",
-  redes_sociais: [],
-  links_rapidos: [],
-  links_servicos: [],
-};
+const initial: Form = { ...RODAPE_DEFAULTS };
 
 const REDE_OPTS = ["instagram", "facebook", "linkedin", "youtube", "twitter", "whatsapp", "tiktok"];
 
 export function RodapeManager() {
-  const [form, setForm] = useState<Form>(empty);
+  const [form, setForm] = useState<Form>(initial);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
@@ -49,7 +41,20 @@ export function RodapeManager() {
       const r = await fetchRodape();
       if (r) {
         const { id: _id, ...rest } = r;
-        setForm(rest);
+        setForm({
+          ...RODAPE_DEFAULTS,
+          ...rest,
+          texto_institucional: rest.texto_institucional || RODAPE_DEFAULTS.texto_institucional,
+          telefone: rest.telefone || RODAPE_DEFAULTS.telefone,
+          telefone_link: rest.telefone_link || RODAPE_DEFAULTS.telefone_link,
+          email: rest.email || RODAPE_DEFAULTS.email,
+          endereco_titulo: rest.endereco_titulo || RODAPE_DEFAULTS.endereco_titulo,
+          endereco_texto: rest.endereco_texto || RODAPE_DEFAULTS.endereco_texto,
+          copyright: rest.copyright || RODAPE_DEFAULTS.copyright,
+          redes_sociais: rest.redes_sociais?.length ? rest.redes_sociais : RODAPE_DEFAULTS.redes_sociais,
+          links_rapidos: rest.links_rapidos?.length ? rest.links_rapidos : RODAPE_DEFAULTS.links_rapidos,
+          links_servicos: rest.links_servicos?.length ? rest.links_servicos : RODAPE_DEFAULTS.links_servicos,
+        });
       }
       setLoading(false);
     })();
@@ -95,7 +100,8 @@ export function RodapeManager() {
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,560px)_1fr]">
+      <div className="space-y-6">
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Texto institucional</h2>
         <Textarea rows={3} value={form.texto_institucional ?? ""} onChange={(e) => setForm({ ...form, texto_institucional: e.target.value })} />
@@ -175,6 +181,16 @@ export function RodapeManager() {
         <Button onClick={save} disabled={saving} className="bg-[#D67F43] hover:bg-[#B85A24]">
           {saving ? "Salvando…" : "Salvar alterações"}
         </Button>
+      </div>
+      </div>
+
+      <div className="lg:sticky lg:top-4 lg:self-start">
+        <PreviewFrame height={520} mobileHeight={900}>
+          <Footer override={form} />
+        </PreviewFrame>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Aparece no final de todas as páginas. Atualiza enquanto você digita.
+        </p>
       </div>
     </div>
   );

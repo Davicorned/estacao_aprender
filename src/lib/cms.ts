@@ -93,6 +93,52 @@ export type SiteSecao = {
   itens: SiteSecaoItem[];
 };
 
+// Defaults usados como fallback quando o banco está vazio. Ficam aqui
+// como fonte única para o site público e o admin enxergarem o mesmo.
+export const HERO_DEFAULTS: Omit<SiteHero, "id"> = {
+  titulo: "Cuidamos de cada fase de desenvolvimento do",
+  titulo_destaque: "seu filho(a)",
+  subtitulo:
+    "Equipe multiprofissional especializada no cuidado integral de crianças e adolescentes. Acolhimento, diagnóstico e tratamento personalizados.",
+  cta_primario_texto: "Agendar atendimento",
+  cta_primario_link:
+    "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Esta%C3%A7%C3%A3o%20Aprender.",
+  cta_secundario_texto: "Conhecer serviços",
+  cta_secundario_link: "/Servicos",
+  imagem_url:
+    "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/81d826ca8_home.png",
+  badge_enabled: true,
+  badge_titulo: "+500 famílias",
+  badge_subtitulo: "atendidas com sucesso",
+};
+
+export const RODAPE_DEFAULTS: Omit<SiteRodape, "id"> = {
+  texto_institucional:
+    "Cuidando da saúde emocional de crianças, adolescentes e suas famílias com acolhimento e profissionalismo.",
+  telefone: "(11) 93213-9815",
+  telefone_link: "https://wa.me/5511932139815",
+  email: "contato@estacaoaprender.com.br",
+  endereco_titulo: "Unidade Engenheiro Goulart",
+  endereco_texto: "Praça Gajé, 56 - Eng. Goulart, São Paulo - SP, 03725-040",
+  copyright: "© 2026 Estação Aprender. Todos os direitos reservados.",
+  redes_sociais: [
+    { tipo: "instagram", url: "https://www.instagram.com/espaco.ide/" },
+    { tipo: "facebook", url: "#" },
+  ],
+  links_rapidos: [
+    { label: "O Espaço", href: "/" },
+    { label: "Quem Somos", href: "/QuemSomos" },
+    { label: "Serviços", href: "/Servicos" },
+    { label: "Atendimento", href: "/Atendimento" },
+  ],
+  links_servicos: [
+    { label: "Psicoterapia", href: "/Servicos?servico=psicoterapia" },
+    { label: "Avaliação Neuropsicológica", href: "/Servicos?servico=neuropsicologia" },
+    { label: "Fonoaudiologia", href: "/Servicos?servico=fonoaudiologia" },
+    { label: "Psicopedagogia", href: "/Servicos?servico=psicopedagogia" },
+  ],
+};
+
 let teamCache: { data: TeamMember[]; at: number } | null = null;
 let teamInflight: Promise<TeamMember[]> | null = null;
 let testimonialsCache: { data: Testimonial[]; at: number } | null = null;

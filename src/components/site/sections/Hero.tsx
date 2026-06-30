@@ -1,58 +1,35 @@
 import { useEffect, useState } from "react";
 import { Calendar, ArrowRight, CheckCircle2 } from "lucide-react";
 import { FadeUp } from "../FadeUp";
-import { fetchHero, type SiteHero } from "@/lib/cms";
+import { fetchHero, HERO_DEFAULTS, type SiteHero } from "@/lib/cms";
 
-const DEFAULT: Pick<
-  SiteHero,
-  | "titulo"
-  | "titulo_destaque"
-  | "subtitulo"
-  | "cta_primario_texto"
-  | "cta_primario_link"
-  | "cta_secundario_texto"
-  | "cta_secundario_link"
-  | "imagem_url"
-  | "badge_enabled"
-  | "badge_titulo"
-  | "badge_subtitulo"
-> = {
-  titulo: "Cuidamos de cada fase de desenvolvimento do",
-  titulo_destaque: "seu filho(a)",
-  subtitulo:
-    "Equipe multiprofissional especializada no cuidado integral de crianças e adolescentes. Acolhimento, diagnóstico e tratamento personalizados.",
-  cta_primario_texto: "Agendar atendimento",
-  cta_primario_link:
-    "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Esta%C3%A7%C3%A3o%20Aprender.",
-  cta_secundario_texto: "Conhecer serviços",
-  cta_secundario_link: "/Servicos",
-  imagem_url:
-    "https://media.base44.com/images/public/6953b58ae89e14e21e4d4c20/81d826ca8_home.png",
-  badge_enabled: true,
-  badge_titulo: "+500 famílias",
-  badge_subtitulo: "atendidas com sucesso",
-};
+type HeroData = Omit<SiteHero, "id">;
 
-export function Hero() {
-  const [hero, setHero] = useState(DEFAULT);
+function mergeHero(h: Partial<HeroData> | null | undefined): HeroData {
+  return {
+    titulo: h?.titulo || HERO_DEFAULTS.titulo,
+    titulo_destaque: h?.titulo_destaque || HERO_DEFAULTS.titulo_destaque,
+    subtitulo: h?.subtitulo || HERO_DEFAULTS.subtitulo,
+    cta_primario_texto: h?.cta_primario_texto || HERO_DEFAULTS.cta_primario_texto,
+    cta_primario_link: h?.cta_primario_link || HERO_DEFAULTS.cta_primario_link,
+    cta_secundario_texto: h?.cta_secundario_texto || HERO_DEFAULTS.cta_secundario_texto,
+    cta_secundario_link: h?.cta_secundario_link || HERO_DEFAULTS.cta_secundario_link,
+    imagem_url: h?.imagem_url || HERO_DEFAULTS.imagem_url,
+    badge_enabled: h?.badge_enabled ?? HERO_DEFAULTS.badge_enabled,
+    badge_titulo: h?.badge_titulo || HERO_DEFAULTS.badge_titulo,
+    badge_subtitulo: h?.badge_subtitulo || HERO_DEFAULTS.badge_subtitulo,
+  };
+}
+
+export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
+  const [hero, setHero] = useState<HeroData>(() => mergeHero(override));
   useEffect(() => {
-    fetchHero().then((h) => {
-      if (!h) return;
-      setHero({
-        titulo: h.titulo ?? DEFAULT.titulo,
-        titulo_destaque: h.titulo_destaque ?? DEFAULT.titulo_destaque,
-        subtitulo: h.subtitulo ?? DEFAULT.subtitulo,
-        cta_primario_texto: h.cta_primario_texto ?? DEFAULT.cta_primario_texto,
-        cta_primario_link: h.cta_primario_link ?? DEFAULT.cta_primario_link,
-        cta_secundario_texto: h.cta_secundario_texto ?? DEFAULT.cta_secundario_texto,
-        cta_secundario_link: h.cta_secundario_link ?? DEFAULT.cta_secundario_link,
-        imagem_url: h.imagem_url ?? DEFAULT.imagem_url,
-        badge_enabled: h.badge_enabled,
-        badge_titulo: h.badge_titulo ?? DEFAULT.badge_titulo,
-        badge_subtitulo: h.badge_subtitulo ?? DEFAULT.badge_subtitulo,
-      });
-    });
-  }, []);
+    if (override) {
+      setHero(mergeHero(override));
+      return;
+    }
+    fetchHero().then((h) => setHero(mergeHero(h)));
+  }, [override]);
 
   return (
     <section className="relative overflow-hidden bg-gradient-to-br from-[#FEF3E8] via-[#FDDFC4] to-white">

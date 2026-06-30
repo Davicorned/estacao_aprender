@@ -1,36 +1,11 @@
 import { useEffect, useState } from "react";
 import { Instagram, Facebook, Linkedin, Youtube, Twitter, Music2, Phone, Mail, MapPin } from "lucide-react";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
-import { fetchRodape, type LinkItem, type RedeSocial, type SiteRodape } from "@/lib/cms";
+import { fetchRodape, RODAPE_DEFAULTS, type LinkItem, type RedeSocial, type SiteRodape } from "@/lib/cms";
 
 const LOGO = logoAsset.url;
 
-const DEFAULT: Omit<SiteRodape, "id"> = {
-  texto_institucional:
-    "Cuidando da saúde emocional de crianças, adolescentes e suas famílias com acolhimento e profissionalismo.",
-  telefone: "(11) 93213-9815",
-  telefone_link: "https://wa.me/5511932139815",
-  email: "contato@estacaoaprender.com.br",
-  endereco_titulo: "Unidade Engenheiro Goulart",
-  endereco_texto: "Praça Gajé, 56 - Eng. Goulart, São Paulo - SP, 03725-040",
-  copyright: "© 2026 Estação Aprender. Todos os direitos reservados.",
-  redes_sociais: [
-    { tipo: "instagram", url: "https://www.instagram.com/espaco.ide/" },
-    { tipo: "facebook", url: "#" },
-  ],
-  links_rapidos: [
-    { label: "O Espaço", href: "/" },
-    { label: "Quem Somos", href: "/QuemSomos" },
-    { label: "Serviços", href: "/Servicos" },
-    { label: "Atendimento", href: "/Atendimento" },
-  ],
-  links_servicos: [
-    { label: "Psicoterapia", href: "/Servicos?servico=psicoterapia" },
-    { label: "Avaliação Neuropsicológica", href: "/Servicos?servico=neuropsicologia" },
-    { label: "Fonoaudiologia", href: "/Servicos?servico=fonoaudiologia" },
-    { label: "Psicopedagogia", href: "/Servicos?servico=psicopedagogia" },
-  ],
-};
+const DEFAULT = RODAPE_DEFAULTS;
 
 const REDE_ICONS: Record<string, typeof Instagram> = {
   instagram: Instagram,
@@ -50,21 +25,34 @@ function FooterLink({ item }: { item: LinkItem }) {
   );
 }
 
-export function Footer() {
-  const [data, setData] = useState(DEFAULT);
+type RodapeData = Omit<SiteRodape, "id">;
+
+function mergeRodape(r: Partial<RodapeData> | null | undefined): RodapeData {
+  return {
+    ...DEFAULT,
+    ...(r ?? {}),
+    texto_institucional: r?.texto_institucional || DEFAULT.texto_institucional,
+    telefone: r?.telefone || DEFAULT.telefone,
+    telefone_link: r?.telefone_link || DEFAULT.telefone_link,
+    email: r?.email || DEFAULT.email,
+    endereco_titulo: r?.endereco_titulo || DEFAULT.endereco_titulo,
+    endereco_texto: r?.endereco_texto || DEFAULT.endereco_texto,
+    copyright: r?.copyright || DEFAULT.copyright,
+    redes_sociais: r?.redes_sociais?.length ? r.redes_sociais : DEFAULT.redes_sociais,
+    links_rapidos: r?.links_rapidos?.length ? r.links_rapidos : DEFAULT.links_rapidos,
+    links_servicos: r?.links_servicos?.length ? r.links_servicos : DEFAULT.links_servicos,
+  };
+}
+
+export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
+  const [data, setData] = useState<RodapeData>(() => mergeRodape(override));
   useEffect(() => {
-    fetchRodape().then((r) => {
-      if (!r) return;
-      const { id: _id, ...rest } = r;
-      setData({
-        ...DEFAULT,
-        ...rest,
-        redes_sociais: rest.redes_sociais?.length ? rest.redes_sociais : DEFAULT.redes_sociais,
-        links_rapidos: rest.links_rapidos?.length ? rest.links_rapidos : DEFAULT.links_rapidos,
-        links_servicos: rest.links_servicos?.length ? rest.links_servicos : DEFAULT.links_servicos,
-      });
-    });
-  }, []);
+    if (override) {
+      setData(mergeRodape(override));
+      return;
+    }
+    fetchRodape().then((r) => setData(mergeRodape(r)));
+  }, [override]);
 
   return (
     <footer className="bg-gray-900 text-white">
