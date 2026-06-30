@@ -1,81 +1,43 @@
-## Problemas atuais (vistos no print)
+## Problemas
+1. Metade direita da tela fica vazia (`max-w-2xl` à esquerda) — obriga rolar.
+2. Campos aparecem em branco no admin embora a Home mostre texto, porque o site público usa fallbacks (`DEFAULT` em `Hero.tsx` / `Footer.tsx`) que o admin não conhece.
+3. "Botões de ação" sem nome no admin pelo mesmo motivo — o que aparece na Home vem do fallback, não do banco.
 
-1. **Coluna do formulário muito estreita** — rótulos quebram ("Etiqueta (laranja, em / cima do título)"), inputs ficam apertados, validação ocupa duas linhas.
-2. **Prévia mostra só os avisos** — quando faltam dados a área fica preta/vazia, então você não sabe como o bloco vai ficar nem onde ele entra na Home.
-3. **Sem contexto da Home** — a prévia mostra a seção isolada, não dá pra ver que ela vai aparecer entre o banner e a equipe, nem em que posição.
-4. **Tudo num único formulão rolável** — Conteúdo, Imagem, Botão, Cards e Aparência misturados.
+## Mudanças
 
-## O que vou mudar
-
-### 1. Reorganizar o diálogo em 2 colunas equilibradas + abas
-
+### 1. Layout em 2 colunas com prévia ao vivo (Banner e Rodapé)
+```text
+┌──────────────────────────┬───────────────────────────┐
+│ Formulário               │ Prévia ao vivo (sticky)   │
+│  Imagem / Texto / Botões │  [Desktop] [Mobile]       │
+│  Selo                    │  <Hero /> ou <Footer />   │
+│                          │  com valores atuais       │
+└──────────────────────────┴───────────────────────────┘
 ```
-┌─────────────────────────┬──────────────────────────────┐
-│  [Conteúdo] [Mídia]     │  Prévia em tempo real        │
-│  [Botão]   [Aparência]  │  ┌──────────────────────┐    │
-│                         │  │ [Desktop] [Mobile]   │    │
-│  título                 │  │                      │    │
-│  descrição              │  │   ← seção aqui →     │    │
-│  …                      │  │                      │    │
-│                         │  └──────────────────────┘    │
-│  ⓘ Aparecerá na posição │  Aparecerá entre:            │
-│     3 de 5, entre       │  ▸ Banner principal          │
-│     "Banner" e "Equipe" │  ▸ Próxima: Nossa equipe     │
-└─────────────────────────┴──────────────────────────────┘
-```
+- `grid lg:grid-cols-[minmax(0,520px)_1fr]`, prévia `sticky top-4`.
+- Em telas <lg volta para 1 coluna (form em cima, prévia abaixo).
+- A prévia reusa os componentes reais (`<Hero />`, `<Footer />`) num wrapper escalado (mesma técnica já usada em `SecoesManager`), com toggle Desktop/Mobile.
 
-- Largura do diálogo aumenta para `sm:max-w-6xl`, colunas `[1.1fr_1.4fr]`.
-- Abas substituem a rolagem gigante: **Conteúdo** (etiqueta, título, descrição, parágrafo extra), **Mídia** (imagem), **Botão** (texto + link), **Cards** (só aparece em grade-cards), **Aparência** (fundo + visível no site).
-- Cada aba mostra um badge vermelho com a contagem de erros daquela aba — você vê de longe onde corrigir.
+### 2. Pré-preencher com defaults reais do site
+- Extrair `DEFAULT` de `Hero.tsx` e do `Footer.tsx` para `src/lib/cms.ts` como `HERO_DEFAULTS` e `RODAPE_DEFAULTS` (fonte única).
+- No `HeroManager` e `RodapeManager`, ao carregar: campos `null`/vazios herdam dos defaults antes de virem para o estado do form — o admin passa a mostrar exatamente o que aparece na Home.
+- Marcar campos herdados com um pequeno rótulo "padrão do site" e botão "Restaurar padrão".
 
-### 2. Prévia que nunca fica vazia
+### 3. Prévia nunca vazia
+- Form mesclado com defaults é o que alimenta a prévia, então fica completa mesmo durante digitação.
+- Atualiza em tempo real (`useState`).
 
-- Quando o campo está vazio, a prévia mostra um **placeholder fantasma** com a forma certa: retângulo tracejado "Sua imagem aqui", linha cinza "Seu título aqui", duas linhas "Sua descrição aqui". Assim você sempre vê o layout do modelo escolhido, mesmo antes de preencher.
-- Toggle **Desktop / Mobile** no topo da prévia, mudando a largura simulada (1280 / 390 px) com o mesmo escalonamento atual.
-- Prévia fica **sticky** no topo da coluna direita, então rolar o formulário não esconde o resultado.
-
-### 3. Contexto da Home
-
-Abaixo da prévia da seção, um mini-mapa da Home mostrando a ordem real das seções (já temos `items` carregados):
-
-```
-Banner principal
-─────────────────
-Nossa abordagem         ← outras seções
-─────────────────
-► Esta seção (#3)       ← destacada
-─────────────────
-Quando procurar ajuda
-─────────────────
-Nossa equipe
-Depoimentos
-Rodapé
-```
-
-Cada item é clicável: ao clicar, abre direto o editor daquela seção. Isso responde "como vai aparecer na home" sem precisar sair da página.
-
-Botão extra **"Abrir Home em nova aba"** no rodapé do diálogo para ver no site real após salvar.
-
-### 4. Listagem da página (fora do diálogo)
-
-- Cada card de seção ganha:
-  - Número de posição grande à esquerda (#1, #2…)
-  - Miniatura maior (96×64) com o tipo do modelo sobreposto
-  - Linha de status: ✓ Pronta · ⚠ 2 avisos · ✕ 1 erro (revalidando com a mesma `computeBlockingErrors`)
-- Botão **"Pré-visualizar a Home completa"** no topo da página, abrindo `/` numa nova aba.
-- Texto explicativo curto no topo: "As seções abaixo aparecem na Home, na ordem listada, entre o banner e a equipe."
-
-### 5. Detalhes técnicos (resumido)
-
-- Arquivo único editado: `src/components/gestao/site/SecoesManager.tsx`.
-- Componente de placeholder/fantasma novo dentro do mesmo arquivo, sem dependências.
-- Reuso de `computeBlockingErrors` + a derivação `fieldIssues` que já existem; apenas redistribui em `Tabs` (shadcn `@/components/ui/tabs`).
-- Sem mudança em `DynamicSection.tsx`, banco de dados, RLS ou rotas.
+## Técnico
+- Arquivos editados:
+  - `src/components/gestao/site/HeroManager.tsx`
+  - `src/components/gestao/site/RodapeManager.tsx`
+  - `src/components/site/sections/Hero.tsx` (extrair DEFAULT)
+  - `src/components/site/Footer.tsx` (extrair DEFAULT)
+  - `src/lib/cms.ts` (exportar `HERO_DEFAULTS`, `RODAPE_DEFAULTS`)
+  - Novo: `src/components/gestao/site/PreviewFrame.tsx` (wrapper escalado reutilizável)
+- Sem mudanças em banco, RLS, rotas ou funcionalidade — só reorganização visual + herdar defaults.
 
 ## Fora do escopo
-
-- Editor visual drag-and-drop na própria Home.
-- Salvar rascunho/versionamento de seções.
-- Novos modelos de seção (mantemos os 3 atuais).
-
-Confirma que sigo nessa direção?
+- Aba "Seções" (já redesenhada).
+- Novos campos no banco.
+- Versionamento/rascunho.
