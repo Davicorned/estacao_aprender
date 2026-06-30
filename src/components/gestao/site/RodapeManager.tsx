@@ -24,6 +24,7 @@ import {
 import { PreviewFrame } from "./PreviewFrame";
 import { Footer } from "@/components/site/Footer";
 import { ColorField } from "./ColorField";
+import { LinkField } from "./LinkField";
 
 type Form = Omit<SiteRodape, "id">;
 
@@ -164,10 +165,12 @@ export function RodapeManager() {
           </div>
           {form[field].length === 0 && <p className="text-xs text-muted-foreground">Nenhum link.</p>}
           {form[field].map((l, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <Input placeholder="Rótulo" className="w-1/3" value={l.label} onChange={(e) => updateLink(field, i, { label: e.target.value })} />
-              <Input placeholder="/destino  ou  https://…" className="flex-1" value={l.href} onChange={(e) => updateLink(field, i, { href: e.target.value })} />
-              <Button size="icon" variant="ghost" onClick={() => removeLink(field, i)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+            <div key={i} className="rounded-lg border border-border p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <Input placeholder="Rótulo" className="flex-1" value={l.label} onChange={(e) => updateLink(field, i, { label: e.target.value })} />
+                <Button size="icon" variant="ghost" onClick={() => removeLink(field, i)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
+              </div>
+              <LinkField label="Destino" value={l.href ?? ""} onChange={(v) => updateLink(field, i, { href: v })} />
             </div>
           ))}
         </section>

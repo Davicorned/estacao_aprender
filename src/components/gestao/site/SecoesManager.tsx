@@ -31,6 +31,7 @@ import {
 import { DynamicSection } from "@/components/site/sections/dynamic/DynamicSection";
 import { useLayoutEffect } from "react";
 import { ColorField } from "./ColorField";
+import { LinkField } from "./LinkField";
 import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
@@ -869,8 +870,7 @@ export function SecoesManager({
                   <FieldMsg issue={fieldIssues.cta_texto} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Link do botão</Label>
-                  <Input className={fieldCls(fieldIssues.cta_link)} value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
+                  <LinkField label="Link do botão" value={form.cta_link} onChange={(v) => setForm({ ...form, cta_link: v })} />
                   <FieldMsg issue={fieldIssues.cta_link} />
                 </div>
               </TabsContent>
@@ -921,7 +921,7 @@ export function SecoesManager({
                         <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
                       )}
                       {itemConfig(form.tipo)?.link && (
-                        <Input value={it.link} onChange={(e) => updateItem(idx, { link: e.target.value })} placeholder="Link (opcional) — ex: /atendimento ou https://..." />
+                        <LinkField label="Link (opcional)" value={it.link} onChange={(v) => updateItem(idx, { link: v })} />
                       )}
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
@@ -1244,10 +1244,8 @@ function DadosModalidadesEditor({
             onChange={(e) => setBullets(idx, e.target.value)}
             placeholder="Um item por linha"
           />
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Input value={c.cta_texto ?? ""} onChange={(e) => patchCard(idx, { cta_texto: e.target.value })} placeholder="Texto do botão" />
-            <Input value={c.cta_link ?? ""} onChange={(e) => patchCard(idx, { cta_link: e.target.value })} placeholder="Link do botão" />
-          </div>
+          <Input value={c.cta_texto ?? ""} onChange={(e) => patchCard(idx, { cta_texto: e.target.value })} placeholder="Texto do botão" />
+          <LinkField label="Link do botão" value={c.cta_link ?? ""} onChange={(v) => patchCard(idx, { cta_link: v })} />
           <Input value={c.cor ?? ""} onChange={(e) => patchCard(idx, { cor: e.target.value })} placeholder="Cor de destaque (hex, opcional)" />
         </div>
       ))}
@@ -1273,10 +1271,8 @@ function DadosContatoMapaEditor({
   const patch = (p: Partial<DadosContatoMapa>) => onChange({ ...v, ...p });
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone (ex: (11) 99999-9999)" />
-        <Input value={v.telefone_link} onChange={(e) => patch({ telefone_link: e.target.value })} placeholder="Link do telefone (tel:/wa.me)" />
-      </div>
+      <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone exibido (ex: (11) 99999-9999)" />
+      <LinkField label="Destino ao clicar no telefone" value={v.telefone_link} onChange={(val) => patch({ telefone_link: val })} />
       <Input value={v.email} onChange={(e) => patch({ email: e.target.value })} placeholder="E-mail" />
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Input value={v.endereco_titulo} onChange={(e) => patch({ endereco_titulo: e.target.value })} placeholder="Título do endereço" />
