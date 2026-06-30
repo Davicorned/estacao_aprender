@@ -10,6 +10,7 @@ import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/sup
 import { invalidateCmsCache, HERO_DEFAULTS, type SiteHero } from "@/lib/cms";
 import { PreviewFrame } from "./PreviewFrame";
 import { Hero } from "@/components/site/sections/Hero";
+import { ColorField } from "./ColorField";
 
 type Form = Omit<SiteHero, "id">;
 
@@ -175,6 +176,21 @@ export function HeroManager() {
             </div>
           </div>
         )}
+      </section>
+
+      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Cor de fundo</h2>
+        <p className="text-xs text-muted-foreground">A imagem do banner aparece sobre esta cor (visível principalmente em desktop, ao redor da imagem).</p>
+        <ColorField
+          label="Fundo do banner"
+          value={form.bg_cor}
+          onChange={(v) => setForm({ ...form, bg_cor: v })}
+          value2={form.bg_cor_2}
+          onChange2={(v) => setForm({ ...form, bg_cor_2: v })}
+          allowGradient
+          presets={["#FEF3E8", "#FDDFC4", "#FFFFFF", "#F3F4F6", "#0F172A", "#D67F43"]}
+          helperText="Deixe em branco para usar o gradiente creme padrão da Home."
+        />
       </section>
 
       <div className="flex justify-end">
