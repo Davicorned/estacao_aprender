@@ -2,6 +2,7 @@ import * as Icons from "lucide-react";
 import { Calendar } from "lucide-react";
 import { FadeUp } from "../../FadeUp";
 import type { SiteSecao } from "@/lib/cms";
+import { buildBackground } from "@/components/gestao/site/ColorField";
 
 function Eyebrow({ text }: { text?: string | null }) {
   if (!text) return null;
@@ -29,11 +30,14 @@ function Cta({ texto, link }: { texto?: string | null; link?: string | null }) {
 }
 
 function TextoImagem({ secao, reverse }: { secao: SiteSecao; reverse: boolean }) {
-  const bg = secao.bg_style === "gradiente"
-    ? "bg-gradient-to-b from-gray-50 to-white"
-    : "bg-white";
+  const customBg = buildBackground(secao.bg_cor, secao.bg_cor_2);
+  const bg = customBg
+    ? ""
+    : secao.bg_style === "gradiente"
+      ? "bg-gradient-to-b from-gray-50 to-white"
+      : "bg-white";
   return (
-    <section className={`${bg} py-20`}>
+    <section className={`${bg} py-20`} style={customBg ? { background: customBg } : undefined}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
           <FadeUp className={reverse ? "lg:order-1" : "lg:order-2"}>
@@ -76,12 +80,15 @@ function getIcon(name?: string | null) {
 }
 
 function GradeCards({ secao }: { secao: SiteSecao }) {
-  const bg = secao.bg_style === "gradiente"
-    ? "bg-gradient-to-b from-gray-50 to-white"
-    : "bg-white";
+  const customBg = buildBackground(secao.bg_cor, secao.bg_cor_2);
+  const bg = customBg
+    ? ""
+    : secao.bg_style === "gradiente"
+      ? "bg-gradient-to-b from-gray-50 to-white"
+      : "bg-white";
   const hasImage = !!secao.imagem_url;
   return (
-    <section className={`${bg} py-20`}>
+    <section className={`${bg} py-20`} style={customBg ? { background: customBg } : undefined}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div
           className={
