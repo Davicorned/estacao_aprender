@@ -458,3 +458,24 @@ export async function fetchHeader(): Promise<SiteHeader | null> {
   headerInflight = run.finally(() => { headerInflight = null; });
   return headerInflight;
 }
+
+export async function fetchTema(): Promise<SiteTema | null> {
+  if (temaCache && Date.now() - temaCache.at < CACHE_TTL_MS) return temaCache.data;
+  if (temaInflight) return temaInflight;
+  const run = (async () => {
+    const { data, error } = await supabase
+      .from("site_tema")
+      .select("*")
+      .eq("id", "singleton")
+      .maybeSingle();
+    if (error) {
+      console.error("fetchTema error", error);
+      return null;
+    }
+    const mapped = data ? (data as SiteTema) : null;
+    temaCache = { data: mapped, at: Date.now() };
+    return mapped;
+  })();
+  temaInflight = run.finally(() => { temaInflight = null; });
+  return temaInflight;
+}
