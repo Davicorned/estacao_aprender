@@ -286,6 +286,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
       card_texto_cor: form.card_texto_cor,
       card_borda_cor: form.card_borda_cor,
       enabled: form.enabled,
+      dados: form.dados ?? {},
       updated_at: new Date().toISOString(),
     };
 
@@ -304,7 +305,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     }
 
     // Sync filhos: estratégia simples — apaga tudo e reinsere
-    if (form.tipo === "grade-cards") {
+    if (templateHas(form.tipo, "itens")) {
       await supabase.from("site_secao_itens").delete().eq("secao_id", secaoId);
       if (form.itens.length > 0) {
         const rows = form.itens.map((it, idx) => ({
@@ -312,11 +313,15 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
           titulo: it.titulo.trim() || "Item",
           descricao: it.descricao.trim() || null,
           icone: it.icone || "Sparkles",
+          link: it.link?.trim() || null,
           order: idx,
         }));
         const { error } = await supabase.from("site_secao_itens").insert(rows);
         if (error) { setSaving(false); return toast.error("Itens: " + error.message); }
       }
+    } else {
+      // Templates sem itens: limpa quaisquer itens órfãos
+      await supabase.from("site_secao_itens").delete().eq("secao_id", secaoId);
     }
 
     setSaving(false);
@@ -352,7 +357,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
   }
 
   function addItem() {
-    setForm((f) => ({ ...f, itens: [...f.itens, { titulo: "", descricao: "", icone: "Sparkles" }] }));
+    setForm((f) => ({ ...f, itens: [...f.itens, { titulo: "", descricao: "", icone: "Sparkles", link: "" }] }));
   }
   function updateItem(idx: number, patch: Partial<ItemForm>) {
     setForm((f) => ({ ...f, itens: f.itens.map((it, i) => i === idx ? { ...it, ...patch } : it) }));
@@ -370,7 +375,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     });
   }
 
-  const tipoLabel = (t: SecaoTipo) => TIPOS.find((x) => x.value === t)?.label ?? t;
+  const tipoLabel = (t: SecaoTipo) => SECTION_TEMPLATES_BY_TIPO[t]?.label ?? t;
 
   // ---- Validação (resumo + por campo) ----
   type Issue = { level: "error" | "warning"; msg: string };
@@ -399,7 +404,10 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     fieldIssues.descricao = { level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." };
     summary.push({ level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." });
   }
-  if (form.tipo !== "grade-cards" && !form.imagem_url) {
+  if (
+    (form.tipo === "texto-imagem-esquerda" || form.tipo === "texto-imagem-direita") &&
+    !form.imagem_url
+  ) {
     fieldIssues.imagem = { level: "error", msg: "Imagem obrigatória neste modelo." };
     summary.push({ level: "error", msg: "Este modelo exige uma imagem ao lado do texto." });
   }
@@ -415,11 +423,11 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     fieldIssues.cta_texto = { level: "error", msg: "Preencha o texto ou remova o link do botão." };
     summary.push({ level: "error", msg: "Link do botão sem texto: preencha o texto ou remova o link." });
   }
-  if (form.tipo === "grade-cards") {
+  if (templateHas(form.tipo, "itens")) {
     form.itens.forEach((it, i) => {
       if (!it.titulo.trim()) {
-        itemIssues[i] = { level: "warning", msg: "Card sem título." };
-        summary.push({ level: "warning", msg: `Card ${i + 1} sem título.` });
+        itemIssues[i] = { level: "warning", msg: "Item sem título." };
+        summary.push({ level: "warning", msg: `Item ${i + 1} sem título.` });
       }
     });
   }
