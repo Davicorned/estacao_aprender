@@ -1244,10 +1244,8 @@ function DadosModalidadesEditor({
             onChange={(e) => setBullets(idx, e.target.value)}
             placeholder="Um item por linha"
           />
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Input value={c.cta_texto ?? ""} onChange={(e) => patchCard(idx, { cta_texto: e.target.value })} placeholder="Texto do botão" />
-            <Input value={c.cta_link ?? ""} onChange={(e) => patchCard(idx, { cta_link: e.target.value })} placeholder="Link do botão" />
-          </div>
+          <Input value={c.cta_texto ?? ""} onChange={(e) => patchCard(idx, { cta_texto: e.target.value })} placeholder="Texto do botão" />
+          <LinkField label="Link do botão" value={c.cta_link ?? ""} onChange={(v) => patchCard(idx, { cta_link: v })} />
           <Input value={c.cor ?? ""} onChange={(e) => patchCard(idx, { cor: e.target.value })} placeholder="Cor de destaque (hex, opcional)" />
         </div>
       ))}
@@ -1273,10 +1271,8 @@ function DadosContatoMapaEditor({
   const patch = (p: Partial<DadosContatoMapa>) => onChange({ ...v, ...p });
   return (
     <div className="space-y-3">
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-        <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone (ex: (11) 99999-9999)" />
-        <Input value={v.telefone_link} onChange={(e) => patch({ telefone_link: e.target.value })} placeholder="Link do telefone (tel:/wa.me)" />
-      </div>
+      <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone exibido (ex: (11) 99999-9999)" />
+      <LinkField label="Destino ao clicar no telefone" value={v.telefone_link} onChange={(val) => patch({ telefone_link: val })} />
       <Input value={v.email} onChange={(e) => patch({ email: e.target.value })} placeholder="E-mail" />
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <Input value={v.endereco_titulo} onChange={(e) => patch({ endereco_titulo: e.target.value })} placeholder="Título do endereço" />
