@@ -46,6 +46,7 @@ const MAIN: NavItem[] = [
 ];
 
 const SITE: NavItem[] = [
+  { to: "/gestao/site", label: "Visão geral", icon: LayoutDashboard },
   { to: "/gestao/site/paginas", label: "Páginas", icon: FileTextIcon },
   { to: "/gestao/site/equipe", label: "Equipe", icon: UserCog },
   { to: "/gestao/site/depoimentos", label: "Depoimentos", icon: MessageSquareQuote },
