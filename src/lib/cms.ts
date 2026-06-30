@@ -387,3 +387,32 @@ export async function fetchSecoes(includeDisabled = false): Promise<SiteSecao[]>
   }
   return run;
 }
+
+export async function fetchHeader(): Promise<SiteHeader | null> {
+  if (headerCache && Date.now() - headerCache.at < CACHE_TTL_MS) return headerCache.data;
+  if (headerInflight) return headerInflight;
+  const run = (async () => {
+    const { data, error } = await supabase
+      .from("site_header")
+      .select("*, itens:site_header_itens(*)")
+      .eq("id", "singleton")
+      .maybeSingle();
+    if (error) {
+      console.error("fetchHeader error", error);
+      return null;
+    }
+    const mapped = data
+      ? ({
+          ...data,
+          logo_url: publicImageUrl((data as any).logo_url),
+          itens: (((data as any).itens ?? []) as SiteHeaderItem[])
+            .slice()
+            .sort((a, b) => a.order - b.order),
+        } as SiteHeader)
+      : null;
+    headerCache = { data: mapped, at: Date.now() };
+    return mapped;
+  })();
+  headerInflight = run.finally(() => { headerInflight = null; });
+  return headerInflight;
+}
