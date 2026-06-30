@@ -707,9 +707,9 @@ export function SecoesManager() {
                 <ColorField
                   label="Cor de fundo personalizada"
                   value={form.bg_cor}
-                  onChange={(v) => setForm({ ...form, bg_cor: v })}
+                  onChange={(v) => setForm((f) => ({ ...f, bg_cor: v }))}
                   value2={form.bg_cor_2}
-                  onChange2={(v) => setForm({ ...form, bg_cor_2: v })}
+                  onChange2={(v) => setForm((f) => ({ ...f, bg_cor_2: v }))}
                   allowGradient
                   presets={["#FFFFFF", "#FEF3E8", "#FDDFC4", "#F3F4F6", "#0F172A", "#D67F43"]}
                   helperText="Sobrescreve o estilo padrão. Use a paleta, um hex (#RRGGBB) ou monte um gradiente com 2 cores."
