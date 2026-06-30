@@ -37,15 +37,15 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
 
   return (
     <section
-      className={`relative overflow-hidden ${hero.bg_cor ? "" : "bg-gradient-to-br from-[var(--site-eyebrow)] via-[#FDDFC4] to-white"}`}
+      className={`relative overflow-hidden ${hero.bg_cor ? "" : "bg-gradient-to-br from-[var(--site-soft)] via-[var(--site-soft-2)] to-white"}`}
       style={{
         ...(hero.bg_cor ? { background: buildBackground(hero.bg_cor, hero.bg_cor_2) } : {}),
         ...(hero.texto_cor ? { color: hero.texto_cor } : {}),
       }}
     >
       {/* Decorative blobs */}
-      <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-[#FBCF9E]/30 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[#FBCF9E]/30 blur-3xl" />
+      <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-[var(--site-soft-3)]/30 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-24 -left-24 h-96 w-96 rounded-full bg-[var(--site-soft-3)]/30 blur-3xl" />
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
@@ -83,7 +83,7 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
               </a>
               <a
                 href={hero.cta_secundario_link ?? "#"}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-medium text-gray-700 transition-colors hover:border-[#FBCF9E] hover:text-[var(--site-primary)]"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-medium text-gray-700 transition-colors hover:border-[var(--site-soft-3)] hover:text-[var(--site-primary)]"
               >
                 {hero.cta_secundario_texto}
                 <ArrowRight className="h-4 w-4" />

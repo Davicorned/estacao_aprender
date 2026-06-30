@@ -66,7 +66,7 @@ export function OurValues({
             const Icon = getIcon(v.icone);
             const Inner = (
               <div className="flex h-full flex-col rounded-xl border-0 bg-white p-6 shadow-lg transition-shadow hover:shadow-xl">
-                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--site-eyebrow)] to-[#FDDFC4]">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-[var(--site-soft)] to-[var(--site-soft-2)]">
                   <Icon className="h-7 w-7 text-[var(--site-primary)]" />
                 </div>
                 <h3 className="mb-2 text-xl font-semibold text-gray-900">{v.titulo}</h3>

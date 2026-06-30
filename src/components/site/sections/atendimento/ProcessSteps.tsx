@@ -50,13 +50,13 @@ export function ProcessSteps({
                 <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-[var(--site-primary)] to-[var(--site-primary-hover)] text-xl font-bold text-white">
                   {i + 1}
                 </div>
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--site-eyebrow)]">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-[var(--site-soft)]">
                   <Icon className="h-7 w-7 text-[var(--site-primary)]" />
                 </div>
                 <h3 className="mb-2 text-lg font-semibold text-gray-900">{p.titulo}</h3>
                 <p className="text-sm leading-relaxed text-gray-600">{p.descricao}</p>
                 {i < passos.length - 1 && (
-                  <div className="absolute top-1/2 -right-4 hidden h-0.5 w-8 bg-[#FBCF9E] lg:block" />
+                  <div className="absolute top-1/2 -right-4 hidden h-0.5 w-8 bg-[var(--site-soft-3)] lg:block" />
                 )}
               </div>
             </FadeUp>
