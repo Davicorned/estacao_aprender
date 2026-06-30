@@ -145,6 +145,22 @@ export type SiteTema = {
   radius_px: number;
 };
 
+export type SitePagina = {
+  id: string;
+  slug: string;
+  titulo: string;
+  is_home: boolean;
+  enabled: boolean;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image: string | null;
+  banner_eyebrow: string | null;
+  banner_titulo: string | null;
+  banner_descricao: string | null;
+  banner_imagem_url: string | null;
+  order: number;
+};
+
 export const TEMA_DEFAULTS: Omit<SiteTema, "id"> = {
   cor_primaria: "#D67F43",
   cor_primaria_hover: "#C4682E",
@@ -249,17 +265,21 @@ let headerCache: { data: SiteHeader | null; at: number } | null = null;
 let headerInflight: Promise<SiteHeader | null> | null = null;
 let temaCache: { data: SiteTema | null; at: number } | null = null;
 let temaInflight: Promise<SiteTema | null> | null = null;
+let paginasCache: { data: SitePagina[]; at: number } | null = null;
+let paginasInflight: Promise<SitePagina[]> | null = null;
+const secoesByPaginaCache = new Map<string, { data: SiteSecao[]; at: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema") {
+export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema" | "paginas") {
   if (!which || which === "team") teamCache = null;
   if (!which || which === "testimonials") testimonialsCache = null;
   if (!which || which === "servicos") servicosCache = null;
   if (!which || which === "hero") heroCache = null;
   if (!which || which === "rodape") rodapeCache = null;
-  if (!which || which === "secoes") secoesCache = null;
+  if (!which || which === "secoes") { secoesCache = null; secoesByPaginaCache.clear(); }
   if (!which || which === "header") headerCache = null;
   if (!which || which === "tema") temaCache = null;
+  if (!which || which === "paginas") paginasCache = null;
 }
 
 export async function fetchTeam(includeDisabled = false): Promise<TeamMember[]> {
