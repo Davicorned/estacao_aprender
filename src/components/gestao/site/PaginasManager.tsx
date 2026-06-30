@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
 import { fetchPaginas, invalidateCmsCache, type SitePagina } from "@/lib/cms";
 import { SecoesManager } from "./SecoesManager";
+import { pageCanonicalUrl } from "@/lib/site-page-routes";
 
 type Form = Omit<SitePagina, "id" | "order"> & { id?: string };
 
@@ -207,12 +208,12 @@ export function PaginasManager() {
                   )}
                 </div>
                 <p className="truncate text-xs text-muted-foreground">
-                  <code>{p.is_home ? "/" : `/${p.slug}`}</code>
+                  <code>{pageCanonicalUrl(p.slug, p.is_home)}</code>
                 </p>
               </div>
               <div className="flex items-center gap-1">
                 <Button asChild size="icon" variant="ghost" title="Ver página">
-                  <a href={p.is_home ? "/" : `/${p.slug}`} target="_blank" rel="noreferrer">
+                  <a href={pageCanonicalUrl(p.slug, p.is_home)} target="_blank" rel="noreferrer">
                     <ExternalLink className="h-4 w-4" />
                   </a>
                 </Button>
@@ -352,12 +353,12 @@ function PaginaBuilder({ pagina, onBack }: { pagina: SitePagina; onBack: () => v
           <div>
             <h2 className="text-lg font-semibold">{pagina.titulo}</h2>
             <p className="text-xs text-muted-foreground">
-              Editando seções de <code>{pagina.is_home ? "/" : `/${pagina.slug}`}</code>
+              Editando seções de <code>{pageCanonicalUrl(pagina.slug, pagina.is_home)}</code>
             </p>
           </div>
         </div>
         <Button asChild variant="outline" size="sm">
-          <a href={pagina.is_home ? "/" : `/${pagina.slug}`} target="_blank" rel="noreferrer">
+          <a href={pageCanonicalUrl(pagina.slug, pagina.is_home)} target="_blank" rel="noreferrer">
             <ExternalLink className="mr-2 h-4 w-4" /> Ver página
           </a>
         </Button>

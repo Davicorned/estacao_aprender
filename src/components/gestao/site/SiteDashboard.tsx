@@ -48,7 +48,8 @@ type StorageFile = {
   mime: string | null;
 };
 
-const PAGE_URL = (slug: string, isHome: boolean) => (isHome ? "/" : `/${slug}`);
+import { pageCanonicalUrl } from "@/lib/site-page-routes";
+const PAGE_URL = (slug: string, isHome: boolean) => pageCanonicalUrl(slug, isHome);
 
 export function SiteDashboard() {
   const [loading, setLoading] = useState(true);
@@ -285,7 +286,7 @@ function PaginaCard({
         <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between gap-2 text-white">
           <div className="min-w-0">
             <div className="truncate text-sm font-semibold drop-shadow">{page.titulo}</div>
-            <div className="truncate font-mono text-[11px] opacity-90">/{page.is_home ? "" : page.slug}</div>
+            <div className="truncate font-mono text-[11px] opacity-90">{PAGE_URL(page.slug, page.is_home)}</div>
           </div>
           {page.is_home ? (
             <span className="rounded-full bg-white/90 px-2 py-0.5 text-[10px] font-semibold text-brand">
