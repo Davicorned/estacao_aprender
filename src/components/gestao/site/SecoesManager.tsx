@@ -537,9 +537,14 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
               card_bg_cor: s.card_bg_cor ?? null,
               card_texto_cor: s.card_texto_cor ?? null,
               card_borda_cor: s.card_borda_cor ?? null,
-              enabled: s.enabled, itens: s.itens.map((it) => ({
-                titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
+              enabled: s.enabled,
+              itens: s.itens.map((it) => ({
+                titulo: it.titulo,
+                descricao: it.descricao ?? "",
+                icone: it.icone ?? "Sparkles",
+                link: (it as any).link ?? "",
               })),
+              dados: (s as any).dados ?? {},
             };
             const errs = computeBlockingErrors(tmpForm);
             return (
