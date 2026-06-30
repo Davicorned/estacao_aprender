@@ -122,11 +122,11 @@ export function LinkField({
       : "";
 
   return (
-    <div className="space-y-2">
+    <div className="w-full min-w-0 space-y-2">
       {label && <Label>{label}</Label>}
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[180px_1fr]">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(120px,150px)_minmax(0,1fr)]">
         <Select value={mode} onValueChange={(v) => handleModeChange(v as Mode)}>
-          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full min-w-0"><SelectValue /></SelectTrigger>
           <SelectContent>
             <SelectItem value="pagina">Página do site</SelectItem>
             {allowWhatsApp && <SelectItem value="whatsapp">WhatsApp</SelectItem>}
@@ -137,8 +137,8 @@ export function LinkField({
 
         {mode === "pagina" && (
           <Select value={matchedPagePath} onValueChange={(v) => onChange(v)}>
-            <SelectTrigger>
-              <SelectValue placeholder="Escolha uma página…" />
+            <SelectTrigger className="w-full min-w-0">
+              <SelectValue className="truncate" placeholder="Escolha uma página…" />
             </SelectTrigger>
             <SelectContent>
               {pages.map((p) => (
@@ -152,6 +152,7 @@ export function LinkField({
 
         {mode === "whatsapp" && (
           <Input
+            className="w-full min-w-0"
             value={extractWaMessage(value ?? "")}
             onChange={(e) => onChange(buildWaLink(e.target.value))}
             placeholder="Mensagem (opcional). Ex: Olá! Quero agendar."
@@ -160,6 +161,7 @@ export function LinkField({
 
         {mode === "externo" && (
           <Input
+            className="w-full min-w-0"
             value={value ?? ""}
             onChange={(e) => onChange(e.target.value)}
             placeholder={placeholder ?? "https://…"}
@@ -168,6 +170,7 @@ export function LinkField({
 
         {mode === "ancora" && (
           <Input
+            className="w-full min-w-0"
             value={value ?? ""}
             onChange={(e) => {
               const raw = e.target.value;
