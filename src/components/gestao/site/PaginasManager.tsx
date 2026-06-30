@@ -342,7 +342,9 @@ export function PaginasManager() {
 }
 
 // ====== Builder: edit one page's sections ======
-function PaginaBuilder({ pagina, onBack }: { pagina: SitePagina; onBack: () => void }) {
+export function PaginaBuilder({
+  pagina, onBack, openSecaoId,
+}: { pagina: SitePagina; onBack: () => void; openSecaoId?: string }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -363,7 +365,7 @@ function PaginaBuilder({ pagina, onBack }: { pagina: SitePagina; onBack: () => v
           </a>
         </Button>
       </div>
-      <SecoesManager paginaId={pagina.id} />
+      <SecoesManager paginaId={pagina.id} openSecaoId={openSecaoId} />
     </div>
   );
 }
