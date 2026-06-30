@@ -651,22 +651,25 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
             {/* ============ COLUNA: FORMULÁRIO COM ABAS ============ */}
             <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="min-w-0">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="conteudo" className="relative">
                   Conteúdo
                   {tabErrors.conteudo > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.conteudo}</span>}
                 </TabsTrigger>
-                <TabsTrigger value="midia" className="relative">
+                <TabsTrigger value="midia" disabled={!templateHas(form.tipo, "imagem_url")} className="relative">
                   Mídia
                   {tabErrors.midia > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.midia}</span>}
                 </TabsTrigger>
-                <TabsTrigger value="botao" className="relative">
+                <TabsTrigger value="botao" disabled={!templateHas(form.tipo, "cta")} className="relative">
                   Botão
                   {tabErrors.botao > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.botao}</span>}
                 </TabsTrigger>
-                <TabsTrigger value="cards" disabled={form.tipo !== "grade-cards"} className="relative">
-                  Cards
+                <TabsTrigger value="cards" disabled={!templateHas(form.tipo, "itens")} className="relative">
+                  Itens
                   {tabErrors.cards > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.cards}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="dados" disabled={!templateHas(form.tipo, "dados")}>
+                  Dados
                 </TabsTrigger>
                 <TabsTrigger value="aparencia">Aparência</TabsTrigger>
               </TabsList>
