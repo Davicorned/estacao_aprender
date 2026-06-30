@@ -738,6 +738,35 @@ export function SecoesManager() {
                   presets={["#FFFFFF", "#FEF3E8", "#FDDFC4", "#F3F4F6", "#0F172A", "#D67F43"]}
                   helperText="Sobrescreve o estilo padrão. Use a paleta, um hex (#RRGGBB) ou monte um gradiente com 2 cores."
                 />
+                <ColorField
+                  label="Cor do texto da seção"
+                  value={form.texto_cor}
+                  onChange={(v) => setForm((f) => ({ ...f, texto_cor: v }))}
+                  presets={["#0F172A", "#1F2937", "#FFFFFF", "#475569", "#D67F43", "#FEF3E8"]}
+                  helperText="Aplica em título, descrição e textos do corpo."
+                />
+                {form.tipo === "grade-cards" && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <ColorField
+                      label="Fundo dos cards"
+                      value={form.card_bg_cor}
+                      onChange={(v) => setForm((f) => ({ ...f, card_bg_cor: v }))}
+                      presets={["#FEF3E8", "#FFFFFF", "#F3F4F6", "#0F172A", "#D67F43", "#FBCF9E"]}
+                    />
+                    <ColorField
+                      label="Texto dos cards"
+                      value={form.card_texto_cor}
+                      onChange={(v) => setForm((f) => ({ ...f, card_texto_cor: v }))}
+                      presets={["#374151", "#0F172A", "#FFFFFF", "#D67F43", "#475569", "#FEF3E8"]}
+                    />
+                    <ColorField
+                      label="Borda dos cards"
+                      value={form.card_borda_cor}
+                      onChange={(v) => setForm((f) => ({ ...f, card_borda_cor: v }))}
+                      presets={["#E5E7EB", "#FBCF9E", "#D67F43", "#0F172A", "#FFFFFF", "#94A3B8"]}
+                    />
+                  </div>
+                )}
                 <div className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
                     <p className="text-sm font-medium">Visível no site</p>
