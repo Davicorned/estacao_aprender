@@ -84,7 +84,7 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
               <a
                 href={ctaTo}
                 className="hidden h-9 items-center gap-2 rounded-full px-6 text-sm font-medium text-white shadow-lg transition-all sm:inline-flex"
-                style={{ backgroundColor: accent, boxShadow: `0 10px 15px -3px ${accent}40` }}
+                style={{ backgroundColor: accent, boxShadow: `0 10px 15px -3px color-mix(in srgb, ${accent} 25%, transparent)` }}
               >
                 <Calendar className="h-4 w-4" />
                 {cfg.cta_label}
