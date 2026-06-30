@@ -31,6 +31,7 @@ import { Route as GestaoSiteDepoimentosRouteImport } from './routes/gestao.site.
 import { Route as GestaoPacientesNovoRouteImport } from './routes/gestao.pacientes.novo'
 import { Route as GestaoPacientesIdRouteImport } from './routes/gestao.pacientes.$id'
 import { Route as GestaoSiteLayoutIndexRouteImport } from './routes/gestao.site.layout.index'
+import { Route as GestaoSiteLayoutTemaRouteImport } from './routes/gestao.site.layout.tema'
 import { Route as GestaoSiteLayoutSecoesRouteImport } from './routes/gestao.site.layout.secoes'
 import { Route as GestaoSiteLayoutRodapeRouteImport } from './routes/gestao.site.layout.rodape'
 import { Route as GestaoSiteLayoutHeroRouteImport } from './routes/gestao.site.layout.hero'
@@ -147,6 +148,11 @@ const GestaoSiteLayoutIndexRoute = GestaoSiteLayoutIndexRouteImport.update({
   path: '/',
   getParentRoute: () => GestaoSiteLayoutRoute,
 } as any)
+const GestaoSiteLayoutTemaRoute = GestaoSiteLayoutTemaRouteImport.update({
+  id: '/tema',
+  path: '/tema',
+  getParentRoute: () => GestaoSiteLayoutRoute,
+} as any)
 const GestaoSiteLayoutSecoesRoute = GestaoSiteLayoutSecoesRouteImport.update({
   id: '/secoes',
   path: '/secoes',
@@ -200,6 +206,7 @@ export interface FileRoutesByFullPath {
   '/gestao/site/layout/hero': typeof GestaoSiteLayoutHeroRoute
   '/gestao/site/layout/rodape': typeof GestaoSiteLayoutRodapeRoute
   '/gestao/site/layout/secoes': typeof GestaoSiteLayoutSecoesRoute
+  '/gestao/site/layout/tema': typeof GestaoSiteLayoutTemaRoute
   '/gestao/site/layout/': typeof GestaoSiteLayoutIndexRoute
 }
 export interface FileRoutesByTo {
@@ -226,6 +233,7 @@ export interface FileRoutesByTo {
   '/gestao/site/layout/hero': typeof GestaoSiteLayoutHeroRoute
   '/gestao/site/layout/rodape': typeof GestaoSiteLayoutRodapeRoute
   '/gestao/site/layout/secoes': typeof GestaoSiteLayoutSecoesRoute
+  '/gestao/site/layout/tema': typeof GestaoSiteLayoutTemaRoute
   '/gestao/site/layout': typeof GestaoSiteLayoutIndexRoute
 }
 export interface FileRoutesById {
@@ -256,6 +264,7 @@ export interface FileRoutesById {
   '/gestao/site/layout/hero': typeof GestaoSiteLayoutHeroRoute
   '/gestao/site/layout/rodape': typeof GestaoSiteLayoutRodapeRoute
   '/gestao/site/layout/secoes': typeof GestaoSiteLayoutSecoesRoute
+  '/gestao/site/layout/tema': typeof GestaoSiteLayoutTemaRoute
   '/gestao/site/layout/': typeof GestaoSiteLayoutIndexRoute
 }
 export interface FileRouteTypes {
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/gestao/site/layout/hero'
     | '/gestao/site/layout/rodape'
     | '/gestao/site/layout/secoes'
+    | '/gestao/site/layout/tema'
     | '/gestao/site/layout/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
     | '/gestao/site/layout/hero'
     | '/gestao/site/layout/rodape'
     | '/gestao/site/layout/secoes'
+    | '/gestao/site/layout/tema'
     | '/gestao/site/layout'
   id:
     | '__root__'
@@ -342,6 +353,7 @@ export interface FileRouteTypes {
     | '/gestao/site/layout/hero'
     | '/gestao/site/layout/rodape'
     | '/gestao/site/layout/secoes'
+    | '/gestao/site/layout/tema'
     | '/gestao/site/layout/'
   fileRoutesById: FileRoutesById
 }
@@ -511,6 +523,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoSiteLayoutIndexRouteImport
       parentRoute: typeof GestaoSiteLayoutRoute
     }
+    '/gestao/site/layout/tema': {
+      id: '/gestao/site/layout/tema'
+      path: '/tema'
+      fullPath: '/gestao/site/layout/tema'
+      preLoaderRoute: typeof GestaoSiteLayoutTemaRouteImport
+      parentRoute: typeof GestaoSiteLayoutRoute
+    }
     '/gestao/site/layout/secoes': {
       id: '/gestao/site/layout/secoes'
       path: '/secoes'
@@ -570,6 +589,7 @@ interface GestaoSiteLayoutRouteChildren {
   GestaoSiteLayoutHeroRoute: typeof GestaoSiteLayoutHeroRoute
   GestaoSiteLayoutRodapeRoute: typeof GestaoSiteLayoutRodapeRoute
   GestaoSiteLayoutSecoesRoute: typeof GestaoSiteLayoutSecoesRoute
+  GestaoSiteLayoutTemaRoute: typeof GestaoSiteLayoutTemaRoute
   GestaoSiteLayoutIndexRoute: typeof GestaoSiteLayoutIndexRoute
 }
 
@@ -578,6 +598,7 @@ const GestaoSiteLayoutRouteChildren: GestaoSiteLayoutRouteChildren = {
   GestaoSiteLayoutHeroRoute: GestaoSiteLayoutHeroRoute,
   GestaoSiteLayoutRodapeRoute: GestaoSiteLayoutRodapeRoute,
   GestaoSiteLayoutSecoesRoute: GestaoSiteLayoutSecoesRoute,
+  GestaoSiteLayoutTemaRoute: GestaoSiteLayoutTemaRoute,
   GestaoSiteLayoutIndexRoute: GestaoSiteLayoutIndexRoute,
 }
 
