@@ -46,6 +46,7 @@ export type SiteHero = {
   badge_subtitulo: string | null;
   bg_cor: string | null;
   bg_cor_2: string | null;
+  texto_cor: string | null; // hex livre — substitui o esquema claro/escuro
 };
 
 export type RedeSocial = { tipo: string; url: string };
@@ -65,6 +66,9 @@ export type SiteRodape = {
   links_servicos: LinkItem[];
   bg_cor: string | null;
   texto_cor: string | null; // 'claro' | 'escuro' | null
+  texto_cor_hex: string | null; // hex livre — tem precedência sobre texto_cor
+  card_bg_cor: string | null;
+  card_texto_cor: string | null;
 };
 
 export type SecaoTipo =
@@ -96,6 +100,10 @@ export type SiteSecao = {
   bg_cor_2: string | null;
   order: number;
   enabled: boolean;
+  texto_cor: string | null;
+  card_bg_cor: string | null;
+  card_texto_cor: string | null;
+  card_borda_cor: string | null;
   itens: SiteSecaoItem[];
 };
 
@@ -118,6 +126,7 @@ export type SiteHeader = {
   bg_cor: string | null;
   bg_cor_2: string | null;
   texto_cor: string | null; // 'claro' | 'escuro' | null
+  texto_cor_hex: string | null; // hex livre — tem precedência sobre texto_cor
   cor_destaque: string | null;
   sticky: boolean;
   itens: SiteHeaderItem[];
@@ -142,6 +151,7 @@ export const HERO_DEFAULTS: Omit<SiteHero, "id"> = {
   badge_subtitulo: "atendidas com sucesso",
   bg_cor: null,
   bg_cor_2: null,
+  texto_cor: null,
 };
 
 export const RODAPE_DEFAULTS: Omit<SiteRodape, "id"> = {
@@ -171,6 +181,9 @@ export const RODAPE_DEFAULTS: Omit<SiteRodape, "id"> = {
   ],
   bg_cor: null,
   texto_cor: null,
+  texto_cor_hex: null,
+  card_bg_cor: null,
+  card_texto_cor: null,
 };
 
 export const HEADER_DEFAULTS: Omit<SiteHeader, "id"> = {
@@ -183,6 +196,7 @@ export const HEADER_DEFAULTS: Omit<SiteHeader, "id"> = {
   bg_cor: null,
   bg_cor_2: null,
   texto_cor: null,
+  texto_cor_hex: null,
   cor_destaque: "#D67F43",
   sticky: true,
   itens: [
