@@ -245,6 +245,10 @@ export function SecoesManager() {
       bg_style: form.bg_style,
       bg_cor: form.bg_cor,
       bg_cor_2: form.bg_cor_2,
+      texto_cor: form.texto_cor,
+      card_bg_cor: form.card_bg_cor,
+      card_texto_cor: form.card_texto_cor,
+      card_borda_cor: form.card_borda_cor,
       enabled: form.enabled,
       updated_at: new Date().toISOString(),
     };
