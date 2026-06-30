@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Instagram, Facebook, Linkedin, Youtube, Twitter, Music2, Phone, Mail, MapPin } from "lucide-react";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import { fetchRodape, RODAPE_DEFAULTS, type LinkItem, type RedeSocial, type SiteRodape } from "@/lib/cms";
+import { buildBackground } from "@/components/gestao/site/ColorField";
 
 const LOGO = logoAsset.url;
 
@@ -54,8 +55,18 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
     fetchRodape().then((r) => setData(mergeRodape(r)));
   }, [override]);
 
+  const customBg = buildBackground(data.bg_cor);
+  // Decide a paleta de texto. "claro" => textos claros (fundo escuro). "escuro" => textos escuros (fundo claro).
+  const isLight = data.texto_cor === "escuro";
+  const cls = isLight
+    ? { footer: "text-gray-800", muted: "text-gray-600", strong: "text-gray-900", border: "border-gray-200", hover: "hover:text-gray-900", chip: "bg-black/5", link: "text-gray-600 hover:text-gray-900" }
+    : { footer: "text-white", muted: "text-gray-400", strong: "text-gray-300", border: "border-gray-800", hover: "hover:text-white", chip: "bg-white/10", link: "text-gray-400 hover:text-white" };
+
   return (
-    <footer className="bg-gray-900 text-white">
+    <footer
+      className={`${customBg ? "" : "bg-gray-900"} ${cls.footer}`}
+      style={customBg ? { background: customBg } : undefined}
+    >
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
         {/* Brand */}
         <div>
@@ -63,7 +74,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
             <img src={LOGO} alt="Estação Aprender" className="h-10 w-auto" />
             <span className="text-lg font-semibold">Estação Aprender</span>
           </div>
-          <p className="mt-4 text-sm leading-relaxed text-gray-400">
+          <p className={`mt-4 text-sm leading-relaxed ${cls.muted}`}>
             {data.texto_institucional}
           </p>
           <div className="mt-6 flex gap-3">
@@ -76,7 +87,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
                   target="_blank"
                   rel="noopener noreferrer"
                   aria-label={r.tipo}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-[#D67F43]"
+                  className={`flex h-10 w-10 items-center justify-center rounded-full ${cls.chip} transition-colors hover:bg-[#D67F43] hover:text-white`}
                 >
                   <Icon className="h-5 w-5" />
                 </a>
@@ -90,7 +101,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
           <h4 className="text-sm font-semibold uppercase tracking-wider">Navegação</h4>
           <ul className="mt-4 space-y-3 text-sm">
             {data.links_rapidos.map((l, i) => (
-              <li key={i}><FooterLink item={l} /></li>
+              <li key={i}><a href={l.href} className={`${cls.link} transition-colors`}>{l.label}</a></li>
             ))}
           </ul>
         </div>
@@ -100,7 +111,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
           <h4 className="text-sm font-semibold uppercase tracking-wider">Serviços</h4>
           <ul className="mt-4 space-y-3 text-sm">
             {data.links_servicos.map((l, i) => (
-              <li key={i}><FooterLink item={l} /></li>
+              <li key={i}><a href={l.href} className={`${cls.link} transition-colors`}>{l.label}</a></li>
             ))}
           </ul>
         </div>
@@ -108,7 +119,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
         {/* Contato */}
         <div>
           <h4 className="text-sm font-semibold uppercase tracking-wider">Contato</h4>
-          <ul className="mt-4 space-y-4 text-sm text-gray-400">
+          <ul className={`mt-4 space-y-4 text-sm ${cls.muted}`}>
             <li className="flex items-start gap-3">
               <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[#D67F43]" />
               <a
@@ -116,21 +127,21 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
                 href={data.telefone_link ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="hover:text-white"
+                className={cls.hover}
               >
                 {data.telefone}
               </a>
             </li>
             <li className="flex items-start gap-3">
               <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[#D67F43]" />
-              <a href={`mailto:${data.email ?? ""}`} className="break-all hover:text-white">
+              <a href={`mailto:${data.email ?? ""}`} className={`break-all ${cls.hover}`}>
                 {data.email}
               </a>
             </li>
             <li className="flex items-start gap-3">
               <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#D67F43]" />
               <span>
-                <strong className="block text-gray-300">{data.endereco_titulo}</strong>
+                <strong className={`block ${cls.strong}`}>{data.endereco_titulo}</strong>
                 {data.endereco_texto}
               </span>
             </li>
@@ -139,13 +150,13 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col items-center justify-between gap-4 border-t border-gray-800 pt-8 pb-8 text-sm text-gray-400 md:flex-row mt-0">
+        <div className={`flex flex-col items-center justify-between gap-4 border-t ${cls.border} pt-8 pb-8 text-sm ${cls.muted} md:flex-row mt-0`}>
           <p>{data.copyright}</p>
           <a
             href="https://www.solucoesmarketingdigital.com.br"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-white"
+            className={cls.hover}
           >
             Desenvolvimento: Soluções Marketing Digital
           </a>
