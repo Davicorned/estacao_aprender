@@ -3,6 +3,19 @@ import { Calendar } from "lucide-react";
 import { FadeUp } from "../../FadeUp";
 import type { SiteSecao } from "@/lib/cms";
 import { buildBackground } from "@/components/gestao/site/ColorField";
+import { OurValues } from "../quemsomos/OurValues";
+import { Founder } from "../quemsomos/Founder";
+import { ProcessSteps } from "../atendimento/ProcessSteps";
+import { Modalities } from "../atendimento/Modalities";
+import { ServicesAccordion } from "../servicos/ServicesAccordion";
+import { Contact } from "../Contact";
+import { CTABanner } from "../../CTABanner";
+import {
+  DEFAULT_CONTATO_MAPA,
+  DEFAULT_MODALIDADES,
+  type DadosContatoMapa,
+  type DadosModalidades,
+} from "@/lib/site-templates";
 
 function Eyebrow({ text }: { text?: string | null }) {
   if (!text) return null;
@@ -207,6 +220,88 @@ export function DynamicSection({ secao }: { secao: SiteSecao }) {
       return <TextoImagem secao={secao} reverse={true} />;
     case "grade-cards":
       return <GradeCards secao={secao} />;
+    case "cards-icones":
+      return (
+        <OurValues
+          eyebrow={secao.eyebrow ?? undefined}
+          titulo={secao.titulo ?? undefined}
+          itens={secao.itens.map((it) => ({
+            icone: it.icone ?? "Sparkles",
+            titulo: it.titulo,
+            descricao: it.descricao ?? "",
+            link: it.link ?? null,
+          }))}
+        />
+      );
+    case "passos-processo":
+      return (
+        <ProcessSteps
+          eyebrow={secao.eyebrow ?? undefined}
+          titulo={secao.titulo ?? undefined}
+          passos={secao.itens.map((it) => ({
+            icone: it.icone ?? "Sparkles",
+            titulo: it.titulo,
+            descricao: it.descricao ?? "",
+          }))}
+        />
+      );
+    case "accordion":
+      return (
+        <ServicesAccordion
+          servicos={secao.itens.map((it) => ({
+            id: it.id,
+            icone: it.icone ?? "Sparkles",
+            titulo: it.titulo,
+            descricao: it.descricao ?? "",
+          }))}
+        />
+      );
+    case "cta-banner":
+      return (
+        <CTABanner
+          title={secao.titulo ?? undefined}
+          description={secao.descricao ?? undefined}
+          buttonLabel={secao.cta_texto ?? undefined}
+          href={secao.cta_link ?? undefined}
+        />
+      );
+    case "destaque-pessoa":
+      return (
+        <Founder
+          eyebrow={secao.eyebrow ?? undefined}
+          titulo={secao.titulo ?? undefined}
+          legenda={secao.descricao ?? undefined}
+          imagem_url={secao.imagem_url ?? undefined}
+        />
+      );
+    case "modalidades": {
+      const d = (secao.dados ?? {}) as Partial<DadosModalidades>;
+      const cards = d.cards && d.cards.length > 0 ? d.cards : DEFAULT_MODALIDADES.cards;
+      return (
+        <Modalities
+          eyebrow={secao.eyebrow ?? undefined}
+          titulo={secao.titulo ?? undefined}
+          cards={cards}
+        />
+      );
+    }
+    case "contato-mapa": {
+      const d = (secao.dados ?? {}) as Partial<DadosContatoMapa>;
+      return (
+        <Contact
+          eyebrow={secao.eyebrow ?? undefined}
+          titulo={secao.titulo ?? undefined}
+          descricao={secao.descricao ?? undefined}
+          telefone={d.telefone ?? DEFAULT_CONTATO_MAPA.telefone}
+          telefone_link={d.telefone_link ?? DEFAULT_CONTATO_MAPA.telefone_link}
+          email={d.email ?? DEFAULT_CONTATO_MAPA.email}
+          endereco_titulo={d.endereco_titulo ?? DEFAULT_CONTATO_MAPA.endereco_titulo}
+          endereco_texto={d.endereco_texto ?? DEFAULT_CONTATO_MAPA.endereco_texto}
+          horarios={d.horarios ?? DEFAULT_CONTATO_MAPA.horarios}
+          mapa_embed_url={d.mapa_embed_url ?? DEFAULT_CONTATO_MAPA.mapa_embed_url}
+        />
+      );
+    }
     default:
       return null;
   }
