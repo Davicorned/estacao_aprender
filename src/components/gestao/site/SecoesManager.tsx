@@ -1016,3 +1016,102 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     </>
   );
 }
+
+// ============================================================================
+// Editores estruturados para o campo `dados`
+// ============================================================================
+
+function DadosModalidadesEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosModalidades>;
+  onChange: (v: DadosModalidades) => void;
+}) {
+  const cards: ModalidadeCard[] =
+    value.cards && value.cards.length > 0 ? value.cards : DEFAULT_MODALIDADES.cards;
+
+  function patchCard(idx: number, patch: Partial<ModalidadeCard>) {
+    const next = cards.map((c, i) => (i === idx ? { ...c, ...patch } : c));
+    onChange({ cards: next });
+  }
+  function setBullets(idx: number, raw: string) {
+    const bullets = raw.split("\n").map((l) => l.trim()).filter(Boolean);
+    patchCard(idx, { bullets });
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Dois cards comparativos (ex: Particular vs. Convênio). Cada card tem ícone, título, descrição, bullets e um botão.
+      </p>
+      {cards.map((c, idx) => (
+        <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_160px]">
+            <Input value={c.titulo} onChange={(e) => patchCard(idx, { titulo: e.target.value })} placeholder="Título do card" />
+            <Select value={c.icone} onValueChange={(v) => patchCard(idx, { icone: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ICONES_SUGERIDOS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Textarea rows={2} value={c.descricao} onChange={(e) => patchCard(idx, { descricao: e.target.value })} placeholder="Descrição curta" />
+          <Textarea
+            rows={4}
+            value={(c.bullets ?? []).join("\n")}
+            onChange={(e) => setBullets(idx, e.target.value)}
+            placeholder="Um item por linha"
+          />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Input value={c.cta_texto ?? ""} onChange={(e) => patchCard(idx, { cta_texto: e.target.value })} placeholder="Texto do botão" />
+            <Input value={c.cta_link ?? ""} onChange={(e) => patchCard(idx, { cta_link: e.target.value })} placeholder="Link do botão" />
+          </div>
+          <Input value={c.cor ?? ""} onChange={(e) => patchCard(idx, { cor: e.target.value })} placeholder="Cor de destaque (hex, opcional)" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DadosContatoMapaEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosContatoMapa>;
+  onChange: (v: DadosContatoMapa) => void;
+}) {
+  const v: DadosContatoMapa = {
+    telefone: value.telefone ?? DEFAULT_CONTATO_MAPA.telefone,
+    telefone_link: value.telefone_link ?? DEFAULT_CONTATO_MAPA.telefone_link,
+    email: value.email ?? DEFAULT_CONTATO_MAPA.email,
+    endereco_titulo: value.endereco_titulo ?? DEFAULT_CONTATO_MAPA.endereco_titulo,
+    endereco_texto: value.endereco_texto ?? DEFAULT_CONTATO_MAPA.endereco_texto,
+    horarios: value.horarios ?? DEFAULT_CONTATO_MAPA.horarios,
+    mapa_embed_url: value.mapa_embed_url ?? DEFAULT_CONTATO_MAPA.mapa_embed_url,
+  };
+  const patch = (p: Partial<DadosContatoMapa>) => onChange({ ...v, ...p });
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone (ex: (11) 99999-9999)" />
+        <Input value={v.telefone_link} onChange={(e) => patch({ telefone_link: e.target.value })} placeholder="Link do telefone (tel:/wa.me)" />
+      </div>
+      <Input value={v.email} onChange={(e) => patch({ email: e.target.value })} placeholder="E-mail" />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Input value={v.endereco_titulo} onChange={(e) => patch({ endereco_titulo: e.target.value })} placeholder="Título do endereço" />
+        <Input value={v.endereco_texto} onChange={(e) => patch({ endereco_texto: e.target.value })} placeholder="Endereço" />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Horários (um por linha)</Label>
+        <Textarea
+          rows={3}
+          value={v.horarios.join("\n")}
+          onChange={(e) => patch({ horarios: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">URL do mapa (iframe embed do Google Maps)</Label>
+        <Input value={v.mapa_embed_url} onChange={(e) => patch({ mapa_embed_url: e.target.value })} placeholder="https://www.google.com/maps/embed?..." />
+      </div>
+    </div>
+  );
+}
