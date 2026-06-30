@@ -18,6 +18,7 @@ import {
   Monitor,
   Sparkles,
   Palette,
+  FileText as FileTextIcon,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -45,6 +46,7 @@ const MAIN: NavItem[] = [
 ];
 
 const SITE: NavItem[] = [
+  { to: "/gestao/site/paginas", label: "Páginas", icon: FileTextIcon },
   { to: "/gestao/site/equipe", label: "Equipe", icon: UserCog },
   { to: "/gestao/site/depoimentos", label: "Depoimentos", icon: MessageSquareQuote },
   { to: "/gestao/site/servicos", label: "Serviços", icon: Sparkles },
@@ -63,6 +65,7 @@ const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/site\/equipe/, title: "Equipe (site)" },
   { match: /^\/gestao\/site\/depoimentos/, title: "Depoimentos (site)" },
   { match: /^\/gestao\/site\/servicos/, title: "Serviços (site)" },
+  { match: /^\/gestao\/site\/paginas/, title: "Páginas do site" },
   { match: /^\/gestao\/site\/layout\/hero/, title: "Layout · Banner" },
   { match: /^\/gestao\/site\/layout\/secoes/, title: "Layout · Seções" },
   { match: /^\/gestao\/site\/layout\/rodape/, title: "Layout · Rodapé" },

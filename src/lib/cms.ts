@@ -145,6 +145,22 @@ export type SiteTema = {
   radius_px: number;
 };
 
+export type SitePagina = {
+  id: string;
+  slug: string;
+  titulo: string;
+  is_home: boolean;
+  enabled: boolean;
+  meta_title: string | null;
+  meta_description: string | null;
+  og_image: string | null;
+  banner_eyebrow: string | null;
+  banner_titulo: string | null;
+  banner_descricao: string | null;
+  banner_imagem_url: string | null;
+  order: number;
+};
+
 export const TEMA_DEFAULTS: Omit<SiteTema, "id"> = {
   cor_primaria: "#D67F43",
   cor_primaria_hover: "#C4682E",
@@ -249,17 +265,21 @@ let headerCache: { data: SiteHeader | null; at: number } | null = null;
 let headerInflight: Promise<SiteHeader | null> | null = null;
 let temaCache: { data: SiteTema | null; at: number } | null = null;
 let temaInflight: Promise<SiteTema | null> | null = null;
+let paginasCache: { data: SitePagina[]; at: number } | null = null;
+let paginasInflight: Promise<SitePagina[]> | null = null;
+const secoesByPaginaCache = new Map<string, { data: SiteSecao[]; at: number }>();
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema") {
+export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema" | "paginas") {
   if (!which || which === "team") teamCache = null;
   if (!which || which === "testimonials") testimonialsCache = null;
   if (!which || which === "servicos") servicosCache = null;
   if (!which || which === "hero") heroCache = null;
   if (!which || which === "rodape") rodapeCache = null;
-  if (!which || which === "secoes") secoesCache = null;
+  if (!which || which === "secoes") { secoesCache = null; secoesByPaginaCache.clear(); }
   if (!which || which === "header") headerCache = null;
   if (!which || which === "tema") temaCache = null;
+  if (!which || which === "paginas") paginasCache = null;
 }
 
 export async function fetchTeam(includeDisabled = false): Promise<TeamMember[]> {
@@ -397,10 +417,19 @@ export async function fetchRodape(): Promise<SiteRodape | null> {
   return rodapeInflight;
 }
 
-export async function fetchSecoes(includeDisabled = false): Promise<SiteSecao[]> {
+export async function fetchSecoes(
+  includeDisabled = false,
+  paginaId?: string | null,
+): Promise<SiteSecao[]> {
+  const cacheKey = paginaId ?? "__all__";
   if (!includeDisabled) {
-    if (secoesCache && Date.now() - secoesCache.at < CACHE_TTL_MS) return secoesCache.data;
-    if (secoesInflight) return secoesInflight;
+    if (paginaId) {
+      const cached = secoesByPaginaCache.get(cacheKey);
+      if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.data;
+    } else {
+      if (secoesCache && Date.now() - secoesCache.at < CACHE_TTL_MS) return secoesCache.data;
+      if (secoesInflight) return secoesInflight;
+    }
   }
   const run = (async () => {
     let q = supabase
@@ -408,6 +437,7 @@ export async function fetchSecoes(includeDisabled = false): Promise<SiteSecao[]>
       .select("*, itens:site_secao_itens(*)")
       .order("order", { ascending: true });
     if (!includeDisabled) q = q.eq("enabled", true);
+    if (paginaId) q = q.eq("pagina_id", paginaId);
     const { data, error } = await q;
     if (error) {
       console.error("fetchSecoes error", error);
@@ -420,10 +450,13 @@ export async function fetchSecoes(includeDisabled = false): Promise<SiteSecao[]>
         .slice()
         .sort((a, b) => a.order - b.order),
     })) as SiteSecao[];
-    if (!includeDisabled) secoesCache = { data: mapped, at: Date.now() };
+    if (!includeDisabled) {
+      if (paginaId) secoesByPaginaCache.set(cacheKey, { data: mapped, at: Date.now() });
+      else secoesCache = { data: mapped, at: Date.now() };
+    }
     return mapped;
   })();
-  if (!includeDisabled) {
+  if (!includeDisabled && !paginaId) {
     secoesInflight = run.finally(() => { secoesInflight = null; });
     return secoesInflight;
   }
@@ -478,4 +511,52 @@ export async function fetchTema(): Promise<SiteTema | null> {
   })();
   temaInflight = run.finally(() => { temaInflight = null; });
   return temaInflight;
+}
+export async function fetchPaginas(includeDisabled = false): Promise<SitePagina[]> {
+  if (!includeDisabled) {
+    if (paginasCache && Date.now() - paginasCache.at < CACHE_TTL_MS) return paginasCache.data;
+    if (paginasInflight) return paginasInflight;
+  }
+  const run = (async () => {
+    let q = supabase
+      .from("site_paginas")
+      .select("*")
+      .order("order", { ascending: true });
+    if (!includeDisabled) q = q.eq("enabled", true);
+    const { data, error } = await q;
+    if (error) {
+      console.error("fetchPaginas error", error);
+      return [];
+    }
+    const mapped = (data ?? []).map((p: any) => ({
+      ...p,
+      banner_imagem_url: publicImageUrl(p.banner_imagem_url),
+      og_image: publicImageUrl(p.og_image),
+    })) as SitePagina[];
+    if (!includeDisabled) paginasCache = { data: mapped, at: Date.now() };
+    return mapped;
+  })();
+  if (!includeDisabled) {
+    paginasInflight = run.finally(() => { paginasInflight = null; });
+    return paginasInflight;
+  }
+  return run;
+}
+
+export async function fetchPaginaBySlug(slug: string): Promise<SitePagina | null> {
+  const { data, error } = await supabase
+    .from("site_paginas")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) {
+    console.error("fetchPaginaBySlug error", error);
+    return null;
+  }
+  if (!data) return null;
+  return {
+    ...(data as any),
+    banner_imagem_url: publicImageUrl((data as any).banner_imagem_url),
+    og_image: publicImageUrl((data as any).og_image),
+  } as SitePagina;
 }

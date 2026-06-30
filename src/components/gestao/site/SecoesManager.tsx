@@ -98,7 +98,7 @@ function computeBlockingErrors(form: FormState): string[] {
   return errors;
 }
 
-export function SecoesManager() {
+export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
   const [items, setItems] = useState<SiteSecao[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -169,13 +169,13 @@ export function SecoesManager() {
   async function load() {
     setLoading(true);
     invalidateCmsCache("secoes");
-    const data = await fetchSecoes(true);
+    const data = await fetchSecoes(true, paginaId ?? undefined);
     // Re-fetch raw paths for editing (publicImageUrl converts paths to URLs in fetchSecoes)
     setItems(data);
     setLoading(false);
   }
 
-  useEffect(() => { void load(); }, []);
+  useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [paginaId]);
 
   function openNew(tipo: SecaoTipo) {
     setForm({ ...empty, tipo });
@@ -260,7 +260,9 @@ export function SecoesManager() {
     } else {
       const nextOrder = items.length ? Math.max(...items.map((i) => i.order)) + 1 : 0;
       const { data, error } = await supabase
-        .from("site_secoes").insert({ ...payload, order: nextOrder }).select("id").single();
+        .from("site_secoes")
+        .insert({ ...payload, order: nextOrder, ...(paginaId ? { pagina_id: paginaId } : {}) })
+        .select("id").single();
       if (error || !data) { setSaving(false); return toast.error(error?.message ?? "Erro"); }
       secaoId = data.id as string;
     }

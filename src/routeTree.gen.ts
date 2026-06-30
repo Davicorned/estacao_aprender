@@ -14,6 +14,7 @@ import { Route as ServicosRouteImport } from './routes/Servicos'
 import { Route as QuemSomosRouteImport } from './routes/QuemSomos'
 import { Route as ContatoRouteImport } from './routes/Contato'
 import { Route as AtendimentoRouteImport } from './routes/Atendimento'
+import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GestaoIndexRouteImport } from './routes/gestao.index'
 import { Route as GestaoPacientesRouteImport } from './routes/gestao.pacientes'
@@ -25,6 +26,7 @@ import { Route as GestaoConfiguracoesRouteImport } from './routes/gestao.configu
 import { Route as GestaoAgendaRouteImport } from './routes/gestao.agenda'
 import { Route as GestaoPacientesIndexRouteImport } from './routes/gestao.pacientes.index'
 import { Route as GestaoSiteServicosRouteImport } from './routes/gestao.site.servicos'
+import { Route as GestaoSitePaginasRouteImport } from './routes/gestao.site.paginas'
 import { Route as GestaoSiteLayoutRouteImport } from './routes/gestao.site.layout'
 import { Route as GestaoSiteEquipeRouteImport } from './routes/gestao.site.equipe'
 import { Route as GestaoSiteDepoimentosRouteImport } from './routes/gestao.site.depoimentos'
@@ -61,6 +63,11 @@ const ContatoRoute = ContatoRouteImport.update({
 const AtendimentoRoute = AtendimentoRouteImport.update({
   id: '/Atendimento',
   path: '/Atendimento',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SlugRoute = SlugRouteImport.update({
+  id: '/$slug',
+  path: '/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -116,6 +123,11 @@ const GestaoPacientesIndexRoute = GestaoPacientesIndexRouteImport.update({
 const GestaoSiteServicosRoute = GestaoSiteServicosRouteImport.update({
   id: '/site/servicos',
   path: '/site/servicos',
+  getParentRoute: () => GestaoRoute,
+} as any)
+const GestaoSitePaginasRoute = GestaoSitePaginasRouteImport.update({
+  id: '/site/paginas',
+  path: '/site/paginas',
   getParentRoute: () => GestaoRoute,
 } as any)
 const GestaoSiteLayoutRoute = GestaoSiteLayoutRouteImport.update({
@@ -181,6 +193,7 @@ const ApiPublicFileProxySplatRoute = ApiPublicFileProxySplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
   '/QuemSomos': typeof QuemSomosRoute
@@ -199,6 +212,7 @@ export interface FileRoutesByFullPath {
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/site/layout': typeof GestaoSiteLayoutRouteWithChildren
+  '/gestao/site/paginas': typeof GestaoSitePaginasRoute
   '/gestao/site/servicos': typeof GestaoSiteServicosRoute
   '/gestao/pacientes/': typeof GestaoPacientesIndexRoute
   '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
@@ -211,6 +225,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
   '/QuemSomos': typeof QuemSomosRoute
@@ -226,6 +241,7 @@ export interface FileRoutesByTo {
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
+  '/gestao/site/paginas': typeof GestaoSitePaginasRoute
   '/gestao/site/servicos': typeof GestaoSiteServicosRoute
   '/gestao/pacientes': typeof GestaoPacientesIndexRoute
   '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
@@ -239,6 +255,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/$slug': typeof SlugRoute
   '/Atendimento': typeof AtendimentoRoute
   '/Contato': typeof ContatoRoute
   '/QuemSomos': typeof QuemSomosRoute
@@ -257,6 +274,7 @@ export interface FileRoutesById {
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/site/layout': typeof GestaoSiteLayoutRouteWithChildren
+  '/gestao/site/paginas': typeof GestaoSitePaginasRoute
   '/gestao/site/servicos': typeof GestaoSiteServicosRoute
   '/gestao/pacientes/': typeof GestaoPacientesIndexRoute
   '/api/public/file-proxy/$': typeof ApiPublicFileProxySplatRoute
@@ -271,6 +289,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/$slug'
     | '/Atendimento'
     | '/Contato'
     | '/QuemSomos'
@@ -289,6 +308,7 @@ export interface FileRouteTypes {
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/site/layout'
+    | '/gestao/site/paginas'
     | '/gestao/site/servicos'
     | '/gestao/pacientes/'
     | '/api/public/file-proxy/$'
@@ -301,6 +321,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/$slug'
     | '/Atendimento'
     | '/Contato'
     | '/QuemSomos'
@@ -316,6 +337,7 @@ export interface FileRouteTypes {
     | '/gestao/pacientes/novo'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
+    | '/gestao/site/paginas'
     | '/gestao/site/servicos'
     | '/gestao/pacientes'
     | '/api/public/file-proxy/$'
@@ -328,6 +350,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/$slug'
     | '/Atendimento'
     | '/Contato'
     | '/QuemSomos'
@@ -346,6 +369,7 @@ export interface FileRouteTypes {
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/site/layout'
+    | '/gestao/site/paginas'
     | '/gestao/site/servicos'
     | '/gestao/pacientes/'
     | '/api/public/file-proxy/$'
@@ -359,6 +383,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  SlugRoute: typeof SlugRoute
   AtendimentoRoute: typeof AtendimentoRoute
   ContatoRoute: typeof ContatoRoute
   QuemSomosRoute: typeof QuemSomosRoute
@@ -402,6 +427,13 @@ declare module '@tanstack/react-router' {
       path: '/Atendimento'
       fullPath: '/Atendimento'
       preLoaderRoute: typeof AtendimentoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/$slug': {
+      id: '/$slug'
+      path: '/$slug'
+      fullPath: '/$slug'
+      preLoaderRoute: typeof SlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -479,6 +511,13 @@ declare module '@tanstack/react-router' {
       path: '/site/servicos'
       fullPath: '/gestao/site/servicos'
       preLoaderRoute: typeof GestaoSiteServicosRouteImport
+      parentRoute: typeof GestaoRoute
+    }
+    '/gestao/site/paginas': {
+      id: '/gestao/site/paginas'
+      path: '/site/paginas'
+      fullPath: '/gestao/site/paginas'
+      preLoaderRoute: typeof GestaoSitePaginasRouteImport
       parentRoute: typeof GestaoRoute
     }
     '/gestao/site/layout': {
@@ -617,6 +656,7 @@ interface GestaoRouteChildren {
   GestaoSiteDepoimentosRoute: typeof GestaoSiteDepoimentosRoute
   GestaoSiteEquipeRoute: typeof GestaoSiteEquipeRoute
   GestaoSiteLayoutRoute: typeof GestaoSiteLayoutRouteWithChildren
+  GestaoSitePaginasRoute: typeof GestaoSitePaginasRoute
   GestaoSiteServicosRoute: typeof GestaoSiteServicosRoute
 }
 
@@ -632,6 +672,7 @@ const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoSiteDepoimentosRoute: GestaoSiteDepoimentosRoute,
   GestaoSiteEquipeRoute: GestaoSiteEquipeRoute,
   GestaoSiteLayoutRoute: GestaoSiteLayoutRouteWithChildren,
+  GestaoSitePaginasRoute: GestaoSitePaginasRoute,
   GestaoSiteServicosRoute: GestaoSiteServicosRoute,
 }
 
@@ -640,6 +681,7 @@ const GestaoRouteWithChildren =
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  SlugRoute: SlugRoute,
   AtendimentoRoute: AtendimentoRoute,
   ContatoRoute: ContatoRoute,
   QuemSomosRoute: QuemSomosRoute,
