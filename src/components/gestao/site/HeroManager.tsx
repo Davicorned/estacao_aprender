@@ -142,12 +142,16 @@ export function HeroManager() {
             <Label>Botão principal — texto</Label>
             <Input value={form.cta_primario_texto ?? ""} onChange={(e) => setForm({ ...form, cta_primario_texto: e.target.value })} />
           </div>
-          <LinkField label="Botão principal — link" value={form.cta_primario_link ?? ""} onChange={(v) => setForm({ ...form, cta_primario_link: v })} />
+          <div className="min-w-0">
+            <LinkField label="Botão principal — link" value={form.cta_primario_link ?? ""} onChange={(v) => setForm({ ...form, cta_primario_link: v })} />
+          </div>
           <div className="space-y-2">
             <Label>Botão secundário — texto</Label>
             <Input value={form.cta_secundario_texto ?? ""} onChange={(e) => setForm({ ...form, cta_secundario_texto: e.target.value })} />
           </div>
-          <LinkField label="Botão secundário — link" value={form.cta_secundario_link ?? ""} onChange={(v) => setForm({ ...form, cta_secundario_link: v })} />
+          <div className="min-w-0">
+            <LinkField label="Botão secundário — link" value={form.cta_secundario_link ?? ""} onChange={(v) => setForm({ ...form, cta_secundario_link: v })} />
+          </div>
         </div>
       </section>
 
