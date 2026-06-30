@@ -1,8 +1,15 @@
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Monitor, Smartphone } from "lucide-react";
 
 type Device = "desktop" | "mobile";
 
+/**
+ * Renderiza children dentro de um <iframe> com largura simulada (1280 ou 390 px).
+ * Isso garante que as media queries do Tailwind (sm/md/lg) respondam à largura
+ * SIMULADA, não à viewport real do navegador — assim Hero e Footer aparecem
+ * exatamente como ficam no site.
+ */
 export function PreviewFrame({
   children,
   height = 600,
@@ -13,11 +20,15 @@ export function PreviewFrame({
   mobileHeight?: number;
 }) {
   const wrapRef = useRef<HTMLDivElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [device, setDevice] = useState<Device>("desktop");
   const [scale, setScale] = useState(0.45);
+  const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
+
+  const targetW = device === "desktop" ? 1280 : 390;
+  const targetH = device === "mobile" ? mobileHeight : height;
 
   useLayoutEffect(() => {
-    const targetW = device === "desktop" ? 1280 : 390;
     function recompute() {
       const w = wrapRef.current?.clientWidth ?? 0;
       if (w > 0) setScale(Math.min(1, w / targetW));
@@ -25,9 +36,42 @@ export function PreviewFrame({
     recompute();
     window.addEventListener("resize", recompute);
     return () => window.removeEventListener("resize", recompute);
-  }, [device]);
+  }, [targetW]);
 
-  const h = device === "mobile" ? mobileHeight : height;
+  // Inicializa o iframe: copia estilos da página pai e marca onde montar
+  // a árvore React via portal.
+  const handleIframeLoad = () => {
+    const iframe = iframeRef.current;
+    if (!iframe) return;
+    const doc = iframe.contentDocument;
+    if (!doc) return;
+
+    // Limpa head e copia tags de estilo do documento pai (Tailwind + fontes).
+    doc.head.innerHTML = "";
+    const styleNodes = document.head.querySelectorAll(
+      'style, link[rel="stylesheet"], link[rel="preload"][as="style"]'
+    );
+    styleNodes.forEach((node) => {
+      doc.head.appendChild(node.cloneNode(true));
+    });
+
+    // Garante meta viewport para que media queries usem a largura do iframe.
+    const meta = doc.createElement("meta");
+    meta.setAttribute("name", "viewport");
+    meta.setAttribute("content", `width=${targetW}`);
+    doc.head.appendChild(meta);
+
+    // Reset básico do body.
+    doc.body.style.margin = "0";
+    doc.body.style.background = "#ffffff";
+
+    setMountNode(doc.body);
+  };
+
+  // Quando o device muda, o iframe é recriado (via key) e onLoad redispara.
+  useEffect(() => {
+    setMountNode(null);
+  }, [device]);
 
   return (
     <div className="space-y-3">
@@ -65,17 +109,24 @@ export function PreviewFrame({
         className={`overflow-hidden rounded-xl border border-border bg-white ${
           device === "mobile" ? "mx-auto max-w-[420px]" : ""
         }`}
-        style={{ height: Math.round(h * scale) }}
+        style={{ height: Math.round(targetH * scale) }}
       >
-        <div
+        <iframe
+          key={device}
+          ref={iframeRef}
+          title="Prévia"
+          srcDoc="<!doctype html><html><head></head><body></body></html>"
+          onLoad={handleIframeLoad}
           style={{
-            width: device === "desktop" ? 1280 : 390,
+            width: targetW,
+            height: targetH,
+            border: 0,
             transform: `scale(${scale})`,
             transformOrigin: "top left",
+            background: "#fff",
           }}
-        >
-          {children}
-        </div>
+        />
+        {mountNode ? createPortal(children, mountNode) : null}
       </div>
     </div>
   );
