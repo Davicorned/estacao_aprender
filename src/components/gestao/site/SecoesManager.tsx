@@ -3,8 +3,10 @@ import * as LucideIcons from "lucide-react";
 import {
   Plus, Pencil, Trash2, ArrowUp, ArrowDown, Upload, X, Eye, EyeOff,
   AlertCircle, AlertTriangle, CheckCircle2,
-  Monitor, Smartphone, ExternalLink, Sparkles,
+  Monitor, Smartphone, ExternalLink, Sparkles, MoreHorizontal,
+  ArrowRightLeft, Copy as CopyIcon,
 } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,12 +18,15 @@ import {
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
 import {
-  fetchSecoes, invalidateCmsCache,
-  type SiteSecao, type SiteSecaoItem, type SecaoTipo,
+  fetchSecoes, fetchPaginas, invalidateCmsCache,
+  type SiteSecao, type SiteSecaoItem, type SecaoTipo, type SitePagina,
 } from "@/lib/cms";
 import { DynamicSection } from "@/components/site/sections/dynamic/DynamicSection";
 import { useLayoutEffect } from "react";
@@ -124,7 +129,10 @@ function computeBlockingErrors(form: FormState): string[] {
   return errors;
 }
 
-export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
+export function SecoesManager({
+  paginaId,
+  openSecaoId,
+}: { paginaId?: string; openSecaoId?: string } = {}) {
   const [items, setItems] = useState<SiteSecao[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -137,6 +145,12 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
   const [previewScale, setPreviewScale] = useState(0.45);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [tab, setTab] = useState<"conteudo" | "midia" | "botao" | "cards" | "dados" | "aparencia">("conteudo");
+  const [movePaginas, setMovePaginas] = useState<SitePagina[] | null>(null);
+  const [moveTarget, setMoveTarget] = useState<{ secao: SiteSecao; mode: "mover" | "duplicar" } | null>(null);
+  const [moveDestId, setMoveDestId] = useState<string>("");
+  const [moveBusy, setMoveBusy] = useState(false);
+  const canCreate = !!paginaId;
+  const autoOpenedRef = useRef<string | null>(null);
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -208,7 +222,23 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
 
   useEffect(() => { void load(); /* eslint-disable-next-line react-hooks/exhaustive-deps */ }, [paginaId]);
 
+  // Auto-abrir uma seção específica (vindo do overview "Layout › Seções").
+  useEffect(() => {
+    if (!openSecaoId || loading) return;
+    if (autoOpenedRef.current === openSecaoId) return;
+    const s = items.find((i) => i.id === openSecaoId);
+    if (s) {
+      autoOpenedRef.current = openSecaoId;
+      void openEdit(s);
+    }
+    /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  }, [openSecaoId, items, loading]);
+
   function openNew(tipo: SecaoTipo) {
+    if (!canCreate) {
+      toast.error("Selecione uma página antes de criar uma seção.");
+      return;
+    }
     setForm({ ...empty, tipo });
     setPickTipo(false);
     setOpen(true);
@@ -261,6 +291,10 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
 
   async function save() {
     // Guarda dura: revalida antes de qualquer escrita, mesmo se a UI deixar escapar.
+    if (!form.id && !canCreate) {
+      toast.error("Não é possível criar uma seção sem página de destino.");
+      return;
+    }
     const errors = computeBlockingErrors(form);
     if (errors.length > 0) {
       toast.error(errors[0], {
@@ -354,6 +388,76 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     const { error } = await supabase.from("site_secoes").update({ enabled: !s.enabled }).eq("id", s.id);
     if (error) return toast.error(error.message);
     void load();
+  }
+
+  // ---------- Mover / Duplicar para outra página ----------
+  async function openMoveDialog(s: SiteSecao, mode: "mover" | "duplicar") {
+    const pgs = await fetchPaginas(true);
+    const list = mode === "mover" ? pgs.filter((p) => p.id !== paginaId) : pgs;
+    if (list.length === 0) {
+      toast.error("Não há outras páginas disponíveis.");
+      return;
+    }
+    setMovePaginas(list);
+    setMoveTarget({ secao: s, mode });
+    setMoveDestId(list[0].id);
+  }
+  function closeMoveDialog() {
+    setMoveTarget(null);
+    setMovePaginas(null);
+    setMoveDestId("");
+  }
+  async function confirmMove() {
+    if (!moveTarget || !moveDestId) return;
+    const { secao, mode } = moveTarget;
+    setMoveBusy(true);
+    try {
+      // calcula próximo order na página destino
+      const { data: destSecoes, error: e0 } = await supabase
+        .from("site_secoes").select("order").eq("pagina_id", moveDestId);
+      if (e0) throw e0;
+      const nextOrder =
+        (destSecoes ?? []).reduce((m, r: any) => Math.max(m, r.order ?? 0), -1) + 1;
+
+      if (mode === "mover") {
+        const { error } = await supabase
+          .from("site_secoes")
+          .update({ pagina_id: moveDestId, order: nextOrder })
+          .eq("id", secao.id);
+        if (error) throw error;
+        toast.success("Seção movida");
+      } else {
+        // duplicar: ler row crua para preservar imagem_url path
+        const { data: raw, error: eRead } = await supabase
+          .from("site_secoes").select("*").eq("id", secao.id).single();
+        if (eRead || !raw) throw eRead ?? new Error("Seção não encontrada");
+        const { id: _id, created_at: _ca, updated_at: _ua, ...rest } = raw as any;
+        const { data: novo, error: eIns } = await supabase
+          .from("site_secoes")
+          .insert({ ...rest, pagina_id: moveDestId, order: nextOrder })
+          .select("id").single();
+        if (eIns || !novo) throw eIns ?? new Error("Falha ao duplicar");
+        const { data: itensRaw, error: eItens } = await supabase
+          .from("site_secao_itens").select("*").eq("secao_id", secao.id);
+        if (eItens) throw eItens;
+        if (itensRaw && itensRaw.length > 0) {
+          const rows = itensRaw.map((it: any) => {
+            const { id: _iid, created_at: _ic, ...r } = it;
+            return { ...r, secao_id: novo.id };
+          });
+          const { error: eIns2 } = await supabase.from("site_secao_itens").insert(rows);
+          if (eIns2) throw eIns2;
+        }
+        toast.success("Seção duplicada");
+      }
+      invalidateCmsCache("secoes");
+      closeMoveDialog();
+      void load();
+    } catch (e: any) {
+      toast.error(e?.message ?? "Falha na operação");
+    } finally {
+      setMoveBusy(false);
+    }
   }
 
   function addItem() {
@@ -475,8 +579,15 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
 
   // Mini-mapa da Home: ordem real das seções fixas + dinâmicas.
   // (Mesma ordem usada em src/routes/index.tsx)
-  const homeMap: { key: string; label: string; fixed: boolean; secaoId?: string; isCurrent?: boolean }[] = [
-    { key: "hero", label: "Banner principal", fixed: true },
+  const homeMap: {
+    key: string;
+    label: string;
+    fixed: boolean;
+    secaoId?: string;
+    isCurrent?: boolean;
+    editTo?: string;
+  }[] = [
+    { key: "hero", label: "Banner principal", fixed: true, editTo: "/gestao/site/layout/hero" },
     { key: "when", label: "Quando procurar ajuda", fixed: true },
     { key: "approach", label: "Nossa abordagem", fixed: true },
     ...items.map((s) => ({
@@ -489,10 +600,10 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     ...(open && !form.id
       ? [{ key: "new", label: ghostTitulo || "Nova seção", fixed: false, isCurrent: true }]
       : []),
-    { key: "team", label: "Nossa equipe", fixed: true },
-    { key: "testimonials", label: "Depoimentos", fixed: true },
+    { key: "team", label: "Nossa equipe", fixed: true, editTo: "/gestao/site/equipe" },
+    { key: "testimonials", label: "Depoimentos", fixed: true, editTo: "/gestao/site/depoimentos" },
     { key: "contact", label: "Contato", fixed: true },
-    { key: "footer", label: "Rodapé", fixed: true },
+    { key: "footer", label: "Rodapé", fixed: true, editTo: "/gestao/site/layout/rodape" },
   ];
 
   return (
@@ -503,7 +614,9 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
             {items.length} seção{items.length !== 1 ? "es" : ""} cadastrada{items.length !== 1 ? "s" : ""}.
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Estas seções aparecem na Home, entre <strong>Nossa abordagem</strong> e <strong>Nossa equipe</strong>, na ordem definida abaixo.
+            {canCreate
+              ? "Estas seções pertencem a esta página, na ordem definida abaixo."
+              : "Selecione uma página em \"Páginas\" para criar ou editar seções — seções não podem existir soltas."}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -512,9 +625,11 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
               <ExternalLink className="mr-2 h-4 w-4" /> Ver Home
             </a>
           </Button>
-          <Button onClick={() => setPickTipo(true)} className="bg-[#D67F43] hover:bg-[#B85A24]">
-            <Plus className="mr-2 h-4 w-4" /> Nova seção
-          </Button>
+          {canCreate && (
+            <Button onClick={() => setPickTipo(true)} className="bg-[#D67F43] hover:bg-[#B85A24]">
+              <Plus className="mr-2 h-4 w-4" /> Nova seção
+            </Button>
+          )}
         </div>
       </div>
 
@@ -591,6 +706,21 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
                     {s.enabled ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4 text-muted-foreground" />}
                   </Button>
                   <Button size="icon" variant="ghost" onClick={() => openEdit(s)}><Pencil className="h-4 w-4" /></Button>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button size="icon" variant="ghost" title="Mais ações">
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem onClick={() => void openMoveDialog(s, "mover")}>
+                        <ArrowRightLeft className="mr-2 h-4 w-4" /> Mover para página…
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void openMoveDialog(s, "duplicar")}>
+                        <CopyIcon className="mr-2 h-4 w-4" /> Duplicar para página…
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button size="icon" variant="ghost" onClick={() => remove(s.id)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
                 </div>
               </div>
@@ -987,7 +1117,20 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
                       <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-current opacity-60" />
                       <span className="truncate">{item.label}</span>
                       {item.isCurrent && <span className="ml-auto text-[10px] uppercase tracking-wide">esta seção</span>}
-                      {item.fixed && <span className="ml-auto text-[10px] uppercase tracking-wide opacity-60">fixa</span>}
+                      {item.fixed && !item.isCurrent && (
+                        item.editTo ? (
+                          <Link
+                            to={item.editTo}
+                            className="ml-auto text-[10px] uppercase tracking-wide text-[#B85A24] hover:underline dark:text-amber-300"
+                          >
+                            Editar ›
+                          </Link>
+                        ) : (
+                          <span className="ml-auto text-[10px] uppercase tracking-wide opacity-60">
+                            fixa no código
+                          </span>
+                        )
+                      )}
                     </li>
                   ))}
                 </ol>
@@ -1009,6 +1152,45 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
               className="bg-[#D67F43] hover:bg-[#B85A24]"
             >
               {saving ? "Salvando…" : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog: Mover / Duplicar para outra página */}
+      <Dialog open={!!moveTarget} onOpenChange={(v) => { if (!v) closeMoveDialog(); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {moveTarget?.mode === "mover" ? "Mover seção" : "Duplicar seção"}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <p className="text-sm text-muted-foreground">
+              {moveTarget?.mode === "mover"
+                ? "Escolha a página de destino. A seção sairá daqui e passará a renderizar lá."
+                : "Uma cópia da seção (com todos os itens) será criada na página escolhida."}
+            </p>
+            <div>
+              <Label className="text-xs">Página de destino</Label>
+              <Select value={moveDestId} onValueChange={setMoveDestId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {(movePaginas ?? []).map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.titulo}{p.is_home ? " (Home)" : ""} — /{p.slug}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={closeMoveDialog} disabled={moveBusy}>Cancelar</Button>
+            <Button onClick={() => void confirmMove()} disabled={moveBusy || !moveDestId} className="bg-[#D67F43] hover:bg-[#B85A24]">
+              {moveBusy
+                ? "Aplicando…"
+                : moveTarget?.mode === "mover" ? "Mover" : "Duplicar"}
             </Button>
           </DialogFooter>
         </DialogContent>
