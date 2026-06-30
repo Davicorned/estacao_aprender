@@ -5,6 +5,7 @@ import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { PageBanner } from "@/components/site/PageBanner";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
 import { fetchPaginaBySlug, type SitePagina } from "@/lib/cms";
+import { pageCanonicalUrl } from "@/lib/site-page-routes";
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
@@ -17,17 +18,18 @@ export const Route = createFileRoute("/$slug")({
     if (!p) return { meta: [] };
     const title = p.meta_title || `${p.titulo} — Estação Aprender`;
     const desc = p.meta_description || p.banner_descricao || "";
+    const canonical = pageCanonicalUrl(p.slug, p.is_home);
     const meta: { title?: string; name?: string; property?: string; content?: string }[] = [
       { title },
       { name: "description", content: desc },
       { property: "og:title", content: title },
       { property: "og:description", content: desc },
-      { property: "og:url", content: `/${p.slug}` },
+      { property: "og:url", content: canonical },
     ];
     if (p.og_image) meta.push({ property: "og:image", content: p.og_image });
     return {
       meta,
-      links: [{ rel: "canonical", href: `/${p.slug}` }],
+      links: [{ rel: "canonical", href: canonical }],
     };
   },
   component: SlugPage,
