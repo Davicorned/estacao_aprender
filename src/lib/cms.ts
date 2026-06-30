@@ -132,6 +132,31 @@ export type SiteHeader = {
   itens: SiteHeaderItem[];
 };
 
+export type SiteTema = {
+  id: "singleton";
+  cor_primaria: string;
+  cor_primaria_hover: string;
+  cor_secundaria: string | null;
+  cor_texto: string;
+  cor_fundo: string;
+  cor_eyebrow: string | null;
+  fonte_titulos: string;
+  fonte_corpo: string;
+  radius_px: number;
+};
+
+export const TEMA_DEFAULTS: Omit<SiteTema, "id"> = {
+  cor_primaria: "#D67F43",
+  cor_primaria_hover: "#C4682E",
+  cor_secundaria: null,
+  cor_texto: "#1A1A1A",
+  cor_fundo: "#FFFFFF",
+  cor_eyebrow: null,
+  fonte_titulos: "Inter",
+  fonte_corpo: "Inter",
+  radius_px: 10,
+};
+
 // Defaults usados como fallback quando o banco está vazio. Ficam aqui
 // como fonte única para o site público e o admin enxergarem o mesmo.
 export const HERO_DEFAULTS: Omit<SiteHero, "id"> = {
@@ -222,9 +247,11 @@ let secoesCache: { data: SiteSecao[]; at: number } | null = null;
 let secoesInflight: Promise<SiteSecao[]> | null = null;
 let headerCache: { data: SiteHeader | null; at: number } | null = null;
 let headerInflight: Promise<SiteHeader | null> | null = null;
+let temaCache: { data: SiteTema | null; at: number } | null = null;
+let temaInflight: Promise<SiteTema | null> | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header") {
+export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema") {
   if (!which || which === "team") teamCache = null;
   if (!which || which === "testimonials") testimonialsCache = null;
   if (!which || which === "servicos") servicosCache = null;
@@ -232,6 +259,7 @@ export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" 
   if (!which || which === "rodape") rodapeCache = null;
   if (!which || which === "secoes") secoesCache = null;
   if (!which || which === "header") headerCache = null;
+  if (!which || which === "tema") temaCache = null;
 }
 
 export async function fetchTeam(includeDisabled = false): Promise<TeamMember[]> {
