@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
+import * as LucideIcons from "lucide-react";
 import {
   Plus, Pencil, Trash2, ArrowUp, ArrowDown, Upload, X, Eye, EyeOff,
-  LayoutTemplate, Image as ImageIcon, Grid3x3, AlertCircle, AlertTriangle, CheckCircle2,
-  Monitor, Smartphone, ExternalLink,
+  AlertCircle, AlertTriangle, CheckCircle2,
+  Monitor, Smartphone, ExternalLink, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,8 +26,13 @@ import {
 import { DynamicSection } from "@/components/site/sections/dynamic/DynamicSection";
 import { useLayoutEffect } from "react";
 import { ColorField } from "./ColorField";
+import {
+  SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
+  ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
+  type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
+} from "@/lib/site-templates";
 
-type ItemForm = { id?: string; titulo: string; descricao: string; icone: string };
+type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
 
 type FormState = {
   id?: string;
@@ -47,6 +53,7 @@ type FormState = {
   card_borda_cor: string | null;
   enabled: boolean;
   itens: ItemForm[];
+  dados: Record<string, any>;
 };
 
 const empty: FormState = {
@@ -67,33 +74,52 @@ const empty: FormState = {
   card_borda_cor: null,
   enabled: true,
   itens: [],
+  dados: {},
 };
 
-const TIPOS: { value: SecaoTipo; label: string; desc: string; Icon: any }[] = [
-  { value: "texto-imagem-esquerda", label: "Imagem à esquerda", desc: "Texto à direita, imagem grande à esquerda.", Icon: ImageIcon },
-  { value: "texto-imagem-direita", label: "Imagem à direita", desc: "Texto à esquerda, imagem grande à direita.", Icon: LayoutTemplate },
-  { value: "grade-cards", label: "Grade de cards", desc: "Imagem + texto + cards (ícones).", Icon: Grid3x3 },
-];
+function getLucide(name: string): any {
+  const I = (LucideIcons as unknown as Record<string, any>)[name];
+  return I ?? Sparkles;
+}
 
-const ICONES_SUGERIDOS = [
-  "BookOpen", "Heart", "Brain", "TrendingDown", "Sparkles", "Star",
-  "Users", "Calendar", "Smile", "Shield", "Sun", "Award",
-];
+function templateHas(tipo: SecaoTipo, campo: string): boolean {
+  const t = SECTION_TEMPLATES_BY_TIPO[tipo];
+  return !!t && t.campos.includes(campo as any);
+}
+
+function itemConfig(tipo: SecaoTipo) {
+  return SECTION_TEMPLATES_BY_TIPO[tipo]?.item;
+}
+
+function defaultDadosForTipo(tipo: SecaoTipo): Record<string, any> {
+  const schema = SECTION_TEMPLATES_BY_TIPO[tipo]?.dadosSchema;
+  if (schema === "modalidades") return { ...DEFAULT_MODALIDADES };
+  if (schema === "contato-mapa") return { ...DEFAULT_CONTATO_MAPA };
+  return {};
+}
 
 /** Lista somente os ERROS bloqueantes do formulário (avisos ficam de fora). */
 function computeBlockingErrors(form: FormState): string[] {
   const errors: string[] = [];
-  if (!form.titulo.trim() && !form.eyebrow.trim()) {
-    errors.push("Informe um título ou uma etiqueta.");
+  const tmpl = SECTION_TEMPLATES_BY_TIPO[form.tipo];
+  const hasEyebrow = tmpl?.campos.includes("eyebrow");
+  const hasTitulo = tmpl?.campos.includes("titulo");
+  if (hasTitulo && !form.titulo.trim() && (!hasEyebrow || !form.eyebrow.trim())) {
+    errors.push("Informe um título" + (hasEyebrow ? " ou uma etiqueta." : "."));
   }
-  if (form.tipo !== "grade-cards" && !form.imagem_url) {
+  if (
+    (form.tipo === "texto-imagem-esquerda" || form.tipo === "texto-imagem-direita") &&
+    !form.imagem_url
+  ) {
     errors.push("Este modelo exige uma imagem ao lado do texto.");
   }
-  if (form.cta_texto.trim() && !form.cta_link.trim()) {
-    errors.push("Botão sem link: preencha o link ou remova o texto do botão.");
-  }
-  if (!form.cta_texto.trim() && form.cta_link.trim()) {
-    errors.push("Link do botão sem texto: preencha o texto ou remova o link.");
+  if (tmpl?.campos.includes("cta")) {
+    if (form.cta_texto.trim() && !form.cta_link.trim()) {
+      errors.push("Botão sem link: preencha o link ou remova o texto do botão.");
+    }
+    if (!form.cta_texto.trim() && form.cta_link.trim()) {
+      errors.push("Link do botão sem texto: preencha o texto ou remova o link.");
+    }
   }
   return errors;
 }
@@ -110,7 +136,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
   const previewWrapRef = useRef<HTMLDivElement | null>(null);
   const [previewScale, setPreviewScale] = useState(0.45);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
-  const [tab, setTab] = useState<"conteudo" | "midia" | "botao" | "cards" | "aparencia">("conteudo");
+  const [tab, setTab] = useState<"conteudo" | "midia" | "botao" | "cards" | "dados" | "aparencia">("conteudo");
 
   useLayoutEffect(() => {
     if (!open) return;
@@ -149,19 +175,24 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     card_borda_cor: form.card_borda_cor,
     order: 0,
     enabled: form.enabled,
-    itens: (form.tipo === "grade-cards" && form.itens.length === 0
+    dados:
+      Object.keys(form.dados ?? {}).length > 0
+        ? form.dados
+        : defaultDadosForTipo(form.tipo),
+    itens: (templateHas(form.tipo, "itens") && form.itens.length === 0
       ? [
-          { titulo: "Card de exemplo 1", descricao: "Descrição curta do card.", icone: "Sparkles" },
-          { titulo: "Card de exemplo 2", descricao: "Descrição curta do card.", icone: "Heart" },
-          { titulo: "Card de exemplo 3", descricao: "Descrição curta do card.", icone: "Star" },
+          { titulo: "Item de exemplo 1", descricao: "Descrição curta.", icone: "Sparkles", link: "" },
+          { titulo: "Item de exemplo 2", descricao: "Descrição curta.", icone: "Heart", link: "" },
+          { titulo: "Item de exemplo 3", descricao: "Descrição curta.", icone: "Star", link: "" },
         ]
       : form.itens
-    ).map((it, idx) => ({
+    ).map((it: any, idx) => ({
       id: it.id ?? `prev-${idx}`,
       secao_id: form.id ?? "preview",
       titulo: it.titulo || "Item",
       descricao: it.descricao || null,
       icone: it.icone || "Sparkles",
+      link: it.link || null,
       order: idx,
     })),
   };
@@ -205,8 +236,13 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
       card_borda_cor: s.card_borda_cor ?? null,
       enabled: s.enabled,
       itens: s.itens.map((it) => ({
-        id: it.id, titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
+        id: it.id,
+        titulo: it.titulo,
+        descricao: it.descricao ?? "",
+        icone: it.icone ?? "Sparkles",
+        link: (it as any).link ?? "",
       })),
+      dados: (s as any).dados ?? {},
     });
     setOpen(true);
   }
@@ -250,6 +286,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
       card_texto_cor: form.card_texto_cor,
       card_borda_cor: form.card_borda_cor,
       enabled: form.enabled,
+      dados: form.dados ?? {},
       updated_at: new Date().toISOString(),
     };
 
@@ -268,7 +305,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     }
 
     // Sync filhos: estratégia simples — apaga tudo e reinsere
-    if (form.tipo === "grade-cards") {
+    if (templateHas(form.tipo, "itens")) {
       await supabase.from("site_secao_itens").delete().eq("secao_id", secaoId);
       if (form.itens.length > 0) {
         const rows = form.itens.map((it, idx) => ({
@@ -276,11 +313,15 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
           titulo: it.titulo.trim() || "Item",
           descricao: it.descricao.trim() || null,
           icone: it.icone || "Sparkles",
+          link: it.link?.trim() || null,
           order: idx,
         }));
         const { error } = await supabase.from("site_secao_itens").insert(rows);
         if (error) { setSaving(false); return toast.error("Itens: " + error.message); }
       }
+    } else {
+      // Templates sem itens: limpa quaisquer itens órfãos
+      await supabase.from("site_secao_itens").delete().eq("secao_id", secaoId);
     }
 
     setSaving(false);
@@ -316,7 +357,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
   }
 
   function addItem() {
-    setForm((f) => ({ ...f, itens: [...f.itens, { titulo: "", descricao: "", icone: "Sparkles" }] }));
+    setForm((f) => ({ ...f, itens: [...f.itens, { titulo: "", descricao: "", icone: "Sparkles", link: "" }] }));
   }
   function updateItem(idx: number, patch: Partial<ItemForm>) {
     setForm((f) => ({ ...f, itens: f.itens.map((it, i) => i === idx ? { ...it, ...patch } : it) }));
@@ -334,7 +375,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     });
   }
 
-  const tipoLabel = (t: SecaoTipo) => TIPOS.find((x) => x.value === t)?.label ?? t;
+  const tipoLabel = (t: SecaoTipo) => SECTION_TEMPLATES_BY_TIPO[t]?.label ?? t;
 
   // ---- Validação (resumo + por campo) ----
   type Issue = { level: "error" | "warning"; msg: string };
@@ -363,7 +404,10 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     fieldIssues.descricao = { level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." };
     summary.push({ level: "warning", msg: "Sem descrição: o texto da seção ficará vazio." });
   }
-  if (form.tipo !== "grade-cards" && !form.imagem_url) {
+  if (
+    (form.tipo === "texto-imagem-esquerda" || form.tipo === "texto-imagem-direita") &&
+    !form.imagem_url
+  ) {
     fieldIssues.imagem = { level: "error", msg: "Imagem obrigatória neste modelo." };
     summary.push({ level: "error", msg: "Este modelo exige uma imagem ao lado do texto." });
   }
@@ -379,11 +423,11 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     fieldIssues.cta_texto = { level: "error", msg: "Preencha o texto ou remova o link do botão." };
     summary.push({ level: "error", msg: "Link do botão sem texto: preencha o texto ou remova o link." });
   }
-  if (form.tipo === "grade-cards") {
+  if (templateHas(form.tipo, "itens")) {
     form.itens.forEach((it, i) => {
       if (!it.titulo.trim()) {
-        itemIssues[i] = { level: "warning", msg: "Card sem título." };
-        summary.push({ level: "warning", msg: `Card ${i + 1} sem título.` });
+        itemIssues[i] = { level: "warning", msg: "Item sem título." };
+        summary.push({ level: "warning", msg: `Item ${i + 1} sem título.` });
       }
     });
   }
@@ -493,9 +537,14 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
               card_bg_cor: s.card_bg_cor ?? null,
               card_texto_cor: s.card_texto_cor ?? null,
               card_borda_cor: s.card_borda_cor ?? null,
-              enabled: s.enabled, itens: s.itens.map((it) => ({
-                titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
+              enabled: s.enabled,
+              itens: s.itens.map((it) => ({
+                titulo: it.titulo,
+                descricao: it.descricao ?? "",
+                icone: it.icone ?? "Sparkles",
+                link: (it as any).link ?? "",
               })),
+              dados: (s as any).dados ?? {},
             };
             const errs = computeBlockingErrors(tmpForm);
             return (
@@ -552,24 +601,40 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
 
       {/* Seletor de template */}
       <Dialog open={pickTipo} onOpenChange={setPickTipo}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>Escolha um modelo</DialogTitle></DialogHeader>
-          <div className="grid gap-3">
-            {TIPOS.map((t) => (
-              <button
-                key={t.value}
-                onClick={() => openNew(t.value)}
-                className="flex items-start gap-3 rounded-xl border border-border p-4 text-left hover:bg-accent transition-colors"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FEF3E8] text-[#D67F43]">
-                  <t.Icon className="h-5 w-5" />
+          <div className="space-y-5">
+            {(["texto-imagem", "cards", "conteudo", "chamada-contato"] as const).map((grupo) => {
+              const lista = SECTION_TEMPLATES.filter((t) => t.grupo === grupo);
+              if (lista.length === 0) return null;
+              return (
+                <div key={grupo}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {GRUPO_LABEL[grupo]}
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {lista.map((t) => {
+                      const Icon = getLucide(t.icon);
+                      return (
+                        <button
+                          key={t.tipo}
+                          onClick={() => openNew(t.tipo)}
+                          className="flex items-start gap-3 rounded-xl border border-border p-3 text-left hover:bg-accent transition-colors"
+                        >
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FEF3E8] text-[#D67F43]">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium leading-tight">{t.label}</p>
+                            <p className="text-[11px] text-muted-foreground leading-snug">{t.descricao}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{t.label}</p>
-                  <p className="text-xs text-muted-foreground">{t.desc}</p>
-                </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>
@@ -586,22 +651,25 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
             {/* ============ COLUNA: FORMULÁRIO COM ABAS ============ */}
             <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="min-w-0">
-              <TabsList className="grid w-full grid-cols-5">
+              <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="conteudo" className="relative">
                   Conteúdo
                   {tabErrors.conteudo > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.conteudo}</span>}
                 </TabsTrigger>
-                <TabsTrigger value="midia" className="relative">
+                <TabsTrigger value="midia" disabled={!templateHas(form.tipo, "imagem_url")} className="relative">
                   Mídia
                   {tabErrors.midia > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.midia}</span>}
                 </TabsTrigger>
-                <TabsTrigger value="botao" className="relative">
+                <TabsTrigger value="botao" disabled={!templateHas(form.tipo, "cta")} className="relative">
                   Botão
                   {tabErrors.botao > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.botao}</span>}
                 </TabsTrigger>
-                <TabsTrigger value="cards" disabled={form.tipo !== "grade-cards"} className="relative">
-                  Cards
+                <TabsTrigger value="cards" disabled={!templateHas(form.tipo, "itens")} className="relative">
+                  Itens
                   {tabErrors.cards > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.cards}</span>}
+                </TabsTrigger>
+                <TabsTrigger value="dados" disabled={!templateHas(form.tipo, "dados")}>
+                  Dados
                 </TabsTrigger>
                 <TabsTrigger value="aparencia">Aparência</TabsTrigger>
               </TabsList>
@@ -681,30 +749,50 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
               <TabsContent value="cards" className="space-y-3 pt-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium">Cards / itens</p>
-                    <p className="text-xs text-muted-foreground">Cada card mostra ícone, título e descrição curta.</p>
+                    <p className="text-sm font-medium">Itens</p>
+                    <p className="text-xs text-muted-foreground">
+                      Cada item exibe título{itemConfig(form.tipo)?.icone ? ", ícone" : ""}
+                      {itemConfig(form.tipo)?.descricao ? ", descrição" : ""}
+                      {itemConfig(form.tipo)?.link ? " e link opcional" : ""}.
+                    </p>
                   </div>
                   <Button size="sm" variant="outline" onClick={addItem}><Plus className="mr-1 h-4 w-4" /> Item</Button>
                 </div>
                 <FieldMsg issue={fieldIssues.itens} />
                 {form.itens.length === 0 ? (
                   <div className="rounded-lg border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
-                    Nenhum card ainda. Clique em <strong>Item</strong> para adicionar.
+                    Nenhum item ainda. Clique em <strong>Item</strong> para adicionar.
                   </div>
                 ) : (
                   form.itens.map((it, idx) => (
                     <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
-                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
-                        <Input className={fieldCls(itemIssues[idx] ?? null)} value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título do card" />
-                        <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
-                          <SelectTrigger><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            {ICONES_SUGERIDOS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-                          </SelectContent>
-                        </Select>
+                      <div className={`grid grid-cols-1 gap-2 ${itemConfig(form.tipo)?.icone ? "sm:grid-cols-[1fr_180px]" : ""}`}>
+                        <Input className={fieldCls(itemIssues[idx] ?? null)} value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título" />
+                        {itemConfig(form.tipo)?.icone && (
+                          <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
+                            <SelectTrigger><SelectValue /></SelectTrigger>
+                            <SelectContent>
+                              {ICONES_SUGERIDOS.map((i) => {
+                                const I = getLucide(i);
+                                return (
+                                  <SelectItem key={i} value={i}>
+                                    <span className="inline-flex items-center gap-2">
+                                      <I className="h-3.5 w-3.5" /> {i}
+                                    </span>
+                                  </SelectItem>
+                                );
+                              })}
+                            </SelectContent>
+                          </Select>
+                        )}
                       </div>
                       <FieldMsg issue={itemIssues[idx] ?? null} />
-                      <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
+                      {itemConfig(form.tipo)?.descricao && (
+                        <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
+                      )}
+                      {itemConfig(form.tipo)?.link && (
+                        <Input value={it.link} onChange={(e) => updateItem(idx, { link: e.target.value })} placeholder="Link (opcional) — ex: /atendimento ou https://..." />
+                      )}
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, 1)} disabled={idx === form.itens.length - 1}><ArrowDown className="h-4 w-4" /></Button>
@@ -712,6 +800,22 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
                       </div>
                     </div>
                   ))
+                )}
+              </TabsContent>
+
+              {/* --- DADOS (modalidades / contato-mapa) --- */}
+              <TabsContent value="dados" className="space-y-4 pt-4">
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "modalidades" && (
+                  <DadosModalidadesEditor
+                    value={(form.dados as Partial<DadosModalidades>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
+                )}
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "contato-mapa" && (
+                  <DadosContatoMapaEditor
+                    value={(form.dados as Partial<DadosContatoMapa>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
                 )}
               </TabsContent>
 
@@ -747,7 +851,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
                   presets={["#0F172A", "#1F2937", "#FFFFFF", "#475569", "#D67F43", "#FEF3E8"]}
                   helperText="Aplica em título, descrição e textos do corpo."
                 />
-                {form.tipo === "grade-cards" && (
+                {(templateHas(form.tipo, "itens") || SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "modalidades") && (
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                     <ColorField
                       label="Fundo dos cards"
@@ -910,5 +1014,104 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
         </DialogContent>
       </Dialog>
     </>
+  );
+}
+
+// ============================================================================
+// Editores estruturados para o campo `dados`
+// ============================================================================
+
+function DadosModalidadesEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosModalidades>;
+  onChange: (v: DadosModalidades) => void;
+}) {
+  const cards: ModalidadeCard[] =
+    value.cards && value.cards.length > 0 ? value.cards : DEFAULT_MODALIDADES.cards;
+
+  function patchCard(idx: number, patch: Partial<ModalidadeCard>) {
+    const next = cards.map((c, i) => (i === idx ? { ...c, ...patch } : c));
+    onChange({ cards: next });
+  }
+  function setBullets(idx: number, raw: string) {
+    const bullets = raw.split("\n").map((l) => l.trim()).filter(Boolean);
+    patchCard(idx, { bullets });
+  }
+
+  return (
+    <div className="space-y-4">
+      <p className="text-xs text-muted-foreground">
+        Dois cards comparativos (ex: Particular vs. Convênio). Cada card tem ícone, título, descrição, bullets e um botão.
+      </p>
+      {cards.map((c, idx) => (
+        <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_160px]">
+            <Input value={c.titulo} onChange={(e) => patchCard(idx, { titulo: e.target.value })} placeholder="Título do card" />
+            <Select value={c.icone} onValueChange={(v) => patchCard(idx, { icone: v })}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {ICONES_SUGERIDOS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Textarea rows={2} value={c.descricao} onChange={(e) => patchCard(idx, { descricao: e.target.value })} placeholder="Descrição curta" />
+          <Textarea
+            rows={4}
+            value={(c.bullets ?? []).join("\n")}
+            onChange={(e) => setBullets(idx, e.target.value)}
+            placeholder="Um item por linha"
+          />
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <Input value={c.cta_texto ?? ""} onChange={(e) => patchCard(idx, { cta_texto: e.target.value })} placeholder="Texto do botão" />
+            <Input value={c.cta_link ?? ""} onChange={(e) => patchCard(idx, { cta_link: e.target.value })} placeholder="Link do botão" />
+          </div>
+          <Input value={c.cor ?? ""} onChange={(e) => patchCard(idx, { cor: e.target.value })} placeholder="Cor de destaque (hex, opcional)" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DadosContatoMapaEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosContatoMapa>;
+  onChange: (v: DadosContatoMapa) => void;
+}) {
+  const v: DadosContatoMapa = {
+    telefone: value.telefone ?? DEFAULT_CONTATO_MAPA.telefone,
+    telefone_link: value.telefone_link ?? DEFAULT_CONTATO_MAPA.telefone_link,
+    email: value.email ?? DEFAULT_CONTATO_MAPA.email,
+    endereco_titulo: value.endereco_titulo ?? DEFAULT_CONTATO_MAPA.endereco_titulo,
+    endereco_texto: value.endereco_texto ?? DEFAULT_CONTATO_MAPA.endereco_texto,
+    horarios: value.horarios ?? DEFAULT_CONTATO_MAPA.horarios,
+    mapa_embed_url: value.mapa_embed_url ?? DEFAULT_CONTATO_MAPA.mapa_embed_url,
+  };
+  const patch = (p: Partial<DadosContatoMapa>) => onChange({ ...v, ...p });
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone (ex: (11) 99999-9999)" />
+        <Input value={v.telefone_link} onChange={(e) => patch({ telefone_link: e.target.value })} placeholder="Link do telefone (tel:/wa.me)" />
+      </div>
+      <Input value={v.email} onChange={(e) => patch({ email: e.target.value })} placeholder="E-mail" />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+        <Input value={v.endereco_titulo} onChange={(e) => patch({ endereco_titulo: e.target.value })} placeholder="Título do endereço" />
+        <Input value={v.endereco_texto} onChange={(e) => patch({ endereco_texto: e.target.value })} placeholder="Endereço" />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">Horários (um por linha)</Label>
+        <Textarea
+          rows={3}
+          value={v.horarios.join("\n")}
+          onChange={(e) => patch({ horarios: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
+        />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs">URL do mapa (iframe embed do Google Maps)</Label>
+        <Input value={v.mapa_embed_url} onChange={(e) => patch({ mapa_embed_url: e.target.value })} placeholder="https://www.google.com/maps/embed?..." />
+      </div>
+    </div>
   );
 }

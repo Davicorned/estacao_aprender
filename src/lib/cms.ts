@@ -74,7 +74,14 @@ export type SiteRodape = {
 export type SecaoTipo =
   | "texto-imagem-esquerda"
   | "texto-imagem-direita"
-  | "grade-cards";
+  | "grade-cards"
+  | "cards-icones"
+  | "passos-processo"
+  | "accordion"
+  | "cta-banner"
+  | "destaque-pessoa"
+  | "modalidades"
+  | "contato-mapa";
 
 export type SiteSecaoItem = {
   id: string;
@@ -82,6 +89,7 @@ export type SiteSecaoItem = {
   titulo: string;
   descricao: string | null;
   icone: string | null;
+  link: string | null;
   order: number;
 };
 
@@ -105,6 +113,7 @@ export type SiteSecao = {
   card_texto_cor: string | null;
   card_borda_cor: string | null;
   itens: SiteSecaoItem[];
+  dados: Record<string, any>;
 };
 
 export type SiteHeaderItem = {
