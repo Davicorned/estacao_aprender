@@ -136,7 +136,7 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
   const previewWrapRef = useRef<HTMLDivElement | null>(null);
   const [previewScale, setPreviewScale] = useState(0.45);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
-  const [tab, setTab] = useState<"conteudo" | "midia" | "botao" | "cards" | "aparencia">("conteudo");
+  const [tab, setTab] = useState<"conteudo" | "midia" | "botao" | "cards" | "dados" | "aparencia">("conteudo");
 
   useLayoutEffect(() => {
     if (!open) return;
