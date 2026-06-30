@@ -185,7 +185,7 @@ export function RodapeManager() {
       </div>
 
       <div className="lg:sticky lg:top-4 lg:self-start">
-        <PreviewFrame height={520} mobileHeight={900}>
+        <PreviewFrame height={520} mobileHeight={1200}>
           <Footer override={form} />
         </PreviewFrame>
         <p className="mt-2 text-xs text-muted-foreground">
