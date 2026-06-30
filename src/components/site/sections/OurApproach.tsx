@@ -12,7 +12,7 @@ export function OurApproach() {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
           <FadeUp className="lg:order-1">
-            <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
+            <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-primary)]">
               Nossa abordagem
             </span>
             <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -34,7 +34,7 @@ export function OurApproach() {
               href={WA_LINK}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-7 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E]"
+              className="mt-8 inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[var(--site-primary)] to-[var(--site-primary-hover)] px-7 text-sm font-medium text-white shadow-lg shadow-[var(--site-primary)]/25 transition-all hover:from-[var(--site-primary-hover)] hover:to-[var(--site-primary-hover)]"
             >
               <Calendar className="h-4 w-4" />
               Agende um atendimento!

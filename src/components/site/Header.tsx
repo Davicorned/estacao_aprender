@@ -40,7 +40,7 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
   const borderCls = isDark ? "border-white/10" : "border-gray-100";
   const stickyCls = cfg.sticky ? "sticky top-0 z-40" : "";
   const bg = bgStyle(cfg);
-  const accent = cfg.cor_destaque || "#D67F43";
+  const accent = cfg.cor_destaque || "var(--site-primary)";
   const textColor = cfg.texto_cor_hex || null; // sobrepõe o esquema claro/escuro
   const logoSrc = cfg.logo_url || FALLBACK_LOGO;
   const ctaTo = cfg.cta_to || "/Contato";
@@ -109,7 +109,7 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
                       key={item.id}
                       href={item.to}
                       onClick={() => setOpen(false)}
-                      className="rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-[#FEF3E8]"
+                      className="rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-[var(--site-eyebrow)]"
                     >
                       {item.label}
                     </a>

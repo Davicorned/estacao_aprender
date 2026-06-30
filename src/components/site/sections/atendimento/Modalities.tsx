@@ -22,7 +22,7 @@ export function Modalities() {
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="mb-16 text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
+          <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-primary)]">
             Modalidades
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
@@ -34,10 +34,10 @@ export function Modalities() {
           {/* Presencial */}
           <FadeUp>
             <div className="overflow-hidden rounded-xl border-0 bg-white shadow-xl transition-shadow hover:shadow-2xl">
-              <div className="h-3 bg-gradient-to-r from-[#D67F43] to-[#C4682E]" />
+              <div className="h-3 bg-gradient-to-r from-[var(--site-primary)] to-[var(--site-primary-hover)]" />
               <div className="p-8">
-                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FEF3E8]">
-                  <MapPin className="h-8 w-8 text-[#D67F43]" />
+                <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-[var(--site-eyebrow)]">
+                  <MapPin className="h-8 w-8 text-[var(--site-primary)]" />
                 </div>
                 <h3 className="mb-4 text-2xl font-bold text-gray-900">Presencial</h3>
                 <p className="leading-relaxed text-gray-600">
@@ -47,7 +47,7 @@ export function Modalities() {
                 <ul className="mt-6 mb-8 space-y-3">
                   {presencial.map((item) => (
                     <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
-                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#D67F43]" />
+                      <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[var(--site-primary)]" />
                       <span>{item}</span>
                     </li>
                   ))}
@@ -57,7 +57,7 @@ export function Modalities() {
                   href={WA}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E]"
+                  className="inline-flex h-12 w-full items-center justify-center rounded-full bg-gradient-to-r from-[var(--site-primary)] to-[var(--site-primary-hover)] text-sm font-medium text-white shadow-lg shadow-[var(--site-primary)]/25 transition-all hover:from-[var(--site-primary-hover)] hover:to-[var(--site-primary-hover)]"
                 >
                   Agendar presencial
                 </a>

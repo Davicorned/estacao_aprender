@@ -8,7 +8,7 @@ export function Founder() {
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="text-center">
-          <span className="text-sm font-semibold uppercase tracking-widest text-[#D67F43]">
+          <span className="text-sm font-semibold uppercase tracking-widest text-[var(--site-primary)]">
             Idealizadora
           </span>
           <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">

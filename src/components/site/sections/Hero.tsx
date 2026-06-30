@@ -37,7 +37,7 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
 
   return (
     <section
-      className={`relative overflow-hidden ${hero.bg_cor ? "" : "bg-gradient-to-br from-[#FEF3E8] via-[#FDDFC4] to-white"}`}
+      className={`relative overflow-hidden ${hero.bg_cor ? "" : "bg-gradient-to-br from-[var(--site-eyebrow)] via-[#FDDFC4] to-white"}`}
       style={{
         ...(hero.bg_cor ? { background: buildBackground(hero.bg_cor, hero.bg_cor_2) } : {}),
         ...(hero.texto_cor ? { color: hero.texto_cor } : {}),
@@ -56,7 +56,7 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
             >
               {hero.titulo}{" "}
               {hero.titulo_destaque && (
-                <span className="bg-gradient-to-r from-[#D67F43] to-[#C4682E] bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-[var(--site-primary)] to-[var(--site-primary-hover)] bg-clip-text text-transparent">
                   {hero.titulo_destaque}
                 </span>
               )}
@@ -76,14 +76,14 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
                 href={hero.cta_primario_link ?? "#"}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#D67F43] to-[#C4682E] px-7 text-sm font-medium text-white shadow-lg shadow-[#D67F43]/25 transition-all hover:from-[#B85A24] hover:to-[#A04E1E]"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[var(--site-primary)] to-[var(--site-primary-hover)] px-7 text-sm font-medium text-white shadow-lg shadow-[var(--site-primary)]/25 transition-all hover:from-[var(--site-primary-hover)] hover:to-[var(--site-primary-hover)]"
               >
                 <Calendar className="h-4 w-4" />
                 {hero.cta_primario_texto}
               </a>
               <a
                 href={hero.cta_secundario_link ?? "#"}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-medium text-gray-700 transition-colors hover:border-[#FBCF9E] hover:text-[#D67F43]"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-7 text-sm font-medium text-gray-700 transition-colors hover:border-[#FBCF9E] hover:text-[var(--site-primary)]"
               >
                 {hero.cta_secundario_texto}
                 <ArrowRight className="h-4 w-4" />
@@ -92,7 +92,7 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
           </FadeUp>
 
           <FadeUp delay={0.15} className="relative hidden lg:block">
-            <div className="relative overflow-hidden rounded-3xl shadow-2xl shadow-[#D67F43]/10">
+            <div className="relative overflow-hidden rounded-3xl shadow-2xl shadow-[var(--site-primary)]/10">
               {hero.imagem_url && (
                 <img
                   src={hero.imagem_url}
