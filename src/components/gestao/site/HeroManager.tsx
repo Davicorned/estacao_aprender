@@ -7,26 +7,18 @@ import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
-import { invalidateCmsCache, type SiteHero } from "@/lib/cms";
+import { invalidateCmsCache, HERO_DEFAULTS, type SiteHero } from "@/lib/cms";
+import { PreviewFrame } from "./PreviewFrame";
+import { Hero } from "@/components/site/sections/Hero";
 
 type Form = Omit<SiteHero, "id">;
 
-const empty: Form = {
-  titulo: "",
-  titulo_destaque: "",
-  subtitulo: "",
-  cta_primario_texto: "",
-  cta_primario_link: "",
-  cta_secundario_texto: "",
-  cta_secundario_link: "",
-  imagem_url: null,
-  badge_enabled: true,
-  badge_titulo: "",
-  badge_subtitulo: "",
-};
+// Começa pré-preenchido com os mesmos valores que aparecem na Home,
+// para o usuário ver de cara o que está editando.
+const initial: Form = { ...HERO_DEFAULTS };
 
 export function HeroManager() {
-  const [form, setForm] = useState<Form>(empty);
+  const [form, setForm] = useState<Form>(initial);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -43,7 +35,15 @@ export function HeroManager() {
       if (error) console.error(error);
       if (data) {
         const { id: _id, updated_at: _u, ...rest } = data as Record<string, unknown>;
-        setForm({ ...empty, ...(rest as Partial<Form>) });
+        // Para cada campo, se o banco está vazio/null, mantém o default visível.
+        const merged: Form = { ...HERO_DEFAULTS };
+        for (const k of Object.keys(merged) as (keyof Form)[]) {
+          const v = (rest as Partial<Form>)[k];
+          if (v !== undefined && v !== null && v !== "") {
+            (merged as any)[k] = v;
+          }
+        }
+        setForm(merged);
       }
       setLoading(false);
     })();
@@ -75,8 +75,19 @@ export function HeroManager() {
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
+  // Para a prévia: a URL da imagem pode ser um path cru do storage.
+  const previewOverride = {
+    ...form,
+    imagem_url: form.imagem_url
+      ? form.imagem_url.startsWith("http")
+        ? form.imagem_url
+        : publicImageUrl(form.imagem_url)
+      : HERO_DEFAULTS.imagem_url,
+  };
+
   return (
-    <div className="max-w-2xl space-y-6">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,560px)_1fr]">
+      <div className="space-y-6">
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Imagem do banner</h2>
         <div className="flex items-start gap-4">
@@ -170,6 +181,16 @@ export function HeroManager() {
         <Button onClick={save} disabled={saving} className="bg-[#D67F43] hover:bg-[#B85A24]">
           {saving ? "Salvando…" : "Salvar alterações"}
         </Button>
+      </div>
+      </div>
+
+      <div className="lg:sticky lg:top-4 lg:self-start">
+        <PreviewFrame height={620} mobileHeight={900}>
+          <Hero override={previewOverride} />
+        </PreviewFrame>
+        <p className="mt-2 text-xs text-muted-foreground">
+          Aparece no topo da Home. Atualiza enquanto você digita.
+        </p>
       </div>
     </div>
   );
