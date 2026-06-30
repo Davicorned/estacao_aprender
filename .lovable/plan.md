@@ -1,42 +1,89 @@
-## Problema
+## Objetivo
 
-A prévia do Banner e do Rodapé renderiza o conteúdo dentro de um `<div>` com `width: 1280px` (desktop) ou `390px` (mobile) e aplica `transform: scale(...)`. O problema é que as media queries do Tailwind (`sm:`, `md:`, `lg:`) usam a **viewport real do navegador** (≈1403 px), não a largura simulada da prévia.
+Adicionar controle de **cor de fundo customizada** (preset + hexadecimal) em três pontos do admin de Layout:
 
-Resultado:
-- **Banner mobile:** `lg:` ainda dispara, então o Hero tenta usar `lg:grid-cols-2` + `lg:text-6xl` dentro de um container de 390 px — o título quebra palavra-por-palavra e o layout fica completamente estourado (a imagem da prévia 2 confirma).
-- **Rodapé desktop:** o painel direito do editor mede ≈500 px; com `width: 1280` forçado em conjunto com media queries da viewport real, o footer renderiza de forma inconsistente (colunas estreitas, e-mail quebrando letra-a-letra, como na prévia 1).
+1. **Seções da Home** (cada seção dinâmica)
+2. **Rodapé**
+3. **Banner / Hero** (cor de fundo atrás da imagem)
 
-Em outras palavras, hoje a prévia mistura "largura simulada" com "media queries reais", e por isso nada bate com o que aparece no site.
+Hoje só existem dois fundos fixos ("branco" e "gradiente") nas seções, o rodapé é hard-coded em cinza escuro, e o Hero usa um gradiente fixo laranja-creme — sem nenhum controle no admin.
 
-## Solução
+---
 
-Renderizar a prévia dentro de um **`<iframe>`** com largura exata da viewport simulada (1280 desktop, 390 mobile) e fazer `transform: scale(...)` no próprio iframe. Dentro do iframe, as media queries respondem à largura simulada — Hero e Footer ficam idênticos ao que o usuário verá no site real.
+## Como vai funcionar (visão do usuário)
 
-### Mudanças
+Em cada formulário (Seção, Rodapé, Hero) aparece um novo campo **"Cor de fundo"** com:
 
-1. **`src/components/gestao/site/PreviewFrame.tsx`** — reescrever:
-   - Renderizar um `<iframe>` com `width = 1280` (desktop) ou `390` (mobile) e altura suficiente.
-   - Quando o iframe carrega, copiar as `<link rel="stylesheet">` e `<style>` do `document.head` para o `head` do iframe (assim o Tailwind funciona dentro).
-   - Usar `createPortal(children, iframe.contentDocument.body)` para renderizar a árvore React lá dentro.
-   - Aplicar `transform: scale(wrapperWidth / simulatedWidth)` no iframe; o wrapper externo segue com `overflow-hidden` e altura = `height * scale`.
-   - Manter o toggle Desktop/Mobile e o `useLayoutEffect` que recalcula o scale no resize.
+- **Presets clicáveis** (swatches): Branco, Creme, Cinza claro, Gradiente laranja, Cinza escuro (somente Rodapé), etc — diferentes por contexto.
+- **Color picker nativo** (campo `<input type="color">`) + **input hex** lado a lado, permitindo digitar `#FAFAFA` direto.
+- **Gradiente opcional** (Hero/Seções): segunda cor + checkbox "usar gradiente" → gera `linear-gradient(135deg, cor1, cor2)`.
+- **Prévia ao vivo** já existente reflete a mudança imediatamente.
 
-2. **`HeroManager.tsx` e `RodapeManager.tsx`** — sem mudanças de API: continuam passando `<Hero override={...} />` e `<Footer override={...} />` como children do `PreviewFrame`. Como o portal preserva o contexto do React, o `override` segue funcionando.
+---
 
-3. **Alturas da prévia** — manter `height={620}` / `mobileHeight={900}` para Hero; aumentar `mobileHeight` do Footer para ≈1200 (mobile do footer empilha 4 colunas + barra inferior). Como agora estará dentro de iframe com layout correto, o conteúdo cabe sem clipping.
+## Mudanças técnicas
 
-### Detalhes técnicos
+### Banco (migration única)
 
-- O iframe usa `srcDoc="<!doctype html><html><head></head><body></body></html>"` para ser same-origin (permite `contentDocument` + portal).
-- O efeito que injeta os styles roda no `onLoad` do iframe e também observa mudanças (basta clonar uma vez no mount; Tailwind no preview é estático).
-- `transform-origin: top left` no iframe; `pointer-events: none` opcional para evitar interação acidental com botões da prévia.
+Adicionar colunas opcionais para cor customizada:
 
-### Validação
+```sql
+-- Seções: já tem bg_style (preset). Adiciona cores custom.
+ALTER TABLE public.site_secoes
+  ADD COLUMN IF NOT EXISTS bg_cor text,        -- hex ou null
+  ADD COLUMN IF NOT EXISTS bg_cor_2 text;      -- segunda cor p/ gradiente, opcional
 
-Após aplicar:
-- Banner em mobile (390): título quebra em 2–3 linhas, imagem some (correto, `lg:hidden` no mobile real), badge no canto inferior.
-- Banner em desktop (1280): grade 2 colunas, imagem visível, badge sobreposto.
-- Rodapé em desktop: 4 colunas lado a lado, e-mail e endereço alinhados como no site.
-- Rodapé em mobile: 1 coluna empilhada, sem clipping.
+-- Hero: novo campo de fundo
+ALTER TABLE public.site_hero
+  ADD COLUMN IF NOT EXISTS bg_cor text,
+  ADD COLUMN IF NOT EXISTS bg_cor_2 text;
 
-Sem mudanças em lógica/CMS; apenas no `PreviewFrame`.
+-- Rodapé: cor de fundo e cor do texto
+ALTER TABLE public.site_rodape
+  ADD COLUMN IF NOT EXISTS bg_cor text,
+  ADD COLUMN IF NOT EXISTS texto_cor text;     -- claro/escuro
+```
+
+Regras de fallback:
+- Se `bg_cor` for `null`, usa o preset/gradiente atual (compatibilidade total).
+- Se `bg_cor` estiver setado, ele vence o preset.
+
+### Tipagem em `src/lib/cms.ts`
+
+Adicionar os novos campos a `SiteSecao`, `SiteHero`, `SiteRodape`. Pre‑popular `null` por padrão.
+
+### Componente reutilizável `ColorField`
+
+Criar `src/components/gestao/site/ColorField.tsx`:
+- Props: `label`, `value`, `onChange`, `presets?: string[]`, `allowGradient?: boolean`, `value2?, onChange2?`.
+- Renderiza: linha de swatches → `<input type="color">` → input hex (validado) → botão "Remover cor" (volta a `null` = usa preset).
+- Aceita digitação `#RRGGBB` e sincroniza com o color picker.
+
+### Aplicação nos editores
+
+- **`SecoesManager.tsx`** (aba Aparência): substitui o select atual de `bg_style` por:
+  - Preset (mantém: Branco / Gradiente creme).
+  - `ColorField` com `allowGradient`.
+- **`RodapeManager.tsx`**: adiciona seção "Aparência" com `ColorField` (cor de fundo) + toggle "Texto claro / Texto escuro" (auto‑contraste sugerido).
+- **`HeroManager.tsx`**: nova seção "Fundo" com `ColorField` + `allowGradient`. Mantém a imagem por cima (que aparece só no desktop).
+
+### Aplicação no site público
+
+- **`DynamicSection.tsx`**: se `secao.bg_cor`, aplicar via `style={{ background: bg_cor_2 ? linear-gradient(...) : bg_cor }}`; senão usa o preset atual.
+- **`Hero.tsx`**: idem; o gradiente atual (`from-[#FEF3E8]…`) vira fallback quando `bg_cor` for `null`.
+- **`Footer.tsx`**: idem; quando `texto_cor === "escuro"` troca classes de texto/links para tons escuros.
+
+### Compatibilidade com a prévia (iframe)
+
+Como cores agora vão via `style` inline, funcionam automaticamente dentro do iframe da prévia — sem mudança no `PreviewFrame`.
+
+---
+
+## Entregáveis
+
+1. SQL no arquivo `SUPABASE_MIGRATION_SITE_CMS_COLORS.sql` (para você colar no Supabase) com os 3 `ALTER TABLE`.
+2. `ColorField` reutilizável (swatch + picker + hex).
+3. Editores atualizados (Seções, Rodapé, Hero) com o novo campo.
+4. Componentes do site honrando as cores salvas, com fallback para os defaults atuais.
+
+Nada de localStorage, nada de cor hard‑coded nova — tudo segue os tokens existentes e a paleta da marca como preset inicial.
