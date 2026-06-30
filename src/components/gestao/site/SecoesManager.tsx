@@ -175,19 +175,24 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
     card_borda_cor: form.card_borda_cor,
     order: 0,
     enabled: form.enabled,
-    itens: (form.tipo === "grade-cards" && form.itens.length === 0
+    dados:
+      Object.keys(form.dados ?? {}).length > 0
+        ? form.dados
+        : defaultDadosForTipo(form.tipo),
+    itens: (templateHas(form.tipo, "itens") && form.itens.length === 0
       ? [
-          { titulo: "Card de exemplo 1", descricao: "Descrição curta do card.", icone: "Sparkles" },
-          { titulo: "Card de exemplo 2", descricao: "Descrição curta do card.", icone: "Heart" },
-          { titulo: "Card de exemplo 3", descricao: "Descrição curta do card.", icone: "Star" },
+          { titulo: "Item de exemplo 1", descricao: "Descrição curta.", icone: "Sparkles", link: "" },
+          { titulo: "Item de exemplo 2", descricao: "Descrição curta.", icone: "Heart", link: "" },
+          { titulo: "Item de exemplo 3", descricao: "Descrição curta.", icone: "Star", link: "" },
         ]
       : form.itens
-    ).map((it, idx) => ({
+    ).map((it: any, idx) => ({
       id: it.id ?? `prev-${idx}`,
       secao_id: form.id ?? "preview",
       titulo: it.titulo || "Item",
       descricao: it.descricao || null,
       icone: it.icone || "Sparkles",
+      link: it.link || null,
       order: idx,
     })),
   };
@@ -231,8 +236,13 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
       card_borda_cor: s.card_borda_cor ?? null,
       enabled: s.enabled,
       itens: s.itens.map((it) => ({
-        id: it.id, titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
+        id: it.id,
+        titulo: it.titulo,
+        descricao: it.descricao ?? "",
+        icone: it.icone ?? "Sparkles",
+        link: (it as any).link ?? "",
       })),
+      dados: (s as any).dados ?? {},
     });
     setOpen(true);
   }
