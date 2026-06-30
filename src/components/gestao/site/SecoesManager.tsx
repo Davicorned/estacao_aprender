@@ -601,24 +601,40 @@ export function SecoesManager({ paginaId }: { paginaId?: string } = {}) {
 
       {/* Seletor de template */}
       <Dialog open={pickTipo} onOpenChange={setPickTipo}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-2xl">
           <DialogHeader><DialogTitle>Escolha um modelo</DialogTitle></DialogHeader>
-          <div className="grid gap-3">
-            {TIPOS.map((t) => (
-              <button
-                key={t.value}
-                onClick={() => openNew(t.value)}
-                className="flex items-start gap-3 rounded-xl border border-border p-4 text-left hover:bg-accent transition-colors"
-              >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-[#FEF3E8] text-[#D67F43]">
-                  <t.Icon className="h-5 w-5" />
+          <div className="space-y-5">
+            {(["texto-imagem", "cards", "conteudo", "chamada-contato"] as const).map((grupo) => {
+              const lista = SECTION_TEMPLATES.filter((t) => t.grupo === grupo);
+              if (lista.length === 0) return null;
+              return (
+                <div key={grupo}>
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    {GRUPO_LABEL[grupo]}
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {lista.map((t) => {
+                      const Icon = getLucide(t.icon);
+                      return (
+                        <button
+                          key={t.tipo}
+                          onClick={() => openNew(t.tipo)}
+                          className="flex items-start gap-3 rounded-xl border border-border p-3 text-left hover:bg-accent transition-colors"
+                        >
+                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-[#FEF3E8] text-[#D67F43]">
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium leading-tight">{t.label}</p>
+                            <p className="text-[11px] text-muted-foreground leading-snug">{t.descricao}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
-                <div>
-                  <p className="font-medium">{t.label}</p>
-                  <p className="text-xs text-muted-foreground">{t.desc}</p>
-                </div>
-              </button>
-            ))}
+              );
+            })}
           </div>
         </DialogContent>
       </Dialog>
