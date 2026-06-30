@@ -11,6 +11,7 @@ import { invalidateCmsCache, HERO_DEFAULTS, type SiteHero } from "@/lib/cms";
 import { PreviewFrame } from "./PreviewFrame";
 import { Hero } from "@/components/site/sections/Hero";
 import { ColorField } from "./ColorField";
+import { LinkField } from "./LinkField";
 
 type Form = Omit<SiteHero, "id">;
 
@@ -141,18 +142,12 @@ export function HeroManager() {
             <Label>Botão principal — texto</Label>
             <Input value={form.cta_primario_texto ?? ""} onChange={(e) => setForm({ ...form, cta_primario_texto: e.target.value })} />
           </div>
-          <div className="space-y-2">
-            <Label>Botão principal — link</Label>
-            <Input value={form.cta_primario_link ?? ""} onChange={(e) => setForm({ ...form, cta_primario_link: e.target.value })} />
-          </div>
+          <LinkField label="Botão principal — link" value={form.cta_primario_link ?? ""} onChange={(v) => setForm({ ...form, cta_primario_link: v })} />
           <div className="space-y-2">
             <Label>Botão secundário — texto</Label>
             <Input value={form.cta_secundario_texto ?? ""} onChange={(e) => setForm({ ...form, cta_secundario_texto: e.target.value })} />
           </div>
-          <div className="space-y-2">
-            <Label>Botão secundário — link</Label>
-            <Input value={form.cta_secundario_link ?? ""} onChange={(e) => setForm({ ...form, cta_secundario_link: e.target.value })} />
-          </div>
+          <LinkField label="Botão secundário — link" value={form.cta_secundario_link ?? ""} onChange={(v) => setForm({ ...form, cta_secundario_link: v })} />
         </div>
       </section>
 
