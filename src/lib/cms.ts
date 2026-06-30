@@ -417,10 +417,19 @@ export async function fetchRodape(): Promise<SiteRodape | null> {
   return rodapeInflight;
 }
 
-export async function fetchSecoes(includeDisabled = false): Promise<SiteSecao[]> {
+export async function fetchSecoes(
+  includeDisabled = false,
+  paginaId?: string | null,
+): Promise<SiteSecao[]> {
+  const cacheKey = paginaId ?? "__all__";
   if (!includeDisabled) {
-    if (secoesCache && Date.now() - secoesCache.at < CACHE_TTL_MS) return secoesCache.data;
-    if (secoesInflight) return secoesInflight;
+    if (paginaId) {
+      const cached = secoesByPaginaCache.get(cacheKey);
+      if (cached && Date.now() - cached.at < CACHE_TTL_MS) return cached.data;
+    } else {
+      if (secoesCache && Date.now() - secoesCache.at < CACHE_TTL_MS) return secoesCache.data;
+      if (secoesInflight) return secoesInflight;
+    }
   }
   const run = (async () => {
     let q = supabase
@@ -428,6 +437,7 @@ export async function fetchSecoes(includeDisabled = false): Promise<SiteSecao[]>
       .select("*, itens:site_secao_itens(*)")
       .order("order", { ascending: true });
     if (!includeDisabled) q = q.eq("enabled", true);
+    if (paginaId) q = q.eq("pagina_id", paginaId);
     const { data, error } = await q;
     if (error) {
       console.error("fetchSecoes error", error);
@@ -440,10 +450,13 @@ export async function fetchSecoes(includeDisabled = false): Promise<SiteSecao[]>
         .slice()
         .sort((a, b) => a.order - b.order),
     })) as SiteSecao[];
-    if (!includeDisabled) secoesCache = { data: mapped, at: Date.now() };
+    if (!includeDisabled) {
+      if (paginaId) secoesByPaginaCache.set(cacheKey, { data: mapped, at: Date.now() });
+      else secoesCache = { data: mapped, at: Date.now() };
+    }
     return mapped;
   })();
-  if (!includeDisabled) {
+  if (!includeDisabled && !paginaId) {
     secoesInflight = run.finally(() => { secoesInflight = null; });
     return secoesInflight;
   }
