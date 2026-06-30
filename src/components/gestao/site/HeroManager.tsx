@@ -191,6 +191,13 @@ export function HeroManager() {
           presets={["#FEF3E8", "#FDDFC4", "#FFFFFF", "#F3F4F6", "#0F172A", "#D67F43"]}
           helperText="Deixe em branco para usar o gradiente creme padrão da Home."
         />
+        <ColorField
+          label="Cor do texto"
+          value={form.texto_cor}
+          onChange={(v) => setForm((f) => ({ ...f, texto_cor: v }))}
+          presets={["#0F172A", "#1F2937", "#FFFFFF", "#FEF3E8", "#D67F43", "#475569"]}
+          helperText="Aplica em título e subtítulo. Em branco, usa o cinza escuro padrão."
+        />
       </section>
 
       <div className="flex justify-end">
