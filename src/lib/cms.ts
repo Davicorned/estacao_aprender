@@ -44,6 +44,8 @@ export type SiteHero = {
   badge_enabled: boolean;
   badge_titulo: string | null;
   badge_subtitulo: string | null;
+  bg_cor: string | null;
+  bg_cor_2: string | null;
 };
 
 export type RedeSocial = { tipo: string; url: string };
@@ -61,6 +63,8 @@ export type SiteRodape = {
   redes_sociais: RedeSocial[];
   links_rapidos: LinkItem[];
   links_servicos: LinkItem[];
+  bg_cor: string | null;
+  texto_cor: string | null; // 'claro' | 'escuro' | null
 };
 
 export type SecaoTipo =
@@ -88,6 +92,8 @@ export type SiteSecao = {
   cta_texto: string | null;
   cta_link: string | null;
   bg_style: string | null;
+  bg_cor: string | null;
+  bg_cor_2: string | null;
   order: number;
   enabled: boolean;
   itens: SiteSecaoItem[];
@@ -110,6 +116,8 @@ export const HERO_DEFAULTS: Omit<SiteHero, "id"> = {
   badge_enabled: true,
   badge_titulo: "+500 famílias",
   badge_subtitulo: "atendidas com sucesso",
+  bg_cor: null,
+  bg_cor_2: null,
 };
 
 export const RODAPE_DEFAULTS: Omit<SiteRodape, "id"> = {
@@ -137,6 +145,8 @@ export const RODAPE_DEFAULTS: Omit<SiteRodape, "id"> = {
     { label: "Fonoaudiologia", href: "/Servicos?servico=fonoaudiologia" },
     { label: "Psicopedagogia", href: "/Servicos?servico=psicopedagogia" },
   ],
+  bg_cor: null,
+  texto_cor: null,
 };
 
 let teamCache: { data: TeamMember[]; at: number } | null = null;

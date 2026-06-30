@@ -24,6 +24,7 @@ import {
 } from "@/lib/cms";
 import { DynamicSection } from "@/components/site/sections/dynamic/DynamicSection";
 import { useLayoutEffect } from "react";
+import { ColorField } from "./ColorField";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string };
 
@@ -38,6 +39,8 @@ type FormState = {
   cta_texto: string;
   cta_link: string;
   bg_style: string;
+  bg_cor: string | null;
+  bg_cor_2: string | null;
   enabled: boolean;
   itens: ItemForm[];
 };
@@ -52,6 +55,8 @@ const empty: FormState = {
   cta_texto: "",
   cta_link: "",
   bg_style: "branco",
+  bg_cor: null,
+  bg_cor_2: null,
   enabled: true,
   itens: [],
 };
@@ -128,6 +133,8 @@ export function SecoesManager() {
     cta_texto: form.cta_texto || (form.cta_link ? "Botão" : null),
     cta_link: form.cta_link || (form.cta_texto ? "#" : null),
     bg_style: form.bg_style,
+    bg_cor: form.bg_cor,
+    bg_cor_2: form.bg_cor_2,
     order: 0,
     enabled: form.enabled,
     itens: (form.tipo === "grade-cards" && form.itens.length === 0
@@ -178,6 +185,8 @@ export function SecoesManager() {
       cta_texto: s.cta_texto ?? "",
       cta_link: s.cta_link ?? "",
       bg_style: s.bg_style ?? "branco",
+      bg_cor: s.bg_cor ?? null,
+      bg_cor_2: s.bg_cor_2 ?? null,
       enabled: s.enabled,
       itens: s.itens.map((it) => ({
         id: it.id, titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
@@ -218,6 +227,8 @@ export function SecoesManager() {
       cta_texto: form.cta_texto.trim() || null,
       cta_link: form.cta_link.trim() || null,
       bg_style: form.bg_style,
+      bg_cor: form.bg_cor,
+      bg_cor_2: form.bg_cor_2,
       enabled: form.enabled,
       updated_at: new Date().toISOString(),
     };
@@ -455,6 +466,7 @@ export function SecoesManager() {
               descricao: s.descricao ?? "", descricao_extra: s.descricao_extra ?? "",
               imagem_url: s.imagem_url, cta_texto: s.cta_texto ?? "",
               cta_link: s.cta_link ?? "", bg_style: s.bg_style ?? "branco",
+              bg_cor: s.bg_cor ?? null, bg_cor_2: s.bg_cor_2 ?? null,
               enabled: s.enabled, itens: s.itens.map((it) => ({
                 titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
               })),
@@ -688,7 +700,20 @@ export function SecoesManager() {
                       <SelectItem value="gradiente">Cinza suave (gradiente)</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-[11px] text-muted-foreground">
+                    Estilo padrão usado se nenhuma cor personalizada for definida abaixo.
+                  </p>
                 </div>
+                <ColorField
+                  label="Cor de fundo personalizada"
+                  value={form.bg_cor}
+                  onChange={(v) => setForm({ ...form, bg_cor: v })}
+                  value2={form.bg_cor_2}
+                  onChange2={(v) => setForm({ ...form, bg_cor_2: v })}
+                  allowGradient
+                  presets={["#FFFFFF", "#FEF3E8", "#FDDFC4", "#F3F4F6", "#0F172A", "#D67F43"]}
+                  helperText="Sobrescreve o estilo padrão. Use a paleta, um hex (#RRGGBB) ou monte um gradiente com 2 cores."
+                />
                 <div className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
                     <p className="text-sm font-medium">Visível no site</p>
