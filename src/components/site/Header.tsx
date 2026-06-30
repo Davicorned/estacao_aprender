@@ -41,20 +41,24 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
   const stickyCls = cfg.sticky ? "sticky top-0 z-40" : "";
   const bg = bgStyle(cfg);
   const accent = cfg.cor_destaque || "#D67F43";
+  const textColor = cfg.texto_cor_hex || null; // sobrepõe o esquema claro/escuro
   const logoSrc = cfg.logo_url || FALLBACK_LOGO;
   const ctaTo = cfg.cta_to || "/Contato";
 
   return (
     <header
       className={`${stickyCls} border-b ${borderCls} ${bg ? "" : "bg-white/95 backdrop-blur"}`}
-      style={bg}
+      style={{ ...(bg ?? {}), ...(textColor ? { color: textColor } : {}) }}
     >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-20 items-center justify-between">
           <Link to="/" className="flex items-center gap-3">
             <img src={logoSrc} alt={cfg.nome_marca ?? "Logo"} className="h-12 w-auto" />
             {cfg.mostrar_nome && cfg.nome_marca && (
-              <span className={`hidden font-semibold sm:inline ${textName}`}>
+              <span
+                className={`hidden font-semibold sm:inline ${textColor ? "" : textName}`}
+                style={textColor ? { color: textColor } : undefined}
+              >
                 {cfg.nome_marca}
               </span>
             )}
@@ -65,9 +69,10 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
               <a
                 key={item.id}
                 href={item.to}
-                className={`text-sm font-medium ${textBase} transition-colors`}
+                className={`text-sm font-medium ${textColor ? "" : textBase} transition-colors`}
+                style={textColor ? { color: textColor } : undefined}
                 onMouseEnter={(e) => (e.currentTarget.style.color = accent)}
-                onMouseLeave={(e) => (e.currentTarget.style.color = "")}
+                onMouseLeave={(e) => (e.currentTarget.style.color = textColor || "")}
               >
                 {item.label}
               </a>
