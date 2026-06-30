@@ -36,24 +36,40 @@ function TextoImagem({ secao, reverse }: { secao: SiteSecao; reverse: boolean })
     : secao.bg_style === "gradiente"
       ? "bg-gradient-to-b from-gray-50 to-white"
       : "bg-white";
+  const textColor = secao.texto_cor || null;
   return (
-    <section className={`${bg} py-20`} style={customBg ? { background: customBg } : undefined}>
+    <section
+      className={`${bg} py-20`}
+      style={{
+        ...(customBg ? { background: customBg } : {}),
+        ...(textColor ? { color: textColor } : {}),
+      }}
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-2">
           <FadeUp className={reverse ? "lg:order-1" : "lg:order-2"}>
             <Eyebrow text={secao.eyebrow} />
             {secao.titulo && (
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              <h2
+                className={`mt-3 text-3xl font-bold tracking-tight sm:text-4xl ${textColor ? "" : "text-gray-900"}`}
+                style={textColor ? { color: textColor } : undefined}
+              >
                 {secao.titulo}
               </h2>
             )}
             {secao.descricao && (
-              <p className="mt-6 leading-relaxed text-gray-600 whitespace-pre-line">
+              <p
+                className={`mt-6 leading-relaxed whitespace-pre-line ${textColor ? "opacity-90" : "text-gray-600"}`}
+                style={textColor ? { color: textColor } : undefined}
+              >
                 {secao.descricao}
               </p>
             )}
             {secao.descricao_extra && (
-              <p className="mt-4 leading-relaxed text-gray-600 whitespace-pre-line">
+              <p
+                className={`mt-4 leading-relaxed whitespace-pre-line ${textColor ? "opacity-90" : "text-gray-600"}`}
+                style={textColor ? { color: textColor } : undefined}
+              >
                 {secao.descricao_extra}
               </p>
             )}
@@ -87,8 +103,25 @@ function GradeCards({ secao }: { secao: SiteSecao }) {
       ? "bg-gradient-to-b from-gray-50 to-white"
       : "bg-white";
   const hasImage = !!secao.imagem_url;
+  const textColor = secao.texto_cor || null;
+  const cardBg = secao.card_bg_cor || null;
+  const cardText = secao.card_texto_cor || null;
+  const cardBorder = secao.card_borda_cor || null;
+  const cardStyle = cardBg || cardText || cardBorder
+    ? {
+        ...(cardBg ? { backgroundColor: cardBg } : {}),
+        ...(cardText ? { color: cardText } : {}),
+        ...(cardBorder ? { borderColor: cardBorder, borderWidth: 1, borderStyle: "solid" as const } : {}),
+      }
+    : undefined;
   return (
-    <section className={`${bg} py-20`} style={customBg ? { background: customBg } : undefined}>
+    <section
+      className={`${bg} py-20`}
+      style={{
+        ...(customBg ? { background: customBg } : {}),
+        ...(textColor ? { color: textColor } : {}),
+      }}
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div
           className={
@@ -108,12 +141,18 @@ function GradeCards({ secao }: { secao: SiteSecao }) {
           <FadeUp delay={0.15}>
             <Eyebrow text={secao.eyebrow} />
             {secao.titulo && (
-              <h2 className="mt-3 text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
+              <h2
+                className={`mt-3 text-3xl font-bold tracking-tight sm:text-4xl ${textColor ? "" : "text-gray-900"}`}
+                style={textColor ? { color: textColor } : undefined}
+              >
                 {secao.titulo}
               </h2>
             )}
             {secao.descricao && (
-              <p className="mt-6 leading-relaxed text-gray-600 whitespace-pre-line">
+              <p
+                className={`mt-6 leading-relaxed whitespace-pre-line ${textColor ? "opacity-90" : "text-gray-600"}`}
+                style={textColor ? { color: textColor } : undefined}
+              >
                 {secao.descricao}
               </p>
             )}
@@ -126,13 +165,24 @@ function GradeCards({ secao }: { secao: SiteSecao }) {
                   return (
                     <div
                       key={it.id}
-                      className={`flex ${compact ? "items-center" : "items-start"} gap-3 rounded-xl bg-[#FEF3E8] p-3 text-left`}
+                      className={`flex ${compact ? "items-center" : "items-start"} gap-3 rounded-xl p-3 text-left ${cardStyle ? "" : "bg-[#FEF3E8]"}`}
+                      style={cardStyle}
                     >
                       <Icon className={`h-5 w-5 shrink-0 text-[#D67F43] ${compact ? "" : "mt-0.5"}`} />
                       <div>
-                        <p className="text-sm font-medium text-gray-700">{it.titulo}</p>
+                        <p
+                          className={`text-sm font-medium ${cardText ? "" : "text-gray-700"}`}
+                          style={cardText ? { color: cardText } : undefined}
+                        >
+                          {it.titulo}
+                        </p>
                         {it.descricao && (
-                          <p className="mt-0.5 text-xs text-gray-500">{it.descricao}</p>
+                          <p
+                            className={`mt-0.5 text-xs ${cardText ? "opacity-75" : "text-gray-500"}`}
+                            style={cardText ? { color: cardText } : undefined}
+                          >
+                            {it.descricao}
+                          </p>
                         )}
                       </div>
                     </div>
