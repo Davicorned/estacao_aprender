@@ -258,6 +258,13 @@ export function HeaderManager() {
                 onChange={(v) => setForm((f) => ({ ...f, cor_destaque: v }))}
                 presets={["#D67F43", "#B85A24", "#0EA5E9", "#16A34A", "#9333EA", "#0F172A"]}
               />
+              <ColorField
+                label="Cor do texto (personalizada)"
+                value={form.texto_cor_hex}
+                onChange={(v) => setForm((f) => ({ ...f, texto_cor_hex: v }))}
+                presets={["#0F172A", "#1F2937", "#FFFFFF", "#475569", "#D67F43", "#FEF3E8"]}
+                helperText="Sobrescreve o contraste claro/escuro. Em branco, mantém o esquema acima."
+              />
             </section>
 
             <section className="rounded-xl border border-border bg-card p-5 space-y-4">

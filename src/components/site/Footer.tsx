@@ -61,20 +61,37 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
   const cls = isLight
     ? { footer: "text-gray-800", muted: "text-gray-600", strong: "text-gray-900", border: "border-gray-200", hover: "hover:text-gray-900", chip: "bg-black/5", link: "text-gray-600 hover:text-gray-900" }
     : { footer: "text-white", muted: "text-gray-400", strong: "text-gray-300", border: "border-gray-800", hover: "hover:text-white", chip: "bg-white/10", link: "text-gray-400 hover:text-white" };
+  const textColor = data.texto_cor_hex || null;
+  const cardBg = data.card_bg_cor || null;
+  const cardText = data.card_texto_cor || null;
+  const colStyle = cardBg || cardText
+    ? {
+        ...(cardBg ? { backgroundColor: cardBg } : {}),
+        ...(cardText ? { color: cardText } : {}),
+        borderRadius: cardBg ? 12 : undefined,
+        padding: cardBg ? "16px" : undefined,
+      }
+    : undefined;
 
   return (
     <footer
       className={`${customBg ? "" : "bg-gray-900"} ${cls.footer}`}
-      style={customBg ? { background: customBg } : undefined}
+      style={{
+        ...(customBg ? { background: customBg } : {}),
+        ...(textColor ? { color: textColor } : {}),
+      }}
     >
       <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
         {/* Brand */}
-        <div>
+        <div style={colStyle}>
           <div className="flex items-center gap-3">
             <img src={LOGO} alt="Estação Aprender" className="h-10 w-auto" />
             <span className="text-lg font-semibold">Estação Aprender</span>
           </div>
-          <p className={`mt-4 text-sm leading-relaxed ${cls.muted}`}>
+          <p
+            className={`mt-4 text-sm leading-relaxed ${cardText || textColor ? "opacity-90" : cls.muted}`}
+            style={cardText ? { color: cardText } : textColor ? { color: textColor } : undefined}
+          >
             {data.texto_institucional}
           </p>
           <div className="mt-6 flex gap-3">
@@ -97,7 +114,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
         </div>
 
         {/* Navegação */}
-        <div>
+        <div style={colStyle}>
           <h4 className="text-sm font-semibold uppercase tracking-wider">Navegação</h4>
           <ul className="mt-4 space-y-3 text-sm">
             {data.links_rapidos.map((l, i) => (
@@ -107,7 +124,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
         </div>
 
         {/* Serviços */}
-        <div>
+        <div style={colStyle}>
           <h4 className="text-sm font-semibold uppercase tracking-wider">Serviços</h4>
           <ul className="mt-4 space-y-3 text-sm">
             {data.links_servicos.map((l, i) => (
@@ -117,7 +134,7 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
         </div>
 
         {/* Contato */}
-        <div>
+        <div style={colStyle}>
           <h4 className="text-sm font-semibold uppercase tracking-wider">Contato</h4>
           <ul className={`mt-4 space-y-4 text-sm ${cls.muted}`}>
             <li className="flex items-start gap-3">

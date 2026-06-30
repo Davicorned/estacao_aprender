@@ -21,6 +21,7 @@ function mergeHero(h: Partial<HeroData> | null | undefined): HeroData {
     badge_subtitulo: h?.badge_subtitulo || HERO_DEFAULTS.badge_subtitulo,
     bg_cor: h?.bg_cor ?? HERO_DEFAULTS.bg_cor,
     bg_cor_2: h?.bg_cor_2 ?? HERO_DEFAULTS.bg_cor_2,
+    texto_cor: h?.texto_cor ?? HERO_DEFAULTS.texto_cor,
   };
 }
 
@@ -37,7 +38,10 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
   return (
     <section
       className={`relative overflow-hidden ${hero.bg_cor ? "" : "bg-gradient-to-br from-[#FEF3E8] via-[#FDDFC4] to-white"}`}
-      style={hero.bg_cor ? { background: buildBackground(hero.bg_cor, hero.bg_cor_2) } : undefined}
+      style={{
+        ...(hero.bg_cor ? { background: buildBackground(hero.bg_cor, hero.bg_cor_2) } : {}),
+        ...(hero.texto_cor ? { color: hero.texto_cor } : {}),
+      }}
     >
       {/* Decorative blobs */}
       <div className="pointer-events-none absolute -top-24 -right-24 h-96 w-96 rounded-full bg-[#FBCF9E]/30 blur-3xl" />
@@ -46,7 +50,10 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
           <FadeUp>
-            <h1 className="text-4xl font-bold leading-tight tracking-tight text-gray-900 sm:text-5xl lg:text-6xl">
+            <h1
+              className={`text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl ${hero.texto_cor ? "" : "text-gray-900"}`}
+              style={hero.texto_cor ? { color: hero.texto_cor } : undefined}
+            >
               {hero.titulo}{" "}
               {hero.titulo_destaque && (
                 <span className="bg-gradient-to-r from-[#D67F43] to-[#C4682E] bg-clip-text text-transparent">
@@ -56,7 +63,10 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
               !
             </h1>
 
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-gray-600">
+            <p
+              className={`mt-6 max-w-xl text-lg leading-relaxed ${hero.texto_cor ? "opacity-90" : "text-gray-600"}`}
+              style={hero.texto_cor ? { color: hero.texto_cor } : undefined}
+            >
               {hero.subtitulo}
             </p>
 

@@ -41,6 +41,10 @@ type FormState = {
   bg_style: string;
   bg_cor: string | null;
   bg_cor_2: string | null;
+  texto_cor: string | null;
+  card_bg_cor: string | null;
+  card_texto_cor: string | null;
+  card_borda_cor: string | null;
   enabled: boolean;
   itens: ItemForm[];
 };
@@ -57,6 +61,10 @@ const empty: FormState = {
   bg_style: "branco",
   bg_cor: null,
   bg_cor_2: null,
+  texto_cor: null,
+  card_bg_cor: null,
+  card_texto_cor: null,
+  card_borda_cor: null,
   enabled: true,
   itens: [],
 };
@@ -135,6 +143,10 @@ export function SecoesManager() {
     bg_style: form.bg_style,
     bg_cor: form.bg_cor,
     bg_cor_2: form.bg_cor_2,
+    texto_cor: form.texto_cor,
+    card_bg_cor: form.card_bg_cor,
+    card_texto_cor: form.card_texto_cor,
+    card_borda_cor: form.card_borda_cor,
     order: 0,
     enabled: form.enabled,
     itens: (form.tipo === "grade-cards" && form.itens.length === 0
@@ -187,6 +199,10 @@ export function SecoesManager() {
       bg_style: s.bg_style ?? "branco",
       bg_cor: s.bg_cor ?? null,
       bg_cor_2: s.bg_cor_2 ?? null,
+      texto_cor: s.texto_cor ?? null,
+      card_bg_cor: s.card_bg_cor ?? null,
+      card_texto_cor: s.card_texto_cor ?? null,
+      card_borda_cor: s.card_borda_cor ?? null,
       enabled: s.enabled,
       itens: s.itens.map((it) => ({
         id: it.id, titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
@@ -229,6 +245,10 @@ export function SecoesManager() {
       bg_style: form.bg_style,
       bg_cor: form.bg_cor,
       bg_cor_2: form.bg_cor_2,
+      texto_cor: form.texto_cor,
+      card_bg_cor: form.card_bg_cor,
+      card_texto_cor: form.card_texto_cor,
+      card_borda_cor: form.card_borda_cor,
       enabled: form.enabled,
       updated_at: new Date().toISOString(),
     };
@@ -467,6 +487,10 @@ export function SecoesManager() {
               imagem_url: s.imagem_url, cta_texto: s.cta_texto ?? "",
               cta_link: s.cta_link ?? "", bg_style: s.bg_style ?? "branco",
               bg_cor: s.bg_cor ?? null, bg_cor_2: s.bg_cor_2 ?? null,
+              texto_cor: s.texto_cor ?? null,
+              card_bg_cor: s.card_bg_cor ?? null,
+              card_texto_cor: s.card_texto_cor ?? null,
+              card_borda_cor: s.card_borda_cor ?? null,
               enabled: s.enabled, itens: s.itens.map((it) => ({
                 titulo: it.titulo, descricao: it.descricao ?? "", icone: it.icone ?? "Sparkles",
               })),
@@ -714,6 +738,35 @@ export function SecoesManager() {
                   presets={["#FFFFFF", "#FEF3E8", "#FDDFC4", "#F3F4F6", "#0F172A", "#D67F43"]}
                   helperText="Sobrescreve o estilo padrão. Use a paleta, um hex (#RRGGBB) ou monte um gradiente com 2 cores."
                 />
+                <ColorField
+                  label="Cor do texto da seção"
+                  value={form.texto_cor}
+                  onChange={(v) => setForm((f) => ({ ...f, texto_cor: v }))}
+                  presets={["#0F172A", "#1F2937", "#FFFFFF", "#475569", "#D67F43", "#FEF3E8"]}
+                  helperText="Aplica em título, descrição e textos do corpo."
+                />
+                {form.tipo === "grade-cards" && (
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <ColorField
+                      label="Fundo dos cards"
+                      value={form.card_bg_cor}
+                      onChange={(v) => setForm((f) => ({ ...f, card_bg_cor: v }))}
+                      presets={["#FEF3E8", "#FFFFFF", "#F3F4F6", "#0F172A", "#D67F43", "#FBCF9E"]}
+                    />
+                    <ColorField
+                      label="Texto dos cards"
+                      value={form.card_texto_cor}
+                      onChange={(v) => setForm((f) => ({ ...f, card_texto_cor: v }))}
+                      presets={["#374151", "#0F172A", "#FFFFFF", "#D67F43", "#475569", "#FEF3E8"]}
+                    />
+                    <ColorField
+                      label="Borda dos cards"
+                      value={form.card_borda_cor}
+                      onChange={(v) => setForm((f) => ({ ...f, card_borda_cor: v }))}
+                      presets={["#E5E7EB", "#FBCF9E", "#D67F43", "#0F172A", "#FFFFFF", "#94A3B8"]}
+                    />
+                  </div>
+                )}
                 <div className="flex items-center justify-between rounded-lg border border-border p-3">
                   <div>
                     <p className="text-sm font-medium">Visível no site</p>

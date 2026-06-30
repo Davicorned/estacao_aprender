@@ -203,6 +203,26 @@ export function RodapeManager() {
             Use “Texto escuro” quando escolher cores de fundo claras (creme, branco) para manter a legibilidade.
           </p>
         </div>
+        <ColorField
+          label="Cor do texto (personalizada)"
+          value={form.texto_cor_hex}
+          onChange={(v) => setForm((f) => ({ ...f, texto_cor_hex: v }))}
+          presets={["#FFFFFF", "#E5E7EB", "#9CA3AF", "#0F172A", "#D67F43", "#FEF3E8"]}
+          helperText="Sobrescreve o contraste acima. Em branco, mantém o esquema claro/escuro."
+        />
+        <ColorField
+          label="Cor de fundo dos blocos (cards)"
+          value={form.card_bg_cor}
+          onChange={(v) => setForm((f) => ({ ...f, card_bg_cor: v }))}
+          presets={["#111827", "#1F2937", "#FFFFFF", "#FEF3E8", "#D67F43", "#0F172A"]}
+          helperText="Aplica fundo às 4 colunas (marca, navegação, serviços, contato)."
+        />
+        <ColorField
+          label="Cor do texto dos blocos"
+          value={form.card_texto_cor}
+          onChange={(v) => setForm((f) => ({ ...f, card_texto_cor: v }))}
+          presets={["#FFFFFF", "#E5E7EB", "#0F172A", "#374151", "#D67F43", "#FEF3E8"]}
+        />
       </section>
 
       <div className="flex justify-end">
