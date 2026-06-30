@@ -62,28 +62,28 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
 
           <nav className="hidden items-center gap-8 lg:flex">
             {items.map((item) => (
-              <Link
+              <a
                 key={item.id}
-                to={item.to}
+                href={item.to}
                 className={`text-sm font-medium ${textBase} transition-colors`}
                 onMouseEnter={(e) => (e.currentTarget.style.color = accent)}
                 onMouseLeave={(e) => (e.currentTarget.style.color = "")}
               >
                 {item.label}
-              </Link>
+              </a>
             ))}
           </nav>
 
           <div className="flex items-center gap-2">
             {cfg.cta_visivel && cfg.cta_label && (
-              <Link
-                to={ctaTo}
+              <a
+                href={ctaTo}
                 className="hidden h-9 items-center gap-2 rounded-full px-6 text-sm font-medium text-white shadow-lg transition-all sm:inline-flex"
                 style={{ backgroundColor: accent, boxShadow: `0 10px 15px -3px ${accent}40` }}
               >
                 <Calendar className="h-4 w-4" />
                 {cfg.cta_label}
-              </Link>
+              </a>
             )}
 
             <Sheet open={open} onOpenChange={setOpen}>
@@ -100,25 +100,25 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
                 <SheetTitle className="text-left">Menu</SheetTitle>
                 <nav className="mt-6 flex flex-col gap-1">
                   {items.map((item) => (
-                    <Link
+                    <a
                       key={item.id}
-                      to={item.to}
+                      href={item.to}
                       onClick={() => setOpen(false)}
                       className="rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-[#FEF3E8]"
                     >
                       {item.label}
-                    </Link>
+                    </a>
                   ))}
                   {cfg.cta_visivel && cfg.cta_label && (
-                    <Link
-                      to={ctaTo}
+                    <a
+                      href={ctaTo}
                       onClick={() => setOpen(false)}
                       className="mt-4 inline-flex h-10 items-center justify-center gap-2 rounded-full px-4 text-sm font-medium text-white shadow-lg"
                       style={{ backgroundColor: accent }}
                     >
                       <Calendar className="h-4 w-4" />
                       {cfg.cta_label}
-                    </Link>
+                    </a>
                   )}
                 </nav>
               </SheetContent>
