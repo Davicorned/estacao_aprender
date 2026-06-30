@@ -31,6 +31,7 @@ import {
 import { DynamicSection } from "@/components/site/sections/dynamic/DynamicSection";
 import { useLayoutEffect } from "react";
 import { ColorField } from "./ColorField";
+import { LinkField } from "./LinkField";
 import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
@@ -869,8 +870,7 @@ export function SecoesManager({
                   <FieldMsg issue={fieldIssues.cta_texto} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Link do botão</Label>
-                  <Input className={fieldCls(fieldIssues.cta_link)} value={form.cta_link} onChange={(e) => setForm({ ...form, cta_link: e.target.value })} placeholder="https://wa.me/..." />
+                  <LinkField label="Link do botão" value={form.cta_link} onChange={(v) => setForm({ ...form, cta_link: v })} />
                   <FieldMsg issue={fieldIssues.cta_link} />
                 </div>
               </TabsContent>
@@ -921,7 +921,7 @@ export function SecoesManager({
                         <Textarea rows={2} value={it.descricao} onChange={(e) => updateItem(idx, { descricao: e.target.value })} placeholder="Descrição (opcional)" />
                       )}
                       {itemConfig(form.tipo)?.link && (
-                        <Input value={it.link} onChange={(e) => updateItem(idx, { link: e.target.value })} placeholder="Link (opcional) — ex: /atendimento ou https://..." />
+                        <LinkField label="Link (opcional)" value={it.link} onChange={(v) => updateItem(idx, { link: v })} />
                       )}
                       <div className="flex justify-end gap-1">
                         <Button size="icon" variant="ghost" onClick={() => moveItem(idx, -1)} disabled={idx === 0}><ArrowUp className="h-4 w-4" /></Button>
