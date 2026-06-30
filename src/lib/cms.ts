@@ -512,3 +512,51 @@ export async function fetchTema(): Promise<SiteTema | null> {
   temaInflight = run.finally(() => { temaInflight = null; });
   return temaInflight;
 }
+export async function fetchPaginas(includeDisabled = false): Promise<SitePagina[]> {
+  if (!includeDisabled) {
+    if (paginasCache && Date.now() - paginasCache.at < CACHE_TTL_MS) return paginasCache.data;
+    if (paginasInflight) return paginasInflight;
+  }
+  const run = (async () => {
+    let q = supabase
+      .from("site_paginas")
+      .select("*")
+      .order("order", { ascending: true });
+    if (!includeDisabled) q = q.eq("enabled", true);
+    const { data, error } = await q;
+    if (error) {
+      console.error("fetchPaginas error", error);
+      return [];
+    }
+    const mapped = (data ?? []).map((p: any) => ({
+      ...p,
+      banner_imagem_url: publicImageUrl(p.banner_imagem_url),
+      og_image: publicImageUrl(p.og_image),
+    })) as SitePagina[];
+    if (!includeDisabled) paginasCache = { data: mapped, at: Date.now() };
+    return mapped;
+  })();
+  if (!includeDisabled) {
+    paginasInflight = run.finally(() => { paginasInflight = null; });
+    return paginasInflight;
+  }
+  return run;
+}
+
+export async function fetchPaginaBySlug(slug: string): Promise<SitePagina | null> {
+  const { data, error } = await supabase
+    .from("site_paginas")
+    .select("*")
+    .eq("slug", slug)
+    .maybeSingle();
+  if (error) {
+    console.error("fetchPaginaBySlug error", error);
+    return null;
+  }
+  if (!data) return null;
+  return {
+    ...(data as any),
+    banner_imagem_url: publicImageUrl((data as any).banner_imagem_url),
+    og_image: publicImageUrl((data as any).og_image),
+  } as SitePagina;
+}
