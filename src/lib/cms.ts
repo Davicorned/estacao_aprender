@@ -26,6 +26,7 @@ export type SiteServico = {
   titulo: string;
   descricao: string | null;
   imagem_url: string | null;
+  icone: string | null;
   link: string | null;
   order: number;
   enabled: boolean;
@@ -81,7 +82,8 @@ export type SecaoTipo =
   | "cta-banner"
   | "destaque-pessoa"
   | "modalidades"
-  | "contato-mapa";
+  | "contato-mapa"
+  | "servicos-cards";
 
 export type SiteSecaoItem = {
   id: string;
@@ -353,7 +355,7 @@ export async function fetchServicos(includeDisabled = false): Promise<SiteServic
   }
   const query = supabase
     .from("site_servicos")
-    .select("id, titulo, descricao, imagem_url, link, order, enabled")
+    .select("id, titulo, descricao, imagem_url, icone, link, order, enabled")
     .order("order", { ascending: true });
   const run = (async () => {
     const { data, error } = includeDisabled ? await query : await query.eq("enabled", true);
