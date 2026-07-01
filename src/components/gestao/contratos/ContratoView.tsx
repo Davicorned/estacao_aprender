@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2, DollarSign } from "lucide-react";
+import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2, DollarSign, Palette } from "lucide-react";
 import { toast } from "sonner";
+import { Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import {
   Dialog,
@@ -25,6 +26,10 @@ import {
   type ContratoComJoin,
 } from "@/lib/contratos";
 import { gerarMensalidadeContrato } from "@/lib/financeiro";
+import { fetchDocumentoEstilo, DOC_ESTILO_DEFAULTS } from "@/lib/documento-estilo";
+import { buildHeaderHtml, buildFooterHtml, getContentMetrics, PAGE_W, PAGE_H } from "@/lib/documento-pdf";
+import { fetchClinica } from "@/lib/configuracoes";
+import { publicImageUrl } from "@/integrations/supabase/client";
 
 type Props = {
   contrato: ContratoComJoin;
@@ -93,6 +98,10 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
         import("html2canvas-pro"),
       ]);
       const html2canvas = h2c.default;
+      const [cfg, clinica] = await Promise.all([
+        fetchDocumentoEstilo().catch(() => DOC_ESTILO_DEFAULTS),
+        fetchClinica().catch(() => null),
+      ]);
       const vars = montarVariaveis({
         paciente_nome: contrato.paciente?.nome ?? "",
         responsavel: (contrato.dados_responsavel as DadosResponsavel | null) ?? null,
@@ -141,11 +150,9 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
 
       const sections: Block[][] = [corpoBlocks, assinaturaBlocks, autorizacaoBlocks];
 
-      // Build off-screen container with all pages
-      const PAGE_W = 794; // 210mm @ 96dpi
-      const PAGE_H = 1123; // 297mm @ 96dpi
-      const CONTENT_TOP = 170; // below blob header
-      const CONTENT_BOTTOM = PAGE_H - 90; // above footer
+      const metrics = getContentMetrics(cfg);
+      const CONTENT_TOP = metrics.top;
+      const CONTENT_BOTTOM = PAGE_H - metrics.bottom;
       const CONTENT_MAX_H = CONTENT_BOTTOM - CONTENT_TOP;
 
       const root = document.createElement("div");
@@ -156,13 +163,11 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
         top: "0",
         width: `${PAGE_W}px`,
         background: "#ffffff",
-        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        fontFamily: `'${cfg.fonte}', 'Inter', system-ui, -apple-system, sans-serif`,
         color: "#1f1f1f",
         zIndex: "-1",
       } as CSSStyleDeclaration);
       document.body.appendChild(root);
-
-      const ORANGE = "#E08A3C";
 
       function svgToPngDataUrl(svg: string, width: number, height: number) {
         return new Promise<string>((resolve, reject) => {
@@ -182,63 +187,33 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
         });
       }
 
-      // html2canvas não renderiza SVG externo de forma confiável; convertemos para PNG embutido.
-      let logoMarkup = "";
-      try {
-        const res = await fetch(logoAsset.url);
-        if (res.ok) {
-          let svg = await res.text();
-          svg = svg
-            .replace(/<\?xml[^?]*\?>/, "")
-            .replace(/<!--([\s\S]*?)-->/g, "")
-            .replace(/#D67F43/gi, "#FFFFFF")
-            .replace(/#724B36/gi, "#FFFFFF")
-            .trim();
-          const png = await svgToPngDataUrl(svg, 190, 107);
-          logoMarkup = `<img src="${png}" alt="Estação Aprender" style="width:190px;height:107px;display:block;object-fit:contain;"/>`;
+      // Resolve logo: config first, otherwise fallback to Estação Aprender SVG recolored.
+      let logoSrc: string | null = null;
+      if (cfg.logo_url) {
+        logoSrc = publicImageUrl(cfg.logo_url);
+      } else {
+        try {
+          const res = await fetch(logoAsset.url);
+          if (res.ok) {
+            let svg = await res.text();
+            const tint = cfg.header_texto_cor || "#FFFFFF";
+            svg = svg
+              .replace(/<\?xml[^?]*\?>/, "")
+              .replace(/<!--([\s\S]*?)-->/g, "")
+              .replace(/#D67F43/gi, tint)
+              .replace(/#724B36/gi, tint)
+              .trim();
+            logoSrc = await svgToPngDataUrl(svg, 190, 107);
+          }
+        } catch (e) {
+          console.warn("Falha ao carregar logo padrão", e);
         }
-      } catch (e) {
-        console.warn("Falha ao carregar logo SVG", e);
       }
 
-      const headerHtml = `
-        <div style="position:relative;width:${PAGE_W}px;height:170px;overflow:hidden;">
-          <svg viewBox="0 0 794 200" preserveAspectRatio="none" style="position:absolute;inset:0;width:100%;height:100%;display:block;">
-            <path d="M0,0 L794,0 L794,140 C680,205 540,180 420,160 C300,140 180,180 80,170 C50,167 20,160 0,150 Z" fill="${ORANGE}"/>
-          </svg>
-          <div style="position:absolute;top:20px;left:42px;width:190px;height:107px;display:flex;align-items:center;color:#fff;">
-            ${logoMarkup || `<div style="font-family:Arial,sans-serif;font-size:26px;font-weight:700;color:#fff;line-height:1.05;letter-spacing:0;">estação<br/><span style="font-size:34px;">aprender</span></div>`}
-          </div>
-          <div style="position:absolute;top:34px;right:48px;text-align:right;color:#fff;font-size:12px;line-height:1.7;letter-spacing:0.02em;">
-            Psicopedagogia · Psicomotricidade<br/>
-            Psicologia · Neuropsicologia · Alfabetização<br/>
-            Educação Neuroparental
-          </div>
-        </div>
-      `;
-
-      const footerHtml = (pageNum: number, total: number) => `
-        <div style="position:absolute;left:48px;right:48px;bottom:32px;">
-          <div style="height:2px;background:${ORANGE};margin-bottom:12px;border-radius:2px;"></div>
-          <div style="display:flex;justify-content:space-between;align-items:center;font-size:11px;color:#666;">
-            <div style="display:flex;gap:18px;align-items:center;flex-wrap:wrap;">
-              <span style="display:inline-flex;align-items:center;gap:6px;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${ORANGE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.37 1.9.72 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.35 1.85.59 2.81.72A2 2 0 0 1 22 16.92z"/></svg>
-                (11) 2621-9800 · (11) 9 3213-9800
-              </span>
-              <span style="display:inline-flex;align-items:center;gap:6px;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${ORANGE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="20" height="20" rx="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>
-                @estacaoaprender_
-              </span>
-              <span style="display:inline-flex;align-items:center;gap:6px;">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="${ORANGE}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-                Praça Gajé n° 56 — Conj. 1, Engenheiro Goulart
-              </span>
-            </div>
-            <span style="color:#999;">${pageNum} / ${total}</span>
-          </div>
-        </div>
-      `;
+      const renderCtx = { logoSrc, clinica };
+      const headerHtml = buildHeaderHtml(cfg, renderCtx);
+      const footerHtml = (pageNum: number, total: number) =>
+        buildFooterHtml(cfg, { ...renderCtx, pageNum, total });
 
       function createPage(): HTMLDivElement {
         const page = document.createElement("div");
@@ -255,8 +230,8 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
         Object.assign(content.style, {
           position: "absolute",
           top: `${CONTENT_TOP}px`,
-          left: "48px",
-          right: "48px",
+          left: `${metrics.left}px`,
+          right: `${metrics.right}px`,
           maxHeight: `${CONTENT_MAX_H}px`,
           overflow: "hidden",
           fontSize: "12.5px",
@@ -310,9 +285,11 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
       // Append footers with final pagination
       const total = pages.length;
       pages.forEach((page, i) => {
+        const html = footerHtml(i + 1, total);
+        if (!html) return;
         const footer = document.createElement("div");
-        footer.innerHTML = footerHtml(i + 1, total);
-        page.appendChild(footer.firstElementChild as HTMLElement);
+        footer.innerHTML = html;
+        if (footer.firstElementChild) page.appendChild(footer.firstElementChild as HTMLElement);
       });
 
       // Wait for logo + fonts
@@ -459,6 +436,11 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
               <Download className="mr-2 h-4 w-4" />
             )}
             {generatingPdf ? "Gerando..." : "Baixar PDF"}
+          </Button>
+          <Button variant="ghost" size="sm" asChild className="text-xs text-muted-foreground">
+            <Link to="/gestao/configuracoes" hash="estilo-pdf">
+              <Palette className="mr-1 h-4 w-4" /> Estilo do PDF
+            </Link>
           </Button>
           <Button onClick={handleWhatsapp} className="bg-green-600 text-white hover:bg-green-700">
             <MessageCircle className="mr-2 h-4 w-4" /> Enviar por WhatsApp
