@@ -23,7 +23,7 @@ import {
   type HeaderEstilo,
 } from "@/lib/documento-estilo";
 import { fetchClinica, type ClinicaConfig } from "@/lib/configuracoes";
-import { buildHeaderHtml, buildFooterHtml, getContentMetrics, PAGE_W, PAGE_H } from "@/lib/documento-pdf";
+import { buildHeaderHtml, buildFooterHtml, getContentMetrics, measureContentTop, PAGE_W, PAGE_H } from "@/lib/documento-pdf";
 import { ColorField } from "@/components/gestao/site/ColorField";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
 
@@ -380,6 +380,15 @@ function PagePreview({
     return () => ro.disconnect();
   }, []);
 
+  // Measure brand block bottom → topo do conteúdo. Recalcula em qualquer
+  // mudança de config (tagline, logo, modelo, altura).
+  const pageRef = useRef<HTMLDivElement>(null);
+  const [contentTop, setContentTop] = useState(metrics.top);
+  useLayoutEffect(() => {
+    if (!pageRef.current) return;
+    setContentTop(measureContentTop(pageRef.current, cfg, 24));
+  }, [cfg, logoSrc, header, metrics.top]);
+
   return (
     <div ref={wrapRef} className="w-full">
       <div
@@ -391,6 +400,7 @@ function PagePreview({
         }}
       >
         <div
+          ref={pageRef}
           style={{
             width: PAGE_W,
             height: PAGE_H,
@@ -405,7 +415,7 @@ function PagePreview({
           <div
             style={{
               position: "absolute",
-              top: metrics.top,
+              top: contentTop,
               left: metrics.left,
               right: metrics.right,
               bottom: metrics.bottom,
