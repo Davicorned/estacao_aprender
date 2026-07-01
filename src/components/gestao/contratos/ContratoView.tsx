@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2, DollarSign } from "lucide-react";
 import { toast } from "sonner";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas-pro";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import {
   Dialog,
@@ -90,6 +88,11 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
   async function handleDownloadPdf() {
     setGeneratingPdf(true);
     try {
+      const [{ jsPDF }, h2c] = await Promise.all([
+        import("jspdf"),
+        import("html2canvas-pro"),
+      ]);
+      const html2canvas = h2c.default;
       const vars = montarVariaveis({
         paciente_nome: contrato.paciente?.nome ?? "",
         responsavel: (contrato.dados_responsavel as DadosResponsavel | null) ?? null,

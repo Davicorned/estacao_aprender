@@ -49,7 +49,7 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
 
       <div className="relative z-10 mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
         <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2">
-          <FadeUp>
+          <FadeUp immediate>
             <h1
               className={`text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl ${hero.texto_cor ? "" : "text-gray-900"}`}
               style={hero.texto_cor ? { color: hero.texto_cor } : undefined}
@@ -91,7 +91,7 @@ export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
             </div>
           </FadeUp>
 
-          <FadeUp delay={0.15} className="relative hidden lg:block">
+          <FadeUp immediate delay={0.15} className="relative hidden lg:block">
             <div className="relative overflow-hidden rounded-3xl shadow-2xl shadow-[var(--site-primary)]/10">
               {hero.imagem_url && (
                 <img
