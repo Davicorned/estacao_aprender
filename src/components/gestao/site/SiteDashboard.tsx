@@ -19,6 +19,7 @@ import {
   Check,
   Loader2,
   RefreshCw,
+  LayoutTemplate,
 } from "lucide-react";
 import {
   fetchPaginas,
@@ -27,6 +28,7 @@ import {
   fetchTestimonials,
   fetchServicos,
   fetchSecoes,
+  fetchHero,
   TEMA_DEFAULTS,
   type SitePagina,
   type SiteTema,
@@ -61,25 +63,36 @@ export function SiteDashboard() {
     depoimentos: 0,
     servicos: 0,
   });
+  const [thumbByPagina, setThumbByPagina] = useState<Record<string, string | null>>({});
 
   async function load() {
     setLoading(true);
-    const [t, pgs, team, dep, svc] = await Promise.all([
+    const [t, pgs, team, dep, svc, hero] = await Promise.all([
       fetchTema(),
       fetchPaginas(true),
       fetchTeam(true),
       fetchTestimonials(true),
       fetchServicos(true),
+      fetchHero(),
     ]);
     setTema(t);
     setPaginas(pgs);
     const secCounts: Record<string, number> = {};
+    const thumbs: Record<string, string | null> = {};
     await Promise.all(
       pgs.map(async (p) => {
         const s = await fetchSecoes(true, p.id);
         secCounts[p.id] = s.length;
+        const firstSecImg = s.find((x) => x.imagem_url)?.imagem_url ?? null;
+        thumbs[p.id] =
+          p.banner_imagem_url ||
+          p.og_image ||
+          (p.is_home ? hero?.imagem_url ?? null : null) ||
+          firstSecImg ||
+          null;
       }),
     );
+    setThumbByPagina(thumbs);
     setCounts({
       secoesByPagina: secCounts,
       team: team.length,
@@ -115,7 +128,13 @@ export function SiteDashboard() {
 
       <IdentidadeCard tema={themeEff} hasRecord={!!tema} />
 
-      <PaginasGrid paginas={paginas} secoesByPagina={counts.secoesByPagina} loading={loading} onReload={load} />
+      <PaginasGrid
+        paginas={paginas}
+        secoesByPagina={counts.secoesByPagina}
+        thumbByPagina={thumbByPagina}
+        loading={loading}
+        onReload={load}
+      />
 
       <BibliotecaGrid counts={counts} />
 
@@ -192,11 +211,13 @@ function Meta({ label, value }: { label: string; value: string }) {
 function PaginasGrid({
   paginas,
   secoesByPagina,
+  thumbByPagina,
   loading,
   onReload,
 }: {
   paginas: SitePagina[];
   secoesByPagina: Record<string, number>;
+  thumbByPagina: Record<string, string | null>;
   loading: boolean;
   onReload: () => void | Promise<void>;
 }) {
@@ -249,6 +270,7 @@ function PaginasGrid({
               key={p.id}
               page={p}
               count={secoesByPagina[p.id] ?? 0}
+              thumb={thumbByPagina[p.id] ?? null}
               onToggle={() => toggleEnabled(p)}
             />
           ))}
@@ -261,27 +283,35 @@ function PaginasGrid({
 function PaginaCard({
   page,
   count,
+  thumb,
   onToggle,
 }: {
   page: SitePagina;
   count: number;
+  thumb?: string | null;
   onToggle: () => void | Promise<void>;
 }) {
   const url = PAGE_URL(page.slug, page.is_home);
+  const cover = thumb ?? page.banner_imagem_url ?? null;
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-background">
       <div
-        className="relative h-28 w-full bg-gradient-to-br from-muted to-accent"
+        className="relative h-28 w-full bg-gradient-to-br from-brand/25 via-brand/10 to-accent"
         style={
-          page.banner_imagem_url
+          cover
             ? {
-                backgroundImage: `url(${page.banner_imagem_url})`,
+                backgroundImage: `url(${cover})`,
                 backgroundSize: "cover",
                 backgroundPosition: "center",
               }
             : undefined
         }
       >
+        {!cover ? (
+          <div className="absolute inset-0 flex items-center justify-center">
+            <LayoutTemplate className="h-10 w-10 text-brand/40" />
+          </div>
+        ) : null}
         <div className="absolute inset-0 bg-gradient-to-t from-black/55 to-transparent" />
         <div className="absolute bottom-2 left-3 right-3 flex items-end justify-between gap-2 text-white">
           <div className="min-w-0">
