@@ -8,6 +8,7 @@ import { Founder } from "../quemsomos/Founder";
 import { ProcessSteps } from "../atendimento/ProcessSteps";
 import { Modalities } from "../atendimento/Modalities";
 import { ServicesAccordion } from "../servicos/ServicesAccordion";
+import { ServicosCards } from "./ServicosCards";
 import { Contact } from "../Contact";
 import { CTABanner } from "../../CTABanner";
 import {
@@ -302,6 +303,8 @@ export function DynamicSection({ secao }: { secao: SiteSecao }) {
         />
       );
     }
+    case "servicos-cards":
+      return <ServicosCards secao={secao} />;
     default:
       return null;
   }
