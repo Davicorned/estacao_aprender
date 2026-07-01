@@ -53,21 +53,21 @@ export function getContentMetrics(cfg: DocumentoEstilo): ContentMetrics {
   const base: ContentMetrics = { top: 170, left: 48, right: 48, bottom: rodapeAlt };
   switch (style) {
     case "curva":
-      return { ...base, top: Math.max(140, cfg.header_altura) };
+      return { ...base, top: Math.max(175, cfg.header_altura + 12) };
     case "barra":
-      return { ...base, top: Math.max(120, Math.min(cfg.header_altura, 160)) };
+      return { ...base, top: Math.max(155, Math.min(cfg.header_altura, 160) + 20) };
     case "linha":
-      return { ...base, top: 110 };
-    case "timbrado":
-      return { ...base, top: 160 };
-    case "faixa-lateral":
-      return { top: 60, left: 78, right: 48, bottom: rodapeAlt };
-    case "canto":
       return { ...base, top: 120 };
+    case "timbrado":
+      return { ...base, top: 200 };
+    case "faixa-lateral":
+      return { top: 100, left: 90, right: 48, bottom: rodapeAlt };
+    case "canto":
+      return { ...base, top: 135 };
     case "moldura":
-      return { top: 72, left: 60, right: 60, bottom: cfg.rodape_mostrar ? 100 : 60 };
+      return { top: 120, left: 60, right: 60, bottom: cfg.rodape_mostrar ? 100 : 60 };
     case "nenhum":
-      return { top: 70, left: 48, right: 48, bottom: rodapeAlt };
+      return { top: 72, left: 48, right: 48, bottom: rodapeAlt };
     default:
       return base;
   }
@@ -206,10 +206,10 @@ export function buildHeaderHtml(cfg: DocumentoEstilo, ctx: RenderCtx = {}): stri
 export function buildFooterHtml(cfg: DocumentoEstilo, ctx: FooterCtx): string {
   if (!cfg.rodape_mostrar) return "";
   const cor = cfg.rodape_cor || cfg.header_cor;
-  const usar = cfg.rodape_usar_clinica;
-  const tel = (usar ? ctx.clinica?.telefone : cfg.rodape_telefone) ?? "";
-  const ig = (usar ? null : cfg.rodape_instagram) ?? cfg.rodape_instagram ?? "";
-  const end = (usar ? ctx.clinica?.endereco : cfg.rodape_endereco) ?? "";
+  // Override do documento_estilo tem prioridade; vazio => cai para a clínica.
+  const tel = (cfg.rodape_telefone?.trim() || ctx.clinica?.telefone) ?? "";
+  const ig = cfg.rodape_instagram?.trim() ?? "";
+  const end = (cfg.rodape_endereco?.trim() || ctx.clinica?.endereco) ?? "";
 
   const style = cfg.header_estilo;
   const leftPad = style === "faixa-lateral" ? 78 : style === "moldura" ? 60 : 48;
