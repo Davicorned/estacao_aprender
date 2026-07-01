@@ -27,6 +27,7 @@ import {
 import { gerarMensalidadeContrato } from "@/lib/financeiro";
 import { fetchDocumentoEstilo, DOC_ESTILO_DEFAULTS } from "@/lib/documento-estilo";
 import { buildHeaderHtml, buildFooterHtml, getContentMetrics, PAGE_W, PAGE_H } from "@/lib/documento-pdf";
+import { measureContentTop } from "@/lib/documento-pdf";
 import { fetchClinica } from "@/lib/configuracoes";
 import { publicImageUrl } from "@/integrations/supabase/client";
 import { DocumentoEstiloDialog } from "@/components/gestao/config/DocumentoEstiloDialog";
@@ -152,9 +153,10 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
       const sections: Block[][] = [corpoBlocks, assinaturaBlocks, autorizacaoBlocks];
 
       const metrics = getContentMetrics(cfg);
-      const CONTENT_TOP = metrics.top;
       const CONTENT_BOTTOM = PAGE_H - metrics.bottom;
-      const CONTENT_MAX_H = CONTENT_BOTTOM - CONTENT_TOP;
+      // CONTENT_TOP is resolved via runtime measurement below (after the probe).
+      let CONTENT_TOP = metrics.top;
+      let CONTENT_MAX_H = CONTENT_BOTTOM - CONTENT_TOP;
 
       const root = document.createElement("div");
       root.setAttribute("data-pdf-root", "");
@@ -215,6 +217,24 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
       const headerHtml = buildHeaderHtml(cfg, renderCtx);
       const footerHtml = (pageNum: number, total: number) =>
         buildFooterHtml(cfg, { ...renderCtx, pageNum, total });
+
+      // Probe: render the header once to measure the brand block height,
+      // so content top adapts to a long tagline / taller logo.
+      const probe = document.createElement("div");
+      Object.assign(probe.style, {
+        position: "relative",
+        width: `${PAGE_W}px`,
+        height: `${PAGE_H}px`,
+        background: "#fff",
+        overflow: "hidden",
+      } as CSSStyleDeclaration);
+      probe.innerHTML = headerHtml;
+      root.appendChild(probe);
+      // Wait for fonts so text-height measurement is accurate.
+      await (document as any).fonts?.ready;
+      CONTENT_TOP = measureContentTop(probe, cfg, 24);
+      CONTENT_MAX_H = CONTENT_BOTTOM - CONTENT_TOP;
+      root.removeChild(probe);
 
       function createPage(): HTMLDivElement {
         const page = document.createElement("div");
