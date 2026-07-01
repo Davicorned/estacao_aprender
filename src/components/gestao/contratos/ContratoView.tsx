@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2, DollarSign, Palette } from "lucide-react";
 import { toast } from "sonner";
-import { Link } from "@tanstack/react-router";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import {
   Dialog,
@@ -30,6 +29,7 @@ import { fetchDocumentoEstilo, DOC_ESTILO_DEFAULTS } from "@/lib/documento-estil
 import { buildHeaderHtml, buildFooterHtml, getContentMetrics, PAGE_W, PAGE_H } from "@/lib/documento-pdf";
 import { fetchClinica } from "@/lib/configuracoes";
 import { publicImageUrl } from "@/integrations/supabase/client";
+import { DocumentoEstiloDialog } from "@/components/gestao/config/DocumentoEstiloDialog";
 
 type Props = {
   contrato: ContratoComJoin;
@@ -45,6 +45,7 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [gerandoMensalidade, setGerandoMensalidade] = useState(false);
   const [viewerUrl, setViewerUrl] = useState<string | null>(null);
+  const [estiloOpen, setEstiloOpen] = useState(false);
   const [localAnexo, setLocalAnexo] = useState<{
     path: string | null;
     uploaded_at: string | null;
@@ -437,10 +438,12 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
             )}
             {generatingPdf ? "Gerando..." : "Baixar PDF"}
           </Button>
-          <Button variant="ghost" size="sm" asChild className="text-xs text-muted-foreground">
-            <Link to="/gestao/configuracoes" hash="estilo-pdf">
-              <Palette className="mr-1 h-4 w-4" /> Estilo do PDF
-            </Link>
+          <Button
+            variant="outline"
+            onClick={() => setEstiloOpen(true)}
+            className="border-amber-300 text-amber-800 hover:bg-amber-50"
+          >
+            <Palette className="mr-2 h-4 w-4" /> Estilo do PDF
           </Button>
           <Button onClick={handleWhatsapp} className="bg-green-600 text-white hover:bg-green-700">
             <MessageCircle className="mr-2 h-4 w-4" /> Enviar por WhatsApp
