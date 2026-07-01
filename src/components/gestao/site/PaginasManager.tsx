@@ -295,6 +295,9 @@ export function PaginasManager() {
               </div>
               <div>
                 <Label>Imagem (opcional)</Label>
+                <p className="mb-1 text-[11px] text-muted-foreground">
+                  Também vira a capa da página no dashboard (prioridade máxima).
+                </p>
                 {form.banner_imagem_url ? (
                   <div className="relative inline-block">
                     <img src={publicImageUrl(form.banner_imagem_url) ?? ""} alt="" className="h-32 rounded-lg object-cover" />
