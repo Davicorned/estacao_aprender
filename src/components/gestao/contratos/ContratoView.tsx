@@ -574,5 +574,8 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
         `}</style>
       </DialogContent>
     </Dialog>
+
+    <DocumentoEstiloDialog open={estiloOpen} onOpenChange={setEstiloOpen} />
+    </>
   );
 }
