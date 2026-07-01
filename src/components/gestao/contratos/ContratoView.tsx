@@ -420,6 +420,7 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
     : null;
 
   return (
+    <>
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
         <DialogHeader className="print:hidden">
