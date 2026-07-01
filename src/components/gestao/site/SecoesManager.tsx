@@ -782,6 +782,15 @@ export function SecoesManager({
           <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)]">
             {/* ============ COLUNA: FORMULÁRIO COM ABAS ============ */}
             <Tabs value={tab} onValueChange={(v) => setTab(v as typeof tab)} className="min-w-0">
+              {form.tipo === "servicos-cards" && (
+                <div className="mb-3 rounded-lg border border-[#D67F43]/40 bg-[#FEF3E8] p-3 text-xs text-[#7a3f18] dark:bg-amber-950/30 dark:text-amber-200">
+                  Os cards desta seção vêm da tela{" "}
+                  <Link to="/gestao/site/servicos" className="font-semibold underline">
+                    Serviços (site)
+                  </Link>
+                  . Aqui você edita só o cabeçalho (etiqueta, título, descrição) e o botão final.
+                </div>
+              )}
               <TabsList className="grid w-full grid-cols-6">
                 <TabsTrigger value="conteudo" className="relative">
                   Conteúdo
