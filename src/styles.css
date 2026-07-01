@@ -186,6 +186,14 @@
   animation: loading-bar 1.2s ease-in-out infinite;
 }
 
+.fade-up { opacity: 1; }
+.fade-up--anim {
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity .35s ease-out, transform .35s ease-out;
+}
+.fade-up--in { opacity: 1; transform: none; }
+
 /*
  * Dark-mode safety net for management pages.
  *
