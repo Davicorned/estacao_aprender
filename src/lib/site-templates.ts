@@ -116,6 +116,15 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     campos: ["eyebrow", "titulo", "descricao", "dados"],
     dadosSchema: "contato-mapa",
   },
+  {
+    tipo: "servicos-cards",
+    label: "Serviços em cards",
+    descricao:
+      "Grade de cards que puxa a lista de Serviços (site) — foto/ícone, título, descrição e link.",
+    icon: "LayoutGrid",
+    grupo: "cards",
+    campos: ["eyebrow", "titulo", "descricao", "cta"],
+  },
 ];
 
 export const SECTION_TEMPLATES_BY_TIPO: Record<SecaoTipo, SectionTemplate> =
