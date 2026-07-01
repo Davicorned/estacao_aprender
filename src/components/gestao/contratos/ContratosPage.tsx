@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, FileText, Eye, Pencil, Trash2, Paperclip } from "lucide-react";
+import { Plus, FileText, Eye, Pencil, Trash2, Paperclip, Palette } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -37,6 +37,7 @@ import {
 } from "@/lib/contratos";
 import { ContratoFormDialog } from "./ContratoFormDialog";
 import { ContratoView } from "./ContratoView";
+import { DocumentoEstiloDialog } from "@/components/gestao/config/DocumentoEstiloDialog";
 
 export function ContratosPage() {
   const [contratos, setContratos] = useState<ContratoComJoin[]>([]);
@@ -50,6 +51,7 @@ export function ContratosPage() {
   const [editing, setEditing] = useState<ContratoComJoin | null>(null);
   const [viewing, setViewing] = useState<ContratoComJoin | null>(null);
   const [delTarget, setDelTarget] = useState<ContratoComJoin | null>(null);
+  const [estiloOpen, setEstiloOpen] = useState(false);
 
   async function carregar() {
     setLoading(true);
@@ -114,6 +116,14 @@ export function ContratosPage() {
           </Select>
         </div>
 
+        <div className="flex gap-2">
+        <Button
+          variant="outline"
+          onClick={() => setEstiloOpen(true)}
+          className="border-amber-300 text-amber-800 hover:bg-amber-50"
+        >
+          <Palette className="mr-2 h-4 w-4" /> Estilo do PDF
+        </Button>
         <Button
           onClick={() => {
             setEditing(null);
@@ -123,6 +133,7 @@ export function ContratosPage() {
         >
           <Plus className="mr-2 h-4 w-4" /> Novo Contrato
         </Button>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-xl border border-amber-100 bg-white">
@@ -230,6 +241,8 @@ export function ContratosPage() {
         contrato={editing ?? undefined}
         onSaved={() => carregar()}
       />
+
+      <DocumentoEstiloDialog open={estiloOpen} onOpenChange={setEstiloOpen} />
 
       {viewing && (
         <ContratoView
