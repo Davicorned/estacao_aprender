@@ -198,6 +198,20 @@ export function buildHeaderHtml(cfg: DocumentoEstilo, ctx: RenderCtx = {}): stri
   }
 }
 
+/**
+ * Measures the rendered [data-doc-headerblock] inside the given page element
+ * (rendered at 1:1 with width=PAGE_W) and returns the content top offset in px.
+ * Callers should use this to place the content area so it never overlaps the
+ * brand block regardless of tagline height.
+ */
+export function measureContentTop(pageEl: HTMLElement, cfg: DocumentoEstilo, gap = 24): number {
+  const min = getContentMetrics(cfg).top;
+  const block = pageEl.querySelector("[data-doc-headerblock]") as HTMLElement | null;
+  if (!block) return min;
+  const bottom = block.offsetTop + block.offsetHeight;
+  return Math.max(min, Math.round(bottom + gap));
+}
+
 export function buildFooterHtml(cfg: DocumentoEstilo, ctx: FooterCtx): string {
   if (!cfg.rodape_mostrar) return "";
   const cor = cfg.rodape_cor || cfg.header_cor;
