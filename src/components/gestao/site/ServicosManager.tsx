@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Upload, X } from "lucide-react";
+import * as LucideIcons from "lucide-react";
+import { Plus, Pencil, Trash2, ArrowUp, ArrowDown, Upload, X, Sparkles } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -15,12 +20,15 @@ import {
 import { toast } from "sonner";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
 import { fetchServicos, invalidateCmsCache, type SiteServico } from "@/lib/cms";
+import { LinkField } from "./LinkField";
+import { ICONES_SUGERIDOS } from "@/lib/site-templates";
 
 type FormState = {
   id?: string;
   titulo: string;
   descricao: string;
   imagem_url: string | null;
+  icone: string;
   link: string;
   enabled: boolean;
 };
@@ -29,9 +37,15 @@ const empty: FormState = {
   titulo: "",
   descricao: "",
   imagem_url: null,
+  icone: "Sparkles",
   link: "",
   enabled: true,
 };
+
+function getLucide(name: string): any {
+  const I = (LucideIcons as unknown as Record<string, any>)[name];
+  return I ?? Sparkles;
+}
 
 export function ServicosManager() {
   const [items, setItems] = useState<SiteServico[]>([]);
@@ -64,6 +78,7 @@ export function ServicosManager() {
       titulo: s.titulo,
       descricao: s.descricao ?? "",
       imagem_url: s.imagem_url,
+      icone: s.icone ?? "Sparkles",
       link: s.link ?? "",
       enabled: s.enabled,
     });
@@ -90,6 +105,7 @@ export function ServicosManager() {
       titulo: form.titulo.trim(),
       descricao: form.descricao.trim() || null,
       imagem_url: form.imagem_url,
+      icone: form.icone || null,
       link: form.link.trim() || null,
       enabled: form.enabled,
       updated_at: new Date().toISOString(),
@@ -139,6 +155,13 @@ export function ServicosManager() {
 
   return (
     <>
+      <div className="mb-4 rounded-lg border border-border bg-muted/30 p-3 text-xs text-muted-foreground">
+        Estes cards aparecem na seção de Serviços da página{" "}
+        <Link to="/gestao/site/paginas" className="font-medium text-[#B85A24] hover:underline dark:text-amber-300">
+          /Servicos
+        </Link>
+        . Sem foto, o card mostra o ícone escolhido.
+      </div>
       <div className="mb-6 flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
           {items.length} serviço{items.length !== 1 ? "s" : ""} cadastrado{items.length !== 1 ? "s" : ""}.
@@ -204,9 +227,14 @@ export function ServicosManager() {
                   {form.imagem_url ? (
                     <img src={publicImageUrl(form.imagem_url) ?? ""} alt="" className="h-full w-full object-cover" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xs text-muted-foreground">
-                      sem imagem
-                    </div>
+                    (() => {
+                      const I = getLucide(form.icone);
+                      return (
+                        <div className="flex h-full w-full items-center justify-center">
+                          <I className="h-8 w-8 text-[#D67F43]" />
+                        </div>
+                      );
+                    })()
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
@@ -226,6 +254,24 @@ export function ServicosManager() {
                   )}
                 </div>
               </div>
+              <div className="space-y-1">
+                <Label className="text-xs">Ícone (usado quando não há imagem)</Label>
+                <Select value={form.icone} onValueChange={(v) => setForm({ ...form, icone: v })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {ICONES_SUGERIDOS.map((i) => {
+                      const I = getLucide(i);
+                      return (
+                        <SelectItem key={i} value={i}>
+                          <span className="inline-flex items-center gap-2">
+                            <I className="h-3.5 w-3.5" /> {i}
+                          </span>
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Título</Label>
@@ -235,9 +281,8 @@ export function ServicosManager() {
               <Label>Descrição curta</Label>
               <Textarea rows={3} value={form.descricao} onChange={(e) => setForm({ ...form, descricao: e.target.value })} />
             </div>
-            <div className="space-y-2">
-              <Label>Link (opcional)</Label>
-              <Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} placeholder="/Servicos?servico=psicoterapia" />
+            <div className="min-w-0">
+              <LinkField label="Link do card (opcional)" value={form.link} onChange={(v) => setForm({ ...form, link: v })} />
             </div>
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div>
