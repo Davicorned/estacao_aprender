@@ -31,7 +31,7 @@ import { DynamicSection } from "@/components/site/sections/dynamic/DynamicSectio
 import { useLayoutEffect } from "react";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
-import { IconPicker } from "./IconPicker";
+import { IconPicker, getLucideIcon as getLucide } from "./IconPicker";
 import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
