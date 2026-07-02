@@ -67,7 +67,7 @@ export function Contact({
                 href={`mailto:${email}`}
                 className="flex items-center gap-4 rounded-2xl bg-gray-50 p-4"
               >
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-eyebrow)]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
                   <Mail className="h-6 w-6 text-[var(--site-primary)]" />
                 </div>
                 <div className="flex-1">
@@ -79,7 +79,7 @@ export function Contact({
 
             {(endereco_titulo || endereco_texto) && (
               <div className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-eyebrow)]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
                   <MapPin className="h-6 w-6 text-[var(--site-primary)]" />
                 </div>
                 <div className="flex-1 space-y-3">
@@ -97,7 +97,7 @@ export function Contact({
 
             {horarios && horarios.length > 0 && (
               <div className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-eyebrow)]">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
                   <Clock className="h-6 w-6 text-[var(--site-primary)]" />
                 </div>
                 <div className="flex-1">

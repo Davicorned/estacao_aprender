@@ -109,7 +109,7 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
                       key={item.id}
                       href={item.to}
                       onClick={() => setOpen(false)}
-                      className="rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-[var(--site-eyebrow)]"
+                      className="rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:bg-[var(--site-soft)]"
                     >
                       {item.label}
                     </a>

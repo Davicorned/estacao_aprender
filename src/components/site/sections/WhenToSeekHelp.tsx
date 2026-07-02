@@ -43,7 +43,7 @@ export function WhenToSeekHelp() {
               {items.map(({ icon: Icon, label }) => (
                 <div
                   key={label}
-                  className="flex items-center gap-3 rounded-xl bg-[var(--site-eyebrow)] p-3"
+                  className="flex items-center gap-3 rounded-xl bg-[var(--site-soft)] p-3"
                 >
                   <Icon className="h-5 w-5 shrink-0 text-[var(--site-primary)]" />
                   <span className="text-sm font-medium text-gray-700">{label}</span>
