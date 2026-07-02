@@ -1,14 +1,20 @@
-import { createFileRoute, notFound } from "@tanstack/react-router";
+import { createFileRoute, notFound, redirect } from "@tanstack/react-router";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { PageBanner } from "@/components/site/PageBanner";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
 import { fetchPaginaBySlug, fetchPublicPageData, type SitePagina } from "@/lib/cms";
-import { pageCanonicalUrl } from "@/lib/site-page-routes";
+import { pageCanonicalUrl, LEGACY_SLUG_TO_ROUTE } from "@/lib/site-page-routes";
+import { PageJsonLd } from "@/components/site/PageJsonLd";
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
+    // Redirect legacy CMS slugs to their canonical PascalCase route (301).
+    const canonical = LEGACY_SLUG_TO_ROUTE[params.slug];
+    if (canonical) {
+      throw redirect({ to: canonical, statusCode: 301 });
+    }
     const pagina = await fetchPaginaBySlug(params.slug);
     if (!pagina || !pagina.enabled) throw notFound();
     const data = await fetchPublicPageData(pagina.id);
@@ -68,6 +74,15 @@ function SlugPage() {
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
       <Header />
       <main>
+        <PageJsonLd
+          pageTitle={pagina.titulo}
+          pagePath={pageCanonicalUrl(pagina.slug, pagina.is_home)}
+          brand="Estação Aprender"
+          secoes={secoes}
+          team={team}
+          testimonials={testimonials}
+          servicos={servicos}
+        />
         {hasBanner && (
           <PageBanner
             eyebrow={pagina.banner_eyebrow ?? ""}

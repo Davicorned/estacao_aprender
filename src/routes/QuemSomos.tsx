@@ -8,6 +8,7 @@ import { OurStory } from "@/components/site/sections/quemsomos/OurStory";
 import { OurValues } from "@/components/site/sections/quemsomos/OurValues";
 import { Founder } from "@/components/site/sections/quemsomos/Founder";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
+import { PageJsonLd } from "@/components/site/PageJsonLd";
 import {
   fetchPaginaBySlug,
   fetchPublicPageData,
@@ -61,6 +62,15 @@ function QuemSomosPage() {
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
       <Header />
       <main>
+        <PageJsonLd
+          pageTitle="Quem Somos"
+          pagePath="/QuemSomos"
+          brand="Estação Aprender"
+          secoes={secoes}
+          team={team}
+          testimonials={testimonials}
+          servicos={servicos}
+        />
         <PageBanner
           eyebrow={pagina?.banner_eyebrow ?? FALLBACK.eyebrow}
           title={pagina?.banner_titulo ?? FALLBACK.title}
