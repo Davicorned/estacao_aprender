@@ -123,6 +123,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         institucional: r.texto_institucional ?? null,
         themeColor: t.cor_primaria ?? "#D67F43",
       },
+      initial: {
+        header: h,
+        rodape: r,
+        hero: he,
+        tema: t,
+      },
     };
   },
   head: ({ loaderData }) => ({
