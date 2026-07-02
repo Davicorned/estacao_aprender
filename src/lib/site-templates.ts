@@ -172,6 +172,10 @@ export type DadosContatoMapa = {
   endereco_texto: string;
   horarios: string[];
   mapa_embed_url: string;
+  icone_telefone?: string;
+  icone_email?: string;
+  icone_endereco?: string;
+  icone_horario?: string;
 };
 
 export const DEFAULT_MODALIDADES: DadosModalidades = {
@@ -221,4 +225,8 @@ export const DEFAULT_CONTATO_MAPA: DadosContatoMapa = {
   horarios: ["Segunda a Sexta: 8h às 20h", "Sábado: 8h às 14h"],
   mapa_embed_url:
     "https://www.google.com/maps?q=Pra%C3%A7a%20Gaj%C3%A9%2C%2056%20-%20Eng.%20Goulart%2C%20S%C3%A3o%20Paulo%20-%20SP%2C%2003725-040&output=embed",
+  icone_telefone: "Phone",
+  icone_email: "Mail",
+  icone_endereco: "MapPin",
+  icone_horario: "Clock",
 };
