@@ -12,13 +12,16 @@ import { ServicosCards } from "./ServicosCards";
 import { Contact } from "../Contact";
 import { CTABanner } from "../../CTABanner";
 import { TeamSection } from "../TeamSection";
+import { Testimonials } from "../Testimonials";
 import {
   DEFAULT_CONTATO_MAPA,
   DEFAULT_MODALIDADES,
   DEFAULT_EQUIPE,
+  DEFAULT_DEPOIMENTOS,
   type DadosContatoMapa,
   type DadosModalidades,
   type DadosEquipe,
+  type DadosDepoimentos,
 } from "@/lib/site-templates";
 
 function Eyebrow({ text }: { text?: string | null }) {
@@ -219,7 +222,7 @@ function GradeCards({ secao }: { secao: SiteSecao }) {
 export function DynamicSection({
   secao,
   team,
-  testimonials: _testimonials,
+  testimonials,
   servicos,
 }: {
   secao: SiteSecao;
@@ -336,6 +339,24 @@ export function DynamicSection({
           bg={bg || null}
           textColor={secao.texto_cor ?? null}
           initial={team}
+        />
+      );
+    }
+    case "depoimentos": {
+      const d = (secao.dados ?? {}) as Partial<DadosDepoimentos>;
+      const bg = buildBackground(secao.bg_cor, secao.bg_cor_2);
+      return (
+        <Testimonials
+          initial={testimonials}
+          layout={d.layout ?? DEFAULT_DEPOIMENTOS.layout}
+          colunas={(d.colunas as 2 | 3) ?? DEFAULT_DEPOIMENTOS.colunas}
+          mostrar_estrelas={d.mostrar_estrelas ?? DEFAULT_DEPOIMENTOS.mostrar_estrelas}
+          mostrar_fonte={d.mostrar_fonte ?? DEFAULT_DEPOIMENTOS.mostrar_fonte}
+          eyebrow={secao.eyebrow}
+          titulo={secao.titulo}
+          descricao={secao.descricao}
+          bg={bg || null}
+          textColor={secao.texto_cor ?? null}
         />
       );
     }

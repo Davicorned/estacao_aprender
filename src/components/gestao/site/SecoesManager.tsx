@@ -35,9 +35,9 @@ import { IconPicker, getLucideIcon as getLucide } from "./IconPicker";
 import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
-  DEFAULT_EQUIPE,
+  DEFAULT_EQUIPE, DEFAULT_DEPOIMENTOS,
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
-  type DadosEquipe,
+  type DadosEquipe, type DadosDepoimentos, type DepoimentosLayout,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -90,6 +90,13 @@ function templateHas(tipo: SecaoTipo, campo: string): boolean {
   return !!t && t.campos.includes(campo as any);
 }
 
+const PREVIEW_TESTIMONIALS = [
+  { id: "p1", nome: "Ana P.", texto: "Atendimento incrível, minha filha evoluiu muito nas últimas semanas — recomendo demais!", fonte: "Google", enabled: true, order: 0 },
+  { id: "p2", nome: "Carlos M.", texto: "Ambiente acolhedor e equipe atenciosa. Fez toda a diferença para nós.", fonte: "Instagram", enabled: true, order: 1 },
+  { id: "p3", nome: "Juliana R.", texto: "Profissionais competentes e um cuidado enorme com cada detalhe.", fonte: "Google", enabled: true, order: 2 },
+  { id: "p4", nome: "Renata S.", texto: "Muito além do que esperávamos. Recomendo para todas as famílias.", fonte: "Google", enabled: true, order: 3 },
+] as any;
+
 function itemConfig(tipo: SecaoTipo) {
   return SECTION_TEMPLATES_BY_TIPO[tipo]?.item;
 }
@@ -99,6 +106,7 @@ function defaultDadosForTipo(tipo: SecaoTipo): Record<string, any> {
   if (schema === "modalidades") return { ...DEFAULT_MODALIDADES };
   if (schema === "contato-mapa") return { ...DEFAULT_CONTATO_MAPA };
   if (schema === "equipe") return { ...DEFAULT_EQUIPE };
+  if (schema === "depoimentos") return { ...DEFAULT_DEPOIMENTOS };
   return {};
 }
 
@@ -951,6 +959,12 @@ export function SecoesManager({
                     onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
                   />
                 )}
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "depoimentos" && (
+                  <DadosDepoimentosEditor
+                    value={(form.dados as Partial<DadosDepoimentos>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
+                )}
               </TabsContent>
 
               {/* --- APARÊNCIA --- */}
@@ -1095,7 +1109,10 @@ export function SecoesManager({
                   }}
                   key={`${form.tipo}-${form.imagem_url ?? "x"}-${previewDevice}`}
                 >
-                  <DynamicSection secao={previewSecao} />
+                  <DynamicSection
+                    secao={previewSecao}
+                    testimonials={form.tipo === "depoimentos" ? PREVIEW_TESTIMONIALS : undefined}
+                  />
                 </div>
               </div>
               <p className="text-[11px] text-muted-foreground">
@@ -1371,6 +1388,181 @@ function DadosEquipeEditor({
         <Switch
           checked={v.mostrar_registro}
           onCheckedChange={(val) => patch({ mostrar_registro: val })}
+        />
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Depoimentos — seletor visual de layout
+// ---------------------------------------------------------------------------
+
+const LAYOUT_OPTIONS: { key: DepoimentosLayout; label: string; hint: string }[] = [
+  { key: "grade", label: "Grade", hint: "Cards em colunas" },
+  { key: "carrossel", label: "Carrossel", hint: "Desliza com setas ‹ ›" },
+  { key: "destaque", label: "Destaque", hint: "Um por vez, aspas grande" },
+  { key: "mosaico", label: "Mosaico", hint: "Alturas variadas (masonry)" },
+  { key: "lista", label: "Lista", hint: "Linhas empilhadas" },
+  { key: "faixa", label: "Faixa", hint: "Cards sobre fundo claro" },
+];
+
+function LayoutThumb({ layout }: { layout: DepoimentosLayout }) {
+  const box = "rounded-sm bg-[#D67F43]/60";
+  if (layout === "grade") {
+    return (
+      <div className="flex h-full w-full items-center justify-center gap-1 p-2">
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+      </div>
+    );
+  }
+  if (layout === "carrossel") {
+    return (
+      <div className="flex h-full w-full items-center justify-between gap-1 px-1">
+        <span className="text-[10px] leading-none text-[#D67F43]">‹</span>
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <span className="text-[10px] leading-none text-[#D67F43]">›</span>
+      </div>
+    );
+  }
+  if (layout === "destaque") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 p-2">
+        <span className="text-sm leading-none text-[#D67F43]">“”</span>
+        <div className={`h-2 w-10 ${box}`} />
+        <div className={`h-2 w-8 ${box}`} />
+        <div className="mt-1 flex gap-0.5">
+          <span className="h-1 w-1 rounded-full bg-[#D67F43]" />
+          <span className="h-1 w-1 rounded-full bg-[#D67F43]/40" />
+          <span className="h-1 w-1 rounded-full bg-[#D67F43]/40" />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "mosaico") {
+    return (
+      <div className="flex h-full w-full items-end justify-center gap-1 p-2">
+        <div className={`h-6 w-3 ${box}`} />
+        <div className={`h-9 w-3 ${box}`} />
+        <div className={`h-5 w-3 ${box}`} />
+        <div className={`h-8 w-3 ${box}`} />
+      </div>
+    );
+  }
+  if (layout === "lista") {
+    return (
+      <div className="flex h-full w-full flex-col justify-center gap-1 px-2">
+        <div className={`h-1.5 w-full ${box}`} />
+        <div className="h-px w-full bg-[#D67F43]/30" />
+        <div className={`h-1.5 w-full ${box}`} />
+        <div className="h-px w-full bg-[#D67F43]/30" />
+        <div className={`h-1.5 w-3/4 ${box}`} />
+      </div>
+    );
+  }
+  // faixa
+  return (
+    <div className="flex h-full w-full items-center justify-center rounded-md bg-[#FEF3E8] p-1">
+      <div className={`h-7 w-4 ${box}`} />
+      <div className={`mx-1 h-7 w-4 ${box}`} />
+      <div className={`h-7 w-4 ${box}`} />
+    </div>
+  );
+}
+
+function DadosDepoimentosEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosDepoimentos>;
+  onChange: (v: DadosDepoimentos) => void;
+}) {
+  const v: DadosDepoimentos = {
+    layout: (value.layout as DepoimentosLayout) ?? DEFAULT_DEPOIMENTOS.layout,
+    colunas: (value.colunas as 2 | 3) ?? DEFAULT_DEPOIMENTOS.colunas,
+    mostrar_estrelas: value.mostrar_estrelas ?? DEFAULT_DEPOIMENTOS.mostrar_estrelas,
+    mostrar_fonte: value.mostrar_fonte ?? DEFAULT_DEPOIMENTOS.mostrar_fonte,
+  };
+  const patch = (p: Partial<DadosDepoimentos>) => onChange({ ...v, ...p });
+  const supportsColunas = v.layout === "grade" || v.layout === "mosaico";
+
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-[#D67F43]/40 bg-[#FEF3E8] p-3 text-xs text-[#7a3f18] dark:bg-amber-950/30 dark:text-amber-200">
+        Os depoimentos vêm da tela{" "}
+        <Link to="/gestao/site/depoimentos" className="font-semibold underline">
+          Depoimentos (site)
+        </Link>
+        . Aqui você escolhe apenas o estilo do layout e como cada card é exibido.
+      </div>
+
+      <div className="space-y-2">
+        <Label className="text-xs">Estilo do layout</Label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {LAYOUT_OPTIONS.map((opt) => {
+            const selected = v.layout === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => patch({ layout: opt.key })}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border bg-white">
+                  <LayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {supportsColunas && (
+        <div className="space-y-2">
+          <Label className="text-xs">Colunas</Label>
+          <Select
+            value={String(v.colunas)}
+            onValueChange={(val) => patch({ colunas: Number(val) as 2 | 3 })}
+          >
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2">2 colunas</SelectItem>
+              <SelectItem value="3">3 colunas</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <p className="text-sm font-medium">Mostrar estrelas</p>
+          <p className="text-xs text-muted-foreground">5 estrelas ao lado do autor.</p>
+        </div>
+        <Switch
+          checked={v.mostrar_estrelas}
+          onCheckedChange={(val) => patch({ mostrar_estrelas: val })}
+        />
+      </div>
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <p className="text-sm font-medium">Mostrar fonte</p>
+          <p className="text-xs text-muted-foreground">Ex.: “via Google”, “via Instagram”.</p>
+        </div>
+        <Switch
+          checked={v.mostrar_fonte}
+          onCheckedChange={(val) => patch({ mostrar_fonte: val })}
         />
       </div>
     </div>

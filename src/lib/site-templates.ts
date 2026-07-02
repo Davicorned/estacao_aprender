@@ -26,7 +26,7 @@ export type SectionTemplate = {
   campos: TemplateCampo[];
   item?: TemplateItemConfig;
   /** Forma do objeto `dados` quando o template usa payload estruturado. */
-  dadosSchema?: "modalidades" | "contato-mapa" | "equipe";
+  dadosSchema?: "modalidades" | "contato-mapa" | "equipe" | "depoimentos";
 };
 
 export const SECTION_TEMPLATES: SectionTemplate[] = [
@@ -134,6 +134,16 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     grupo: "conteudo",
     campos: ["eyebrow", "titulo", "descricao"],
     dadosSchema: "equipe",
+  },
+  {
+    tipo: "depoimentos",
+    label: "Depoimentos",
+    descricao:
+      "Depoimentos de clientes em 6 estilos (grade, carrossel, destaque, mosaico, lista, faixa). Puxa a coleção Depoimentos (site).",
+    icon: "Quote",
+    grupo: "conteudo",
+    campos: ["eyebrow", "titulo", "descricao"],
+    dadosSchema: "depoimentos",
   },
 ];
 
@@ -252,4 +262,27 @@ export const DEFAULT_EQUIPE: DadosEquipe = {
   colunas: 3,
   mostrar_especialidades: true,
   mostrar_registro: true,
+};
+
+/** Depoimentos (puxa coleção testimonials) */
+export type DepoimentosLayout =
+  | "grade"
+  | "carrossel"
+  | "destaque"
+  | "mosaico"
+  | "lista"
+  | "faixa";
+
+export type DadosDepoimentos = {
+  layout: DepoimentosLayout;
+  colunas: 2 | 3;
+  mostrar_estrelas: boolean;
+  mostrar_fonte: boolean;
+};
+
+export const DEFAULT_DEPOIMENTOS: DadosDepoimentos = {
+  layout: "grade",
+  colunas: 3,
+  mostrar_estrelas: true,
+  mostrar_fonte: true,
 };

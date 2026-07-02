@@ -84,7 +84,8 @@ export type SecaoTipo =
   | "modalidades"
   | "contato-mapa"
   | "servicos-cards"
-  | "equipe";
+  | "equipe"
+  | "depoimentos";
 
 export type SiteSecaoItem = {
   id: string;
