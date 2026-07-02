@@ -300,6 +300,10 @@ export function DynamicSection({ secao }: { secao: SiteSecao }) {
           endereco_texto={d.endereco_texto ?? DEFAULT_CONTATO_MAPA.endereco_texto}
           horarios={d.horarios ?? DEFAULT_CONTATO_MAPA.horarios}
           mapa_embed_url={d.mapa_embed_url ?? DEFAULT_CONTATO_MAPA.mapa_embed_url}
+          icone_telefone={d.icone_telefone}
+          icone_email={d.icone_email}
+          icone_endereco={d.icone_endereco}
+          icone_horario={d.icone_horario}
         />
       );
     }
