@@ -26,7 +26,7 @@ export type SectionTemplate = {
   campos: TemplateCampo[];
   item?: TemplateItemConfig;
   /** Forma do objeto `dados` quando o template usa payload estruturado. */
-  dadosSchema?: "modalidades" | "contato-mapa";
+  dadosSchema?: "modalidades" | "contato-mapa" | "equipe";
 };
 
 export const SECTION_TEMPLATES: SectionTemplate[] = [
@@ -124,6 +124,16 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     icon: "LayoutGrid",
     grupo: "cards",
     campos: ["eyebrow", "titulo", "descricao", "cta"],
+  },
+  {
+    tipo: "equipe",
+    label: "Nossa equipe",
+    descricao:
+      "Grade/carrossel de profissionais puxando a coleção de Equipe (site).",
+    icon: "UserCog",
+    grupo: "conteudo",
+    campos: ["eyebrow", "titulo", "descricao"],
+    dadosSchema: "equipe",
   },
 ];
 
