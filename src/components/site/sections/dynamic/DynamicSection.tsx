@@ -1,7 +1,7 @@
 import * as Icons from "lucide-react";
 import { Calendar } from "lucide-react";
 import { FadeUp } from "../../FadeUp";
-import type { SiteSecao } from "@/lib/cms";
+import type { SiteSecao, TeamMember, Testimonial, SiteServico } from "@/lib/cms";
 import { buildBackground } from "@/components/gestao/site/ColorField";
 import { OurValues } from "../quemsomos/OurValues";
 import { Founder } from "../quemsomos/Founder";
@@ -216,7 +216,17 @@ function GradeCards({ secao }: { secao: SiteSecao }) {
   );
 }
 
-export function DynamicSection({ secao }: { secao: SiteSecao }) {
+export function DynamicSection({
+  secao,
+  team,
+  testimonials: _testimonials,
+  servicos,
+}: {
+  secao: SiteSecao;
+  team?: TeamMember[];
+  testimonials?: Testimonial[];
+  servicos?: SiteServico[];
+}) {
   switch (secao.tipo) {
     case "texto-imagem-esquerda":
       return <TextoImagem secao={secao} reverse={false} />;
@@ -311,7 +321,7 @@ export function DynamicSection({ secao }: { secao: SiteSecao }) {
       );
     }
     case "servicos-cards":
-      return <ServicosCards secao={secao} />;
+      return <ServicosCards secao={secao} initial={servicos} />;
     case "equipe": {
       const d = (secao.dados ?? {}) as Partial<DadosEquipe>;
       const bg = buildBackground(secao.bg_cor, secao.bg_cor_2);
@@ -325,6 +335,7 @@ export function DynamicSection({ secao }: { secao: SiteSecao }) {
           mostrar_registro={d.mostrar_registro ?? DEFAULT_EQUIPE.mostrar_registro}
           bg={bg || null}
           textColor={secao.texto_cor ?? null}
+          initial={team}
         />
       );
     }

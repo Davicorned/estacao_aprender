@@ -11,11 +11,19 @@ function getIcon(name?: string | null) {
   return I ?? Sparkles;
 }
 
-export function ServicosCards({ secao }: { secao: SiteSecao }) {
-  const [items, setItems] = useState<SiteServico[]>([]);
-  const [loaded, setLoaded] = useState(false);
+export function ServicosCards({
+  secao,
+  initial,
+}: {
+  secao: SiteSecao;
+  /** SSR-provided servicos (skips client fetch). */
+  initial?: SiteServico[];
+}) {
+  const [items, setItems] = useState<SiteServico[]>(initial ?? []);
+  const [loaded, setLoaded] = useState<boolean>(initial !== undefined);
 
   useEffect(() => {
+    if (initial) { setItems(initial); setLoaded(true); return; }
     let alive = true;
     void fetchServicos(false).then((data) => {
       if (!alive) return;
@@ -25,7 +33,7 @@ export function ServicosCards({ secao }: { secao: SiteSecao }) {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [initial]);
 
   const customBg = buildBackground(secao.bg_cor, secao.bg_cor_2);
   const bg = customBg

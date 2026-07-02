@@ -572,3 +572,25 @@ export async function fetchPaginaBySlug(slug: string): Promise<SitePagina | null
     og_image: publicImageUrl((data as any).og_image),
   } as SitePagina;
 }
+
+/**
+ * SSR helper: fetches sections + shared collections in parallel for a public page.
+ * Any individual failure resolves to an empty array so the loader never rejects.
+ */
+export async function fetchPublicPageData(paginaId?: string | null): Promise<{
+  secoes: SiteSecao[];
+  team: TeamMember[];
+  testimonials: Testimonial[];
+  servicos: SiteServico[];
+}> {
+  const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
+    try { return (await fn()) ?? fallback; } catch { return fallback; }
+  };
+  const [secoes, team, testimonials, servicos] = await Promise.all([
+    safe<SiteSecao[]>(() => fetchSecoes(false, paginaId ?? undefined), []),
+    safe<TeamMember[]>(() => fetchTeam(), []),
+    safe<Testimonial[]>(() => fetchTestimonials(), []),
+    safe<SiteServico[]>(() => fetchServicos(false), []),
+  ]);
+  return { secoes, team, testimonials, servicos };
+}

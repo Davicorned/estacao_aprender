@@ -137,6 +137,8 @@ type TeamSectionProps = {
   mostrar_registro?: boolean;
   bg?: string | null;
   textColor?: string | null;
+  /** SSR-provided team (skips client fetch). */
+  initial?: TeamMember[];
 };
 
 export function TeamSection({
@@ -148,15 +150,17 @@ export function TeamSection({
   mostrar_registro = true,
   bg = null,
   textColor = null,
+  initial,
 }: TeamSectionProps = {}) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
-  const [equipe, setEquipe] = useState<TeamMember[]>([]);
+  const [equipe, setEquipe] = useState<TeamMember[]>(initial ?? []);
 
   useEffect(() => {
+    if (initial) { setEquipe(initial); return; }
     void fetchTeam().then(setEquipe);
-  }, []);
+  }, [initial]);
 
   const updateArrows = () => {
     const el = scrollerRef.current;

@@ -1,5 +1,12 @@
 import { useEffect, useState } from "react";
-import { fetchPaginaBySlug, fetchSecoes, type SiteSecao } from "@/lib/cms";
+import {
+  fetchPaginaBySlug,
+  fetchSecoes,
+  type SiteSecao,
+  type TeamMember,
+  type Testimonial,
+  type SiteServico,
+} from "@/lib/cms";
 import { DynamicSection } from "./DynamicSection";
 
 type Props = {
@@ -7,11 +14,30 @@ type Props = {
   paginaId?: string | null;
   /** Convenience: resolve a page by slug then filter by its id. */
   paginaSlug?: string;
+  /** SSR-provided sections (skips client fetch). */
+  secoes?: SiteSecao[];
+  /** SSR-provided collections (passed down to templates). */
+  team?: TeamMember[];
+  testimonials?: Testimonial[];
+  servicos?: SiteServico[];
 };
 
-export function DynamicSections({ paginaId, paginaSlug }: Props = {}) {
-  const [secoes, setSecoes] = useState<SiteSecao[]>([]);
+export function DynamicSections({
+  paginaId,
+  paginaSlug,
+  secoes: secoesProp,
+  team,
+  testimonials,
+  servicos,
+}: Props = {}) {
+  const hasSSR = secoesProp !== undefined;
+  const [secoes, setSecoes] = useState<SiteSecao[]>(secoesProp ?? []);
+
   useEffect(() => {
+    if (hasSSR) {
+      setSecoes(secoesProp ?? []);
+      return;
+    }
     let cancelled = false;
     (async () => {
       let id: string | null | undefined = paginaId;
@@ -23,12 +49,19 @@ export function DynamicSections({ paginaId, paginaSlug }: Props = {}) {
       if (!cancelled) setSecoes(data);
     })();
     return () => { cancelled = true; };
-  }, [paginaId, paginaSlug]);
+  }, [paginaId, paginaSlug, hasSSR, secoesProp]);
+
   if (secoes.length === 0) return null;
   return (
     <>
       {secoes.map((s) => (
-        <DynamicSection key={s.id} secao={s} />
+        <DynamicSection
+          key={s.id}
+          secao={s}
+          team={team}
+          testimonials={testimonials}
+          servicos={servicos}
+        />
       ))}
     </>
   );

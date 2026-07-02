@@ -7,7 +7,15 @@ import { PageBanner } from "@/components/site/PageBanner";
 import { ServicesAccordion } from "@/components/site/sections/servicos/ServicesAccordion";
 import { FadeUp } from "@/components/site/FadeUp";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
-import { fetchPaginaBySlug, fetchSecoes, type SitePagina, type SiteSecao } from "@/lib/cms";
+import {
+  fetchPaginaBySlug,
+  fetchPublicPageData,
+  type SitePagina,
+  type SiteSecao,
+  type TeamMember,
+  type Testimonial,
+  type SiteServico,
+} from "@/lib/cms";
 
 const WA = "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20saber%20mais%20sobre%20os%20servi%C3%A7os%20do%20Esta%C3%A7%C3%A3o%20Aprender.";
 const SLUG = "servicos";
@@ -21,10 +29,16 @@ export const Route = createFileRoute("/Servicos")({
   loader: async () => {
     try {
       const pagina = await fetchPaginaBySlug(SLUG);
-      const secoes = pagina ? await fetchSecoes(false, pagina.id) : [];
-      return { pagina, secoes };
+      const data = await fetchPublicPageData(pagina?.id ?? null);
+      return { pagina, ...data };
     } catch {
-      return { pagina: null as SitePagina | null, secoes: [] as SiteSecao[] };
+      return {
+        pagina: null as SitePagina | null,
+        secoes: [] as SiteSecao[],
+        team: [] as TeamMember[],
+        testimonials: [] as Testimonial[],
+        servicos: [] as SiteServico[],
+      };
     }
   },
   head: () => ({
@@ -40,7 +54,7 @@ export const Route = createFileRoute("/Servicos")({
 });
 
 function ServicosPage() {
-  const { pagina, secoes } = Route.useLoaderData();
+  const { pagina, secoes, team, testimonials, servicos } = Route.useLoaderData();
   const useCms = !!pagina && secoes.length > 0;
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
@@ -66,7 +80,13 @@ function ServicosPage() {
           }
         />
         {useCms ? (
-          <DynamicSections paginaId={pagina!.id} />
+          <DynamicSections
+            paginaId={pagina!.id}
+            secoes={secoes}
+            team={team}
+            testimonials={testimonials}
+            servicos={servicos}
+          />
         ) : (
           <>
             <ServicesAccordion />

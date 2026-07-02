@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Calendar, Menu } from "lucide-react";
-import { Link } from "@tanstack/react-router";
+import { Link, getRouteApi } from "@tanstack/react-router";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import { fetchHeader, HEADER_DEFAULTS, type SiteHeader } from "@/lib/cms";
@@ -17,14 +17,21 @@ function bgStyle(h: { bg_cor: string | null; bg_cor_2: string | null }) {
 
 export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
   const [open, setOpen] = useState(false);
-  const [data, setData] = useState<SiteHeader | null>(null);
+  const rootApi = getRouteApi("__root__");
+  let initialFromLoader: SiteHeader | null = null;
+  try {
+    const rootData = rootApi.useLoaderData();
+    initialFromLoader = ((rootData as any)?.initial?.header as SiteHeader | undefined) ?? null;
+  } catch { /* not inside root */ }
+  const [data, setData] = useState<SiteHeader | null>(initialFromLoader);
 
   useEffect(() => {
     if (override) return;
+    if (initialFromLoader) return;
     let alive = true;
     void fetchHeader().then((d) => { if (alive) setData(d); });
     return () => { alive = false; };
-  }, [override]);
+  }, [override, initialFromLoader]);
 
   const cfg: SiteHeader = override
     ? ({ id: "singleton", ...HEADER_DEFAULTS, ...(data ?? {}), ...override } as SiteHeader)
