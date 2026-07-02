@@ -4,14 +4,15 @@ import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { PageBanner } from "@/components/site/PageBanner";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
-import { fetchPaginaBySlug, type SitePagina } from "@/lib/cms";
+import { fetchPaginaBySlug, fetchPublicPageData, type SitePagina } from "@/lib/cms";
 import { pageCanonicalUrl } from "@/lib/site-page-routes";
 
 export const Route = createFileRoute("/$slug")({
   loader: async ({ params }) => {
     const pagina = await fetchPaginaBySlug(params.slug);
     if (!pagina || !pagina.enabled) throw notFound();
-    return { pagina };
+    const data = await fetchPublicPageData(pagina.id);
+    return { pagina, ...data };
   },
   head: ({ loaderData }) => {
     const p = loaderData?.pagina as SitePagina | undefined;
@@ -60,7 +61,7 @@ export const Route = createFileRoute("/$slug")({
 });
 
 function SlugPage() {
-  const { pagina } = Route.useLoaderData();
+  const { pagina, secoes, team, testimonials, servicos } = Route.useLoaderData();
   const hasBanner =
     !!(pagina.banner_eyebrow || pagina.banner_titulo || pagina.banner_descricao);
   return (
@@ -74,7 +75,13 @@ function SlugPage() {
             description={pagina.banner_descricao ?? ""}
           />
         )}
-        <DynamicSections paginaId={pagina.id} />
+        <DynamicSections
+          paginaId={pagina.id}
+          secoes={secoes}
+          team={team}
+          testimonials={testimonials}
+          servicos={servicos}
+        />
       </main>
       <Footer />
       <WhatsAppFloat />
