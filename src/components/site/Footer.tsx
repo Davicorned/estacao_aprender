@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getRouteApi } from "@tanstack/react-router";
 import { Instagram, Facebook, Linkedin, Youtube, Twitter, Music2, Phone, Mail, MapPin } from "lucide-react";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
 import { fetchRodape, RODAPE_DEFAULTS, type LinkItem, type RedeSocial, type SiteRodape } from "@/lib/cms";
@@ -46,14 +47,23 @@ function mergeRodape(r: Partial<RodapeData> | null | undefined): RodapeData {
 }
 
 export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
-  const [data, setData] = useState<RodapeData>(() => mergeRodape(override));
+  const rootApi = getRouteApi("__root__");
+  let initialFromLoader: Partial<RodapeData> | null = null;
+  try {
+    const rootData = rootApi.useLoaderData();
+    initialFromLoader = ((rootData as any)?.initial?.rodape as Partial<RodapeData> | undefined) ?? null;
+  } catch { /* not inside root */ }
+  const [data, setData] = useState<RodapeData>(() =>
+    mergeRodape(override ?? initialFromLoader),
+  );
   useEffect(() => {
     if (override) {
       setData(mergeRodape(override));
       return;
     }
+    if (initialFromLoader) return;
     fetchRodape().then((r) => setData(mergeRodape(r)));
-  }, [override]);
+  }, [override, initialFromLoader]);
 
   const customBg = buildBackground(data.bg_cor);
   // Decide a paleta de texto. "claro" => textos claros (fundo escuro). "escuro" => textos escuros (fundo claro).
