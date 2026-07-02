@@ -158,7 +158,7 @@ export function TeamSection({
   const [equipe, setEquipe] = useState<TeamMember[]>(initial ?? []);
 
   useEffect(() => {
-    if (initial) { setEquipe(initial); return; }
+    if (initial && initial.length > 0) { setEquipe(initial); return; }
     void fetchTeam().then(setEquipe);
   }, [initial]);
 

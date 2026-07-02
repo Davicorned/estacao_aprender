@@ -20,10 +20,10 @@ export function ServicosCards({
   initial?: SiteServico[];
 }) {
   const [items, setItems] = useState<SiteServico[]>(initial ?? []);
-  const [loaded, setLoaded] = useState<boolean>(initial !== undefined);
+  const [loaded, setLoaded] = useState<boolean>(Array.isArray(initial) && initial.length > 0);
 
   useEffect(() => {
-    if (initial) { setItems(initial); setLoaded(true); return; }
+    if (initial && initial.length > 0) { setItems(initial); setLoaded(true); return; }
     let alive = true;
     void fetchServicos(false).then((data) => {
       if (!alive) return;

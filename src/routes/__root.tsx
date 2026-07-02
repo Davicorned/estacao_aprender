@@ -204,10 +204,7 @@ function RootComponent() {
   const data = Route.useLoaderData();
   const seo = data?.seo;
 
-  const origin =
-    typeof window !== "undefined" && window.location?.origin
-      ? window.location.origin
-      : "";
+  const origin = "";
 
   const clinic = seo
     ? compactJsonLd({
