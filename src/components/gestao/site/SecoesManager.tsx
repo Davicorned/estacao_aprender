@@ -90,6 +90,11 @@ function templateHas(tipo: SecaoTipo, campo: string): boolean {
   return !!t && t.campos.includes(campo as any);
 }
 
+function templateHasEstilo(tipo: SecaoTipo): boolean {
+  const t = SECTION_TEMPLATES_BY_TIPO[tipo];
+  return !!t && (!!t.dadosSchema || t.campos.includes("dados" as any));
+}
+
 const PREVIEW_TESTIMONIALS = [
   { id: "p1", nome: "Ana P.", texto: "Atendimento incrível, minha filha evoluiu muito nas últimas semanas — recomendo demais!", fonte: "Google", enabled: true, order: 0 },
   { id: "p2", nome: "Carlos M.", texto: "Ambiente acolhedor e equipe atenciosa. Fez toda a diferença para nós.", fonte: "Instagram", enabled: true, order: 1 },
@@ -796,28 +801,57 @@ export function SecoesManager({
                   . Aqui você edita só o cabeçalho (etiqueta, título, descrição) e o botão final.
                 </div>
               )}
-              <TabsList className="grid w-full grid-cols-6">
-                <TabsTrigger value="conteudo" className="relative">
-                  Conteúdo
-                  {tabErrors.conteudo > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.conteudo}</span>}
-                </TabsTrigger>
-                <TabsTrigger value="midia" disabled={!templateHas(form.tipo, "imagem_url")} className="relative">
-                  Mídia
-                  {tabErrors.midia > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.midia}</span>}
-                </TabsTrigger>
-                <TabsTrigger value="botao" disabled={!templateHas(form.tipo, "cta")} className="relative">
-                  Botão
-                  {tabErrors.botao > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.botao}</span>}
-                </TabsTrigger>
-                <TabsTrigger value="cards" disabled={!templateHas(form.tipo, "itens")} className="relative">
-                  Itens
-                  {tabErrors.cards > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.cards}</span>}
-                </TabsTrigger>
-                <TabsTrigger value="dados" disabled={!templateHas(form.tipo, "dados")}>
-                  Dados
-                </TabsTrigger>
-                <TabsTrigger value="aparencia">Aparência</TabsTrigger>
-              </TabsList>
+              {(() => {
+                const hasMidia = templateHas(form.tipo, "imagem_url");
+                const hasBotao = templateHas(form.tipo, "cta");
+                const hasItens = templateHas(form.tipo, "itens");
+                const hasEstilo = templateHasEstilo(form.tipo);
+                const visible: Array<typeof tab> = ["conteudo"];
+                if (hasMidia) visible.push("midia");
+                if (hasBotao) visible.push("botao");
+                if (hasItens) visible.push("cards");
+                if (hasEstilo) visible.push("dados");
+                visible.push("aparencia");
+                if (!visible.includes(tab)) {
+                  // Reset to Conteúdo when current tab is hidden for this template.
+                  setTimeout(() => setTab("conteudo"), 0);
+                }
+                const colsCls =
+                  visible.length === 3 ? "grid-cols-3"
+                  : visible.length === 4 ? "grid-cols-4"
+                  : visible.length === 5 ? "grid-cols-5"
+                  : "grid-cols-6";
+                return (
+                  <TabsList className={`grid w-full ${colsCls}`}>
+                    <TabsTrigger value="conteudo" className="relative">
+                      Conteúdo
+                      {tabErrors.conteudo > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.conteudo}</span>}
+                    </TabsTrigger>
+                    {hasMidia && (
+                      <TabsTrigger value="midia" className="relative">
+                        Mídia
+                        {tabErrors.midia > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.midia}</span>}
+                      </TabsTrigger>
+                    )}
+                    {hasBotao && (
+                      <TabsTrigger value="botao" className="relative">
+                        Botão
+                        {tabErrors.botao > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.botao}</span>}
+                      </TabsTrigger>
+                    )}
+                    {hasItens && (
+                      <TabsTrigger value="cards" className="relative">
+                        Itens
+                        {tabErrors.cards > 0 && <span className="ml-1.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">{tabErrors.cards}</span>}
+                      </TabsTrigger>
+                    )}
+                    {hasEstilo && (
+                      <TabsTrigger value="dados">Estilo</TabsTrigger>
+                    )}
+                    <TabsTrigger value="aparencia">Aparência</TabsTrigger>
+                  </TabsList>
+                );
+              })()}
 
               {/* --- CONTEÚDO --- */}
               <TabsContent value="conteudo" className="space-y-4 pt-4">
@@ -941,6 +975,9 @@ export function SecoesManager({
 
               {/* --- DADOS (modalidades / contato-mapa) --- */}
               <TabsContent value="dados" className="space-y-4 pt-4">
+                <p className="text-xs text-muted-foreground">
+                  Escolha o layout e os detalhes de exibição desta seção.
+                </p>
                 {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "modalidades" && (
                   <DadosModalidadesEditor
                     value={(form.dados as Partial<DadosModalidades>) ?? {}}
