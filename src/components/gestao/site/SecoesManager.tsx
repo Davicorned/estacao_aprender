@@ -368,6 +368,7 @@ export function SecoesManager({
     await supabase.from("site_secao_itens").delete().eq("secao_id", id);
     const { error } = await supabase.from("site_secoes").delete().eq("id", id);
     if (error) return toast.error(error.message);
+    invalidateCmsCache("secoes");
     toast.success("Removida");
     void load();
   }
@@ -380,12 +381,14 @@ export function SecoesManager({
     const r1 = await supabase.from("site_secoes").update({ order: b.order }).eq("id", a.id);
     const r2 = await supabase.from("site_secoes").update({ order: a.order }).eq("id", b.id);
     if (r1.error || r2.error) return toast.error("Falha ao reordenar");
+    invalidateCmsCache("secoes");
     void load();
   }
 
   async function toggleEnabled(s: SiteSecao) {
     const { error } = await supabase.from("site_secoes").update({ enabled: !s.enabled }).eq("id", s.id);
     if (error) return toast.error(error.message);
+    invalidateCmsCache("secoes");
     void load();
   }
 
