@@ -11,11 +11,14 @@ import { ServicesAccordion } from "../servicos/ServicesAccordion";
 import { ServicosCards } from "./ServicosCards";
 import { Contact } from "../Contact";
 import { CTABanner } from "../../CTABanner";
+import { TeamSection } from "../TeamSection";
 import {
   DEFAULT_CONTATO_MAPA,
   DEFAULT_MODALIDADES,
+  DEFAULT_EQUIPE,
   type DadosContatoMapa,
   type DadosModalidades,
+  type DadosEquipe,
 } from "@/lib/site-templates";
 
 function Eyebrow({ text }: { text?: string | null }) {
@@ -309,6 +312,22 @@ export function DynamicSection({ secao }: { secao: SiteSecao }) {
     }
     case "servicos-cards":
       return <ServicosCards secao={secao} />;
+    case "equipe": {
+      const d = (secao.dados ?? {}) as Partial<DadosEquipe>;
+      const bg = buildBackground(secao.bg_cor, secao.bg_cor_2);
+      return (
+        <TeamSection
+          eyebrow={secao.eyebrow ?? undefined}
+          titulo={secao.titulo ?? undefined}
+          descricao={secao.descricao ?? undefined}
+          colunas={(d.colunas as 2 | 3 | 4) ?? DEFAULT_EQUIPE.colunas}
+          mostrar_especialidades={d.mostrar_especialidades ?? DEFAULT_EQUIPE.mostrar_especialidades}
+          mostrar_registro={d.mostrar_registro ?? DEFAULT_EQUIPE.mostrar_registro}
+          bg={bg || null}
+          textColor={secao.texto_cor ?? null}
+        />
+      );
+    }
     default:
       return null;
   }
