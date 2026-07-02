@@ -90,6 +90,13 @@ function templateHas(tipo: SecaoTipo, campo: string): boolean {
   return !!t && t.campos.includes(campo as any);
 }
 
+const PREVIEW_TESTIMONIALS = [
+  { id: "p1", nome: "Ana P.", texto: "Atendimento incrível, minha filha evoluiu muito nas últimas semanas — recomendo demais!", fonte: "Google", enabled: true, order: 0 },
+  { id: "p2", nome: "Carlos M.", texto: "Ambiente acolhedor e equipe atenciosa. Fez toda a diferença para nós.", fonte: "Instagram", enabled: true, order: 1 },
+  { id: "p3", nome: "Juliana R.", texto: "Profissionais competentes e um cuidado enorme com cada detalhe.", fonte: "Google", enabled: true, order: 2 },
+  { id: "p4", nome: "Renata S.", texto: "Muito além do que esperávamos. Recomendo para todas as famílias.", fonte: "Google", enabled: true, order: 3 },
+] as any;
+
 function itemConfig(tipo: SecaoTipo) {
   return SECTION_TEMPLATES_BY_TIPO[tipo]?.item;
 }
