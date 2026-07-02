@@ -3,7 +3,6 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { Hero } from "@/components/site/sections/Hero";
-import { TeamSection } from "@/components/site/sections/TeamSection";
 import { Testimonials } from "@/components/site/sections/Testimonials";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
 
@@ -39,7 +38,6 @@ function Index() {
       <main>
         <Hero />
         <DynamicSections paginaSlug="home" />
-        <TeamSection />
         <Testimonials />
       </main>
       <Footer />
