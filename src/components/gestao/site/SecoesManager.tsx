@@ -1314,3 +1314,62 @@ function DadosContatoMapaEditor({
     </div>
   );
 }
+
+function DadosEquipeEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosEquipe>;
+  onChange: (v: DadosEquipe) => void;
+}) {
+  const v: DadosEquipe = {
+    colunas: (value.colunas as 2 | 3 | 4) ?? DEFAULT_EQUIPE.colunas,
+    mostrar_especialidades: value.mostrar_especialidades ?? DEFAULT_EQUIPE.mostrar_especialidades,
+    mostrar_registro: value.mostrar_registro ?? DEFAULT_EQUIPE.mostrar_registro,
+  };
+  const patch = (p: Partial<DadosEquipe>) => onChange({ ...v, ...p });
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-[#D67F43]/40 bg-[#FEF3E8] p-3 text-xs text-[#7a3f18] dark:bg-amber-950/30 dark:text-amber-200">
+        Os profissionais desta seção vêm da tela{" "}
+        <Link to="/gestao/site/equipe" className="font-semibold underline">
+          Equipe (site)
+        </Link>
+        . Aqui você edita só o cabeçalho e as opções de exibição abaixo.
+      </div>
+      <div className="space-y-2">
+        <Label className="text-xs">Colunas</Label>
+        <Select
+          value={String(v.colunas)}
+          onValueChange={(val) => patch({ colunas: Number(val) as 2 | 3 | 4 })}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="2">2 colunas</SelectItem>
+            <SelectItem value="3">3 colunas</SelectItem>
+            <SelectItem value="4">4 colunas</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <p className="text-sm font-medium">Mostrar especialidades</p>
+          <p className="text-xs text-muted-foreground">Tags coloridas com as áreas de atuação.</p>
+        </div>
+        <Switch
+          checked={v.mostrar_especialidades}
+          onCheckedChange={(val) => patch({ mostrar_especialidades: val })}
+        />
+      </div>
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <p className="text-sm font-medium">Mostrar registro</p>
+          <p className="text-xs text-muted-foreground">Ex.: CRP, CRFa — exibido nos detalhes.</p>
+        </div>
+        <Switch
+          checked={v.mostrar_registro}
+          onCheckedChange={(val) => patch({ mostrar_registro: val })}
+        />
+      </div>
+    </div>
+  );
+}
