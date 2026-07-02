@@ -3,7 +3,6 @@ import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
 import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { Hero } from "@/components/site/sections/Hero";
-import { Testimonials } from "@/components/site/sections/Testimonials";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
 import { fetchPaginaBySlug, fetchPublicPageData } from "@/lib/cms";
 import { PageJsonLd } from "@/components/site/PageJsonLd";
@@ -66,7 +65,6 @@ function Index() {
           testimonials={testimonials}
           servicos={servicos}
         />
-        <Testimonials initial={testimonials} />
       </main>
       <Footer />
       <WhatsAppFloat />
