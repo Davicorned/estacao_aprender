@@ -1,6 +1,7 @@
-import { Phone, Mail, MapPin, Clock, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 import { DEFAULT_CONTATO_MAPA } from "@/lib/site-templates";
+import { getLucideIcon } from "@/components/gestao/site/IconPicker";
 
 type Props = {
   eyebrow?: string;
@@ -13,6 +14,10 @@ type Props = {
   endereco_texto?: string;
   horarios?: string[];
   mapa_embed_url?: string;
+  icone_telefone?: string;
+  icone_email?: string;
+  icone_endereco?: string;
+  icone_horario?: string;
 };
 
 export function Contact({
@@ -26,8 +31,16 @@ export function Contact({
   endereco_texto = DEFAULT_CONTATO_MAPA.endereco_texto,
   horarios = DEFAULT_CONTATO_MAPA.horarios,
   mapa_embed_url = DEFAULT_CONTATO_MAPA.mapa_embed_url,
+  icone_telefone,
+  icone_email,
+  icone_endereco,
+  icone_horario,
 }: Props = {}) {
   const waExternal = telefone_link.startsWith("http");
+  const PhoneIcon = getLucideIcon(icone_telefone ?? DEFAULT_CONTATO_MAPA.icone_telefone ?? "Phone");
+  const MailIcon = getLucideIcon(icone_email ?? DEFAULT_CONTATO_MAPA.icone_email ?? "Mail");
+  const MapPinIcon = getLucideIcon(icone_endereco ?? DEFAULT_CONTATO_MAPA.icone_endereco ?? "MapPin");
+  const ClockIcon = getLucideIcon(icone_horario ?? DEFAULT_CONTATO_MAPA.icone_horario ?? "Clock");
   return (
     <section className="bg-white py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -52,7 +65,7 @@ export function Contact({
                 className="group flex items-center gap-4 rounded-2xl bg-green-50 p-4 transition-colors hover:bg-green-100"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-500">
-                  <Phone className="h-6 w-6 text-white" />
+                  <PhoneIcon className="h-6 w-6 text-white" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-gray-900">WhatsApp</p>
@@ -68,7 +81,7 @@ export function Contact({
                 className="flex items-center gap-4 rounded-2xl bg-gray-50 p-4"
               >
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
-                  <Mail className="h-6 w-6 text-[var(--site-primary)]" />
+                  <MailIcon className="h-6 w-6 text-[var(--site-primary)]" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-gray-900">E-mail</p>
@@ -80,7 +93,7 @@ export function Contact({
             {(endereco_titulo || endereco_texto) && (
               <div className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
-                  <MapPin className="h-6 w-6 text-[var(--site-primary)]" />
+                  <MapPinIcon className="h-6 w-6 text-[var(--site-primary)]" />
                 </div>
                 <div className="flex-1 space-y-3">
                   <div>
@@ -98,7 +111,7 @@ export function Contact({
             {horarios && horarios.length > 0 && (
               <div className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
                 <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
-                  <Clock className="h-6 w-6 text-[var(--site-primary)]" />
+                  <ClockIcon className="h-6 w-6 text-[var(--site-primary)]" />
                 </div>
                 <div className="flex-1">
                   <p className="text-sm font-semibold text-gray-900">Horário de Funcionamento</p>
