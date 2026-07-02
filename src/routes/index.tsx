@@ -5,8 +5,18 @@ import { WhatsAppFloat } from "@/components/site/WhatsAppFloat";
 import { Hero } from "@/components/site/sections/Hero";
 import { Testimonials } from "@/components/site/sections/Testimonials";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
+import { fetchPaginaBySlug, fetchPublicPageData } from "@/lib/cms";
 
 export const Route = createFileRoute("/")({
+  loader: async () => {
+    try {
+      const pagina = await fetchPaginaBySlug("home");
+      const data = await fetchPublicPageData(pagina?.id ?? null);
+      return { ...data };
+    } catch {
+      return { secoes: [], team: [], testimonials: [], servicos: [] };
+    }
+  },
   head: () => ({
     meta: [
       { title: "Estação Aprender — Morumbi" },
@@ -32,13 +42,20 @@ export const Route = createFileRoute("/")({
 });
 
 function Index() {
+  const { secoes, team, testimonials, servicos } = Route.useLoaderData();
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
       <Header />
       <main>
         <Hero />
-        <DynamicSections paginaSlug="home" />
-        <Testimonials />
+        <DynamicSections
+          paginaSlug="home"
+          secoes={secoes}
+          team={team}
+          testimonials={testimonials}
+          servicos={servicos}
+        />
+        <Testimonials initial={testimonials} />
       </main>
       <Footer />
       <WhatsAppFloat />
