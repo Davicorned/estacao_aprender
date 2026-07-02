@@ -6,6 +6,7 @@ import { Hero } from "@/components/site/sections/Hero";
 import { Testimonials } from "@/components/site/sections/Testimonials";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
 import { fetchPaginaBySlug, fetchPublicPageData } from "@/lib/cms";
+import { PageJsonLd } from "@/components/site/PageJsonLd";
 
 export const Route = createFileRoute("/")({
   loader: async () => {
@@ -47,6 +48,16 @@ function Index() {
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
       <Header />
       <main>
+        <PageJsonLd
+          pageTitle="Início"
+          pagePath="/"
+          brand="Estação Aprender"
+          secoes={secoes}
+          team={team}
+          testimonials={testimonials}
+          servicos={servicos}
+          alwaysTestimonials
+        />
         <Hero />
         <DynamicSections
           paginaSlug="home"
