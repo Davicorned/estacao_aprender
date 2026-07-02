@@ -240,3 +240,16 @@ export const DEFAULT_CONTATO_MAPA: DadosContatoMapa = {
   icone_endereco: "MapPin",
   icone_horario: "Clock",
 };
+
+/** Nossa equipe (puxa coleção team_members) */
+export type DadosEquipe = {
+  colunas: 2 | 3 | 4;
+  mostrar_especialidades: boolean;
+  mostrar_registro: boolean;
+};
+
+export const DEFAULT_EQUIPE: DadosEquipe = {
+  colunas: 3,
+  mostrar_especialidades: true,
+  mostrar_registro: true,
+};
