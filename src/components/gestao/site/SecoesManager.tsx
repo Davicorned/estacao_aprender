@@ -35,7 +35,9 @@ import { IconPicker, getLucideIcon as getLucide } from "./IconPicker";
 import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
+  DEFAULT_EQUIPE,
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
+  type DadosEquipe,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -96,6 +98,7 @@ function defaultDadosForTipo(tipo: SecaoTipo): Record<string, any> {
   const schema = SECTION_TEMPLATES_BY_TIPO[tipo]?.dadosSchema;
   if (schema === "modalidades") return { ...DEFAULT_MODALIDADES };
   if (schema === "contato-mapa") return { ...DEFAULT_CONTATO_MAPA };
+  if (schema === "equipe") return { ...DEFAULT_EQUIPE };
   return {};
 }
 
