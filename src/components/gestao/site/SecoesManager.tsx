@@ -991,21 +991,11 @@ export function SecoesManager({
                       <div className={`grid grid-cols-1 gap-2 ${itemConfig(form.tipo)?.icone ? "sm:grid-cols-[1fr_180px]" : ""}`}>
                         <Input className={fieldCls(itemIssues[idx] ?? null)} value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título" />
                         {itemConfig(form.tipo)?.icone && (
-                          <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {ICONES_SUGERIDOS.map((i) => {
-                                const I = getLucide(i);
-                                return (
-                                  <SelectItem key={i} value={i}>
-                                    <span className="inline-flex items-center gap-2">
-                                      <I className="h-3.5 w-3.5" /> {i}
-                                    </span>
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
+                          <IconPicker
+                            value={it.icone}
+                            onChange={(v) => updateItem(idx, { icone: v })}
+                            suggestions={ICONES_SUGERIDOS}
+                          />
                         )}
                       </div>
                       <FieldMsg issue={itemIssues[idx] ?? null} />
@@ -1324,12 +1314,11 @@ function DadosModalidadesEditor({
         <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_160px]">
             <Input value={c.titulo} onChange={(e) => patchCard(idx, { titulo: e.target.value })} placeholder="Título do card" />
-            <Select value={c.icone} onValueChange={(v) => patchCard(idx, { icone: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {ICONES_SUGERIDOS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <IconPicker
+              value={c.icone}
+              onChange={(v) => patchCard(idx, { icone: v })}
+              suggestions={ICONES_SUGERIDOS}
+            />
           </div>
           <Textarea rows={2} value={c.descricao} onChange={(e) => patchCard(idx, { descricao: e.target.value })} placeholder="Descrição curta" />
           <Textarea
