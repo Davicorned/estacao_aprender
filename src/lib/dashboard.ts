@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { countPacientesRemarcados } from "@/lib/historico";
+import { hojeLocal, toLocalISODate } from "@/lib/datas";
 
 export type PeriodoRange = { start: string; end: string };
 
@@ -7,7 +8,7 @@ export function rangeUltimos30(): PeriodoRange {
   const end = new Date();
   const start = new Date();
   start.setDate(end.getDate() - 29);
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+  return { start: toLocalISODate(start), end: toLocalISODate(end) };
 }
 
 export function rangeMesAtual(): PeriodoRange {
@@ -63,7 +64,7 @@ function pct(atual: number, anterior: number): number | null {
 }
 
 export async function fetchKpis(range: PeriodoRange, profissionalId?: string | null): Promise<Kpis> {
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeLocal();
   const prev = deslocarRangeAnterior(range);
 
   const baseAgendamentos = () => {
@@ -176,10 +177,10 @@ export async function pacientesNovosVsRecorrentes(
 }
 
 export async function proximosAgendamentos(limit = 5) {
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeLocal();
   const amanha = new Date();
   amanha.setDate(amanha.getDate() + 1);
-  const amanhaStr = amanha.toISOString().slice(0, 10);
+  const amanhaStr = toLocalISODate(amanha);
 
   const { data, error } = await supabase
     .from("agendamentos")
