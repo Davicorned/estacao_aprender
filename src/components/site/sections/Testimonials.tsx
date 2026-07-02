@@ -3,12 +3,13 @@ import { Quote, Star } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 import { fetchTestimonials, type Testimonial } from "@/lib/cms";
 
-export function Testimonials() {
-  const [items, setItems] = useState<Testimonial[]>([]);
+export function Testimonials({ initial }: { initial?: Testimonial[] } = {}) {
+  const [items, setItems] = useState<Testimonial[]>(initial ?? []);
 
   useEffect(() => {
+    if (initial) { setItems(initial); return; }
     void fetchTestimonials().then(setItems);
-  }, []);
+  }, [initial]);
 
   if (items.length === 0) return null;
 
