@@ -597,7 +597,6 @@ export function SecoesManager({
     ...(open && !form.id
       ? [{ key: "new", label: ghostTitulo || "Nova seção", fixed: false, isCurrent: true }]
       : []),
-    { key: "team", label: "Nossa equipe", fixed: true, editTo: "/gestao/site/equipe" },
     { key: "testimonials", label: "Depoimentos", fixed: true, editTo: "/gestao/site/depoimentos" },
     { key: "footer", label: "Rodapé", fixed: true, editTo: "/gestao/site/layout/rodape" },
   ];
