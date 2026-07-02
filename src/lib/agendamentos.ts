@@ -298,10 +298,13 @@ export function ocorrenciasParaRecorrencia(
   }
 
   if (cfg.tipo === "mensal") {
+    const diaBase = base.getDate();
     for (let i = 0; i < n; i++) {
-      const d = new Date(base);
-      d.setMonth(base.getMonth() + i);
-      out.push(toIsoDate(d));
+      // 1º dia do mês alvo (o construtor normaliza o ano quando o mês passa de 11)
+      const alvo = new Date(base.getFullYear(), base.getMonth() + i, 1);
+      const ultimoDia = new Date(alvo.getFullYear(), alvo.getMonth() + 1, 0).getDate();
+      alvo.setDate(Math.min(diaBase, ultimoDia)); // clampa 31→28/30 conforme o mês
+      out.push(toIsoDate(alvo));
     }
     return out;
   }
