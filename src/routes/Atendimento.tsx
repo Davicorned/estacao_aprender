@@ -7,7 +7,15 @@ import { CTABanner } from "@/components/site/CTABanner";
 import { Modalities } from "@/components/site/sections/atendimento/Modalities";
 import { ProcessSteps } from "@/components/site/sections/atendimento/ProcessSteps";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
-import { fetchPaginaBySlug, fetchSecoes, type SitePagina, type SiteSecao } from "@/lib/cms";
+import {
+  fetchPaginaBySlug,
+  fetchPublicPageData,
+  type SitePagina,
+  type SiteSecao,
+  type TeamMember,
+  type Testimonial,
+  type SiteServico,
+} from "@/lib/cms";
 
 const SLUG = "atendimento";
 const FALLBACK = {
@@ -20,10 +28,16 @@ export const Route = createFileRoute("/Atendimento")({
   loader: async () => {
     try {
       const pagina = await fetchPaginaBySlug(SLUG);
-      const secoes = pagina ? await fetchSecoes(false, pagina.id) : [];
-      return { pagina, secoes };
+      const data = await fetchPublicPageData(pagina?.id ?? null);
+      return { pagina, ...data };
     } catch {
-      return { pagina: null as SitePagina | null, secoes: [] as SiteSecao[] };
+      return {
+        pagina: null as SitePagina | null,
+        secoes: [] as SiteSecao[],
+        team: [] as TeamMember[],
+        testimonials: [] as Testimonial[],
+        servicos: [] as SiteServico[],
+      };
     }
   },
   head: () => ({
@@ -39,7 +53,7 @@ export const Route = createFileRoute("/Atendimento")({
 });
 
 function AtendimentoPage() {
-  const { pagina, secoes } = Route.useLoaderData();
+  const { pagina, secoes, team, testimonials, servicos } = Route.useLoaderData();
   const useCms = !!pagina && secoes.length > 0;
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
@@ -51,7 +65,13 @@ function AtendimentoPage() {
           description={pagina?.banner_descricao ?? FALLBACK.description}
         />
         {useCms ? (
-          <DynamicSections paginaId={pagina!.id} />
+          <DynamicSections
+            paginaId={pagina!.id}
+            secoes={secoes}
+            team={team}
+            testimonials={testimonials}
+            servicos={servicos}
+          />
         ) : (
           <>
             <Modalities />
