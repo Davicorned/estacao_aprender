@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { getRouteApi } from "@tanstack/react-router";
 import { Calendar, ArrowRight, CheckCircle2 } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 import { fetchHero, HERO_DEFAULTS, type SiteHero } from "@/lib/cms";
@@ -26,14 +27,23 @@ function mergeHero(h: Partial<HeroData> | null | undefined): HeroData {
 }
 
 export function Hero({ override }: { override?: Partial<HeroData> } = {}) {
-  const [hero, setHero] = useState<HeroData>(() => mergeHero(override));
+  const rootApi = getRouteApi("__root__");
+  let initialFromLoader: Partial<HeroData> | null = null;
+  try {
+    const rootData = rootApi.useLoaderData();
+    initialFromLoader = (rootData as any)?.initial?.hero ?? null;
+  } catch { /* not inside root context (tests, storybook) */ }
+  const [hero, setHero] = useState<HeroData>(() =>
+    mergeHero(override ?? initialFromLoader),
+  );
   useEffect(() => {
     if (override) {
       setHero(mergeHero(override));
       return;
     }
+    if (initialFromLoader) return; // already have SSR data
     fetchHero().then((h) => setHero(mergeHero(h)));
-  }, [override]);
+  }, [override, initialFromLoader]);
 
   return (
     <section
