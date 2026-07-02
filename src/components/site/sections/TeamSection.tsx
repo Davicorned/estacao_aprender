@@ -10,9 +10,20 @@ type CardProps = {
   especialidades: string[];
   bio?: string | null;
   registro?: string | null;
+  mostrar_especialidades?: boolean;
+  mostrar_registro?: boolean;
 };
 
-function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardProps) {
+function TeamCard({
+  nome,
+  titulo,
+  foto,
+  especialidades,
+  bio,
+  registro,
+  mostrar_especialidades = true,
+  mostrar_registro = true,
+}: CardProps) {
   const [open, setOpen] = useState(false);
   const iniciais = nome
     .split(" ")
@@ -45,16 +56,18 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
         <h3 className="mb-1 text-base font-semibold text-gray-900">{nome}</h3>
         <p className="mb-3 text-sm font-medium text-[var(--site-primary)]">{titulo}</p>
 
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {especialidades.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-[var(--site-soft)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {mostrar_especialidades && especialidades.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {especialidades.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-[var(--site-soft)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         <button
           type="button"
@@ -74,7 +87,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
         }`}
       >
         <div className="space-y-4 border-t border-gray-100 px-5 pt-4 pb-5">
-          {registro && (
+          {mostrar_registro && registro && (
             <div>
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                 Registro
@@ -92,7 +105,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
             </div>
           )}
 
-          {especialidades.length > 3 && (
+          {mostrar_especialidades && especialidades.length > 3 && (
             <div>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                 Todas as especialidades
@@ -115,7 +128,27 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
   );
 }
 
-export function TeamSection() {
+type TeamSectionProps = {
+  eyebrow?: string | null;
+  titulo?: string | null;
+  descricao?: string | null;
+  colunas?: 2 | 3 | 4;
+  mostrar_especialidades?: boolean;
+  mostrar_registro?: boolean;
+  bg?: string | null;
+  textColor?: string | null;
+};
+
+export function TeamSection({
+  eyebrow = "Nossa equipe",
+  titulo = "Profissionais especializados para o seu filho",
+  descricao = "Cada profissional com dedicação específica ao desenvolvimento de crianças e adolescentes",
+  colunas = 3,
+  mostrar_especialidades = true,
+  mostrar_registro = true,
+  bg = null,
+  textColor = null,
+}: TeamSectionProps = {}) {
   const scrollerRef = useRef<HTMLDivElement | null>(null);
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(false);
@@ -158,25 +191,55 @@ export function TeamSection() {
     return null;
   }
 
+  const basisByColunas =
+    colunas === 2
+      ? "sm:basis-[48%] md:basis-[48%] lg:basis-[48%] xl:basis-[48%]"
+      : colunas === 4
+        ? "sm:basis-[48%] md:basis-[32%] lg:basis-[24%] xl:basis-[24%]"
+        : "sm:basis-[48%] md:basis-[40%] lg:basis-[31%] xl:basis-[24%]";
+
   return (
-    <section className="bg-white py-20">
+    <section
+      className={bg ? "py-20" : "bg-white py-20"}
+      style={{
+        ...(bg ? { background: bg } : {}),
+        ...(textColor ? { color: textColor } : {}),
+      }}
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <FadeUp className="mb-16 text-center">
-          <span className="text-sm font-medium uppercase tracking-wider text-[var(--site-primary)]">
-            Nossa equipe
-          </span>
-          <h2 className="mt-3 mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
-            Profissionais especializados para o seu filho
-          </h2>
-          <p className="mx-auto max-w-2xl text-gray-600">
-            Cada profissional com dedicação específica ao desenvolvimento de crianças e adolescentes
-          </p>
+          {eyebrow && (
+            <span className="text-sm font-medium uppercase tracking-wider text-[var(--site-primary)]">
+              {eyebrow}
+            </span>
+          )}
+          {titulo && (
+            <h2
+              className={`mt-3 mb-4 text-3xl font-bold md:text-4xl ${textColor ? "" : "text-gray-900"}`}
+              style={textColor ? { color: textColor } : undefined}
+            >
+              {titulo}
+            </h2>
+          )}
+          {descricao && (
+            <p
+              className={`mx-auto max-w-2xl ${textColor ? "opacity-90" : "text-gray-600"}`}
+              style={textColor ? { color: textColor } : undefined}
+            >
+              {descricao}
+            </p>
+          )}
         </FadeUp>
 
         {single ? (
           <div className="mx-auto max-w-sm">
             <FadeUp>
-              <TeamCard {...equipe[0]} foto={equipe[0].foto_url} />
+              <TeamCard
+                {...equipe[0]}
+                foto={equipe[0].foto_url}
+                mostrar_especialidades={mostrar_especialidades}
+                mostrar_registro={mostrar_registro}
+              />
             </FadeUp>
           </div>
         ) : (
@@ -189,10 +252,15 @@ export function TeamSection() {
                 <div
                   key={profissional.id}
                   data-team-card
-                  className="snap-start shrink-0 basis-[85%] sm:basis-[48%] md:basis-[40%] lg:basis-[31%] xl:basis-[24%]"
+                  className={`snap-start shrink-0 basis-[85%] ${basisByColunas}`}
                 >
                   <FadeUp delay={idx * 0.05}>
-                    <TeamCard {...profissional} foto={profissional.foto_url} />
+                    <TeamCard
+                      {...profissional}
+                      foto={profissional.foto_url}
+                      mostrar_especialidades={mostrar_especialidades}
+                      mostrar_registro={mostrar_registro}
+                    />
                   </FadeUp>
                 </div>
               ))}

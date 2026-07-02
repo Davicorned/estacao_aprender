@@ -26,7 +26,7 @@ export type SectionTemplate = {
   campos: TemplateCampo[];
   item?: TemplateItemConfig;
   /** Forma do objeto `dados` quando o template usa payload estruturado. */
-  dadosSchema?: "modalidades" | "contato-mapa";
+  dadosSchema?: "modalidades" | "contato-mapa" | "equipe";
 };
 
 export const SECTION_TEMPLATES: SectionTemplate[] = [
@@ -124,6 +124,16 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     icon: "LayoutGrid",
     grupo: "cards",
     campos: ["eyebrow", "titulo", "descricao", "cta"],
+  },
+  {
+    tipo: "equipe",
+    label: "Nossa equipe",
+    descricao:
+      "Grade/carrossel de profissionais puxando a coleção de Equipe (site).",
+    icon: "UserCog",
+    grupo: "conteudo",
+    campos: ["eyebrow", "titulo", "descricao"],
+    dadosSchema: "equipe",
   },
 ];
 
@@ -229,4 +239,17 @@ export const DEFAULT_CONTATO_MAPA: DadosContatoMapa = {
   icone_email: "Mail",
   icone_endereco: "MapPin",
   icone_horario: "Clock",
+};
+
+/** Nossa equipe (puxa coleção team_members) */
+export type DadosEquipe = {
+  colunas: 2 | 3 | 4;
+  mostrar_especialidades: boolean;
+  mostrar_registro: boolean;
+};
+
+export const DEFAULT_EQUIPE: DadosEquipe = {
+  colunas: 3,
+  mostrar_especialidades: true,
+  mostrar_registro: true,
 };

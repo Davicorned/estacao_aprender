@@ -35,7 +35,9 @@ import { IconPicker, getLucideIcon as getLucide } from "./IconPicker";
 import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
+  DEFAULT_EQUIPE,
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
+  type DadosEquipe,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -96,6 +98,7 @@ function defaultDadosForTipo(tipo: SecaoTipo): Record<string, any> {
   const schema = SECTION_TEMPLATES_BY_TIPO[tipo]?.dadosSchema;
   if (schema === "modalidades") return { ...DEFAULT_MODALIDADES };
   if (schema === "contato-mapa") return { ...DEFAULT_CONTATO_MAPA };
+  if (schema === "equipe") return { ...DEFAULT_EQUIPE };
   return {};
 }
 
@@ -594,7 +597,6 @@ export function SecoesManager({
     ...(open && !form.id
       ? [{ key: "new", label: ghostTitulo || "Nova seção", fixed: false, isCurrent: true }]
       : []),
-    { key: "team", label: "Nossa equipe", fixed: true, editTo: "/gestao/site/equipe" },
     { key: "testimonials", label: "Depoimentos", fixed: true, editTo: "/gestao/site/depoimentos" },
     { key: "footer", label: "Rodapé", fixed: true, editTo: "/gestao/site/layout/rodape" },
   ];
@@ -937,6 +939,12 @@ export function SecoesManager({
                 {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "contato-mapa" && (
                   <DadosContatoMapaEditor
                     value={(form.dados as Partial<DadosContatoMapa>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
+                )}
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "equipe" && (
+                  <DadosEquipeEditor
+                    value={(form.dados as Partial<DadosEquipe>) ?? {}}
                     onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
                   />
                 )}
@@ -1302,6 +1310,65 @@ function DadosContatoMapaEditor({
       <div className="space-y-1">
         <Label className="text-xs">URL do mapa (iframe embed do Google Maps)</Label>
         <Input value={v.mapa_embed_url} onChange={(e) => patch({ mapa_embed_url: e.target.value })} placeholder="https://www.google.com/maps/embed?..." />
+      </div>
+    </div>
+  );
+}
+
+function DadosEquipeEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosEquipe>;
+  onChange: (v: DadosEquipe) => void;
+}) {
+  const v: DadosEquipe = {
+    colunas: (value.colunas as 2 | 3 | 4) ?? DEFAULT_EQUIPE.colunas,
+    mostrar_especialidades: value.mostrar_especialidades ?? DEFAULT_EQUIPE.mostrar_especialidades,
+    mostrar_registro: value.mostrar_registro ?? DEFAULT_EQUIPE.mostrar_registro,
+  };
+  const patch = (p: Partial<DadosEquipe>) => onChange({ ...v, ...p });
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-[#D67F43]/40 bg-[#FEF3E8] p-3 text-xs text-[#7a3f18] dark:bg-amber-950/30 dark:text-amber-200">
+        Os profissionais desta seção vêm da tela{" "}
+        <Link to="/gestao/site/equipe" className="font-semibold underline">
+          Equipe (site)
+        </Link>
+        . Aqui você edita só o cabeçalho e as opções de exibição abaixo.
+      </div>
+      <div className="space-y-2">
+        <Label className="text-xs">Colunas</Label>
+        <Select
+          value={String(v.colunas)}
+          onValueChange={(val) => patch({ colunas: Number(val) as 2 | 3 | 4 })}
+        >
+          <SelectTrigger><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="2">2 colunas</SelectItem>
+            <SelectItem value="3">3 colunas</SelectItem>
+            <SelectItem value="4">4 colunas</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <p className="text-sm font-medium">Mostrar especialidades</p>
+          <p className="text-xs text-muted-foreground">Tags coloridas com as áreas de atuação.</p>
+        </div>
+        <Switch
+          checked={v.mostrar_especialidades}
+          onCheckedChange={(val) => patch({ mostrar_especialidades: val })}
+        />
+      </div>
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <p className="text-sm font-medium">Mostrar registro</p>
+          <p className="text-xs text-muted-foreground">Ex.: CRP, CRFa — exibido nos detalhes.</p>
+        </div>
+        <Switch
+          checked={v.mostrar_registro}
+          onCheckedChange={(val) => patch({ mostrar_registro: val })}
+        />
       </div>
     </div>
   );
