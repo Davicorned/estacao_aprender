@@ -83,7 +83,8 @@ export type SecaoTipo =
   | "destaque-pessoa"
   | "modalidades"
   | "contato-mapa"
-  | "servicos-cards";
+  | "servicos-cards"
+  | "equipe";
 
 export type SiteSecaoItem = {
   id: string;
