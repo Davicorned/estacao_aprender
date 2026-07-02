@@ -23,7 +23,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
 
   return (
     <div className="group overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-md transition-all duration-300 hover:shadow-xl hover:shadow-[var(--site-primary)]/10">
-      <div className="aspect-square overflow-hidden bg-[var(--site-eyebrow)]">
+      <div className="aspect-square overflow-hidden bg-[var(--site-soft)]">
         {foto ? (
           <img
             src={foto}
@@ -49,7 +49,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
           {especialidades.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="rounded-full bg-[var(--site-eyebrow)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
+              className="rounded-full bg-[var(--site-soft)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
             >
               {tag}
             </span>
@@ -101,7 +101,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
                 {especialidades.map((tag) => (
                   <span
                     key={tag}
-                    className="rounded-full bg-[var(--site-eyebrow)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
+                    className="rounded-full bg-[var(--site-soft)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
                   >
                     {tag}
                   </span>

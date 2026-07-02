@@ -21,6 +21,7 @@ import {
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
@@ -86,6 +87,91 @@ const empty: FormState = {
 function getLucide(name: string): any {
   const I = (LucideIcons as unknown as Record<string, any>)[name];
   return I ?? Sparkles;
+}
+
+// Todos os nomes de ícones do lucide-react (PascalCase, sem aliases "*Icon" duplicados).
+const ALL_LUCIDE_ICON_NAMES: string[] = (() => {
+  const all = Object.keys(LucideIcons as Record<string, unknown>).filter((k) => {
+    if (!/^[A-Z][A-Za-z0-9]+$/.test(k)) return false;
+    if (k === "Icon" || k === "LucideIcon" || k === "createLucideIcon") return false;
+    const v = (LucideIcons as any)[k];
+    return typeof v === "object" || typeof v === "function";
+  });
+  const set = new Set(all);
+  // Remove aliases "FooIcon" quando "Foo" também existe.
+  return all.filter((k) => !(k.endsWith("Icon") && set.has(k.slice(0, -4)))).sort();
+})();
+
+function IconPicker({
+  value,
+  onChange,
+  suggestions,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  suggestions: readonly string[];
+}) {
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState("");
+  const Current = getLucide(value);
+  const list = (() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return suggestions.slice(0, 60);
+    return ALL_LUCIDE_ICON_NAMES.filter((n) => n.toLowerCase().includes(q)).slice(0, 60);
+  })();
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button variant="outline" size="sm" className="w-full justify-start gap-2 font-normal">
+          <Current className="h-4 w-4 shrink-0" />
+          <span className="truncate">{value || "Escolher ícone"}</span>
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[320px] p-2" align="start">
+        <Input
+          autoFocus
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="Buscar ícone (ex.: Stethoscope, Baby…)"
+          className="mb-2 h-8"
+        />
+        <div className="max-h-64 overflow-y-auto">
+          {!query && (
+            <div className="mb-1 px-1 text-[10px] uppercase tracking-wide text-muted-foreground">Sugestões</div>
+          )}
+          <div className="grid grid-cols-6 gap-1">
+            {list.map((name) => {
+              const I = getLucide(name);
+              const selected = name === value;
+              return (
+                <button
+                  key={name}
+                  type="button"
+                  title={name}
+                  onClick={() => {
+                    onChange(name);
+                    setOpen(false);
+                  }}
+                  className={`flex h-9 w-full items-center justify-center rounded-md border transition ${
+                    selected
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-transparent hover:bg-muted"
+                  }`}
+                >
+                  <I className="h-4 w-4" />
+                </button>
+              );
+            })}
+            {list.length === 0 && (
+              <div className="col-span-6 py-4 text-center text-xs text-muted-foreground">
+                Nenhum ícone encontrado.
+              </div>
+            )}
+          </div>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
 }
 
 function templateHas(tipo: SecaoTipo, campo: string): boolean {
@@ -905,21 +991,11 @@ export function SecoesManager({
                       <div className={`grid grid-cols-1 gap-2 ${itemConfig(form.tipo)?.icone ? "sm:grid-cols-[1fr_180px]" : ""}`}>
                         <Input className={fieldCls(itemIssues[idx] ?? null)} value={it.titulo} onChange={(e) => updateItem(idx, { titulo: e.target.value })} placeholder="Título" />
                         {itemConfig(form.tipo)?.icone && (
-                          <Select value={it.icone} onValueChange={(v) => updateItem(idx, { icone: v })}>
-                            <SelectTrigger><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              {ICONES_SUGERIDOS.map((i) => {
-                                const I = getLucide(i);
-                                return (
-                                  <SelectItem key={i} value={i}>
-                                    <span className="inline-flex items-center gap-2">
-                                      <I className="h-3.5 w-3.5" /> {i}
-                                    </span>
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
+                          <IconPicker
+                            value={it.icone}
+                            onChange={(v) => updateItem(idx, { icone: v })}
+                            suggestions={ICONES_SUGERIDOS}
+                          />
                         )}
                       </div>
                       <FieldMsg issue={itemIssues[idx] ?? null} />
@@ -1238,12 +1314,11 @@ function DadosModalidadesEditor({
         <div key={idx} className="rounded-lg border border-border p-3 space-y-2">
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_160px]">
             <Input value={c.titulo} onChange={(e) => patchCard(idx, { titulo: e.target.value })} placeholder="Título do card" />
-            <Select value={c.icone} onValueChange={(v) => patchCard(idx, { icone: v })}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                {ICONES_SUGERIDOS.map((i) => <SelectItem key={i} value={i}>{i}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <IconPicker
+              value={c.icone}
+              onChange={(v) => patchCard(idx, { icone: v })}
+              suggestions={ICONES_SUGERIDOS}
+            />
           </div>
           <Textarea rows={2} value={c.descricao} onChange={(e) => patchCard(idx, { descricao: e.target.value })} placeholder="Descrição curta" />
           <Textarea
