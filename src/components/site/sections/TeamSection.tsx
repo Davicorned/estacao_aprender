@@ -10,9 +10,20 @@ type CardProps = {
   especialidades: string[];
   bio?: string | null;
   registro?: string | null;
+  mostrar_especialidades?: boolean;
+  mostrar_registro?: boolean;
 };
 
-function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardProps) {
+function TeamCard({
+  nome,
+  titulo,
+  foto,
+  especialidades,
+  bio,
+  registro,
+  mostrar_especialidades = true,
+  mostrar_registro = true,
+}: CardProps) {
   const [open, setOpen] = useState(false);
   const iniciais = nome
     .split(" ")
@@ -45,16 +56,18 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
         <h3 className="mb-1 text-base font-semibold text-gray-900">{nome}</h3>
         <p className="mb-3 text-sm font-medium text-[var(--site-primary)]">{titulo}</p>
 
-        <div className="mb-3 flex flex-wrap gap-1.5">
-          {especialidades.slice(0, 3).map((tag) => (
-            <span
-              key={tag}
-              className="rounded-full bg-[var(--site-soft)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
+        {mostrar_especialidades && especialidades.length > 0 && (
+          <div className="mb-3 flex flex-wrap gap-1.5">
+            {especialidades.slice(0, 3).map((tag) => (
+              <span
+                key={tag}
+                className="rounded-full bg-[var(--site-soft)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]"
+              >
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
 
         <button
           type="button"
@@ -74,7 +87,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
         }`}
       >
         <div className="space-y-4 border-t border-gray-100 px-5 pt-4 pb-5">
-          {registro && (
+          {mostrar_registro && registro && (
             <div>
               <p className="mb-1 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                 Registro
@@ -92,7 +105,7 @@ function TeamCard({ nome, titulo, foto, especialidades, bio, registro }: CardPro
             </div>
           )}
 
-          {especialidades.length > 3 && (
+          {mostrar_especialidades && especialidades.length > 3 && (
             <div>
               <p className="mb-2 text-[10px] font-semibold uppercase tracking-wider text-gray-400">
                 Todas as especialidades
