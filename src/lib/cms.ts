@@ -1,4 +1,4 @@
-import { supabase, publicImageUrl } from "@/integrations/supabase/client";
+import { supabase, publicImageUrl, SITE_IMAGES_BUCKET } from "@/integrations/supabase/client";
 
 export type TeamMember = {
   id: string;
