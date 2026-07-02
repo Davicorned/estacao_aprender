@@ -1261,26 +1261,43 @@ function DadosContatoMapaEditor({
     endereco_texto: value.endereco_texto ?? DEFAULT_CONTATO_MAPA.endereco_texto,
     horarios: value.horarios ?? DEFAULT_CONTATO_MAPA.horarios,
     mapa_embed_url: value.mapa_embed_url ?? DEFAULT_CONTATO_MAPA.mapa_embed_url,
+    icone_telefone: value.icone_telefone ?? DEFAULT_CONTATO_MAPA.icone_telefone,
+    icone_email: value.icone_email ?? DEFAULT_CONTATO_MAPA.icone_email,
+    icone_endereco: value.icone_endereco ?? DEFAULT_CONTATO_MAPA.icone_endereco,
+    icone_horario: value.icone_horario ?? DEFAULT_CONTATO_MAPA.icone_horario,
   };
   const patch = (p: Partial<DadosContatoMapa>) => onChange({ ...v, ...p });
   return (
     <div className="space-y-3">
-      <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone exibido (ex: (11) 99999-9999)" />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
+        <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone exibido (ex: (11) 99999-9999)" />
+        <IconPicker value={v.icone_telefone ?? "Phone"} onChange={(nm) => patch({ icone_telefone: nm })} />
+      </div>
       <div className="min-w-0">
         <LinkField label="Destino ao clicar no telefone" value={v.telefone_link} onChange={(val) => patch({ telefone_link: val })} />
       </div>
-      <Input value={v.email} onChange={(e) => patch({ email: e.target.value })} placeholder="E-mail" />
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
+        <Input value={v.email} onChange={(e) => patch({ email: e.target.value })} placeholder="E-mail" />
+        <IconPicker value={v.icone_email ?? "Mail"} onChange={(nm) => patch({ icone_email: nm })} />
+      </div>
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_180px]">
         <Input value={v.endereco_titulo} onChange={(e) => patch({ endereco_titulo: e.target.value })} placeholder="Título do endereço" />
         <Input value={v.endereco_texto} onChange={(e) => patch({ endereco_texto: e.target.value })} placeholder="Endereço" />
+        <IconPicker value={v.icone_endereco ?? "MapPin"} onChange={(nm) => patch({ icone_endereco: nm })} />
       </div>
-      <div className="space-y-1">
-        <Label className="text-xs">Horários (um por linha)</Label>
-        <Textarea
-          rows={3}
-          value={v.horarios.join("\n")}
-          onChange={(e) => patch({ horarios: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
-        />
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
+        <div className="space-y-1">
+          <Label className="text-xs">Horários (um por linha)</Label>
+          <Textarea
+            rows={3}
+            value={v.horarios.join("\n")}
+            onChange={(e) => patch({ horarios: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Ícone</Label>
+          <IconPicker value={v.icone_horario ?? "Clock"} onChange={(nm) => patch({ icone_horario: nm })} />
+        </div>
       </div>
       <div className="space-y-1">
         <Label className="text-xs">URL do mapa (iframe embed do Google Maps)</Label>
