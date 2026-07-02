@@ -165,6 +165,9 @@ export function DocumentoEstiloDialog({ open, onOpenChange, onSaved }: Props) {
                     </div>
                   </div>
                 </div>
+                <p className="text-[11px] text-gray-500">
+                  Para cabeçalhos coloridos, use um logo claro (PNG com fundo transparente).
+                </p>
               </fieldset>
 
               {/* Estilo do cabeçalho */}

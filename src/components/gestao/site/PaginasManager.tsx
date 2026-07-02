@@ -43,6 +43,9 @@ function slugify(s: string) {
     .slice(0, 60);
 }
 
+// Slugs que colidem com rotas do app (ficariam "engolidos" pela rota estática).
+const RESERVED_SLUGS = new Set(["gestao", "api", "assets", "_build", "static"]);
+
 export function PaginasManager() {
   const [items, setItems] = useState<SitePagina[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,6 +103,9 @@ export function PaginasManager() {
     if (!form.titulo.trim()) return toast.error("Informe um título para a página.");
     const slug = (form.slug.trim() || slugify(form.titulo)).trim();
     if (!slug) return toast.error("Slug inválido.");
+    if (RESERVED_SLUGS.has(slug)) {
+      return toast.error("Esse endereço é reservado, escolha outro.");
+    }
     setSaving(true);
     const payload = {
       slug,
