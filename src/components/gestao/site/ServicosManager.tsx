@@ -21,7 +21,7 @@ import { toast } from "sonner";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
 import { fetchServicos, invalidateCmsCache, type SiteServico } from "@/lib/cms";
 import { LinkField } from "./LinkField";
-import { ICONES_SUGERIDOS } from "@/lib/site-templates";
+import { IconPicker } from "./IconPicker";
 
 type FormState = {
   id?: string;
@@ -256,21 +256,7 @@ export function ServicosManager() {
               </div>
               <div className="space-y-1">
                 <Label className="text-xs">Ícone (usado quando não há imagem)</Label>
-                <Select value={form.icone} onValueChange={(v) => setForm({ ...form, icone: v })}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {ICONES_SUGERIDOS.map((i) => {
-                      const I = getLucide(i);
-                      return (
-                        <SelectItem key={i} value={i}>
-                          <span className="inline-flex items-center gap-2">
-                            <I className="h-3.5 w-3.5" /> {i}
-                          </span>
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <IconPicker value={form.icone} onChange={(v) => setForm({ ...form, icone: v })} />
               </div>
             </div>
             <div className="space-y-2">
