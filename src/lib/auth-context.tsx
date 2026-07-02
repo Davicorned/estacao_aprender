@@ -45,11 +45,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }, 0);
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      void checkRole(data.session?.user?.id).finally(() => setLoading(false));
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+        setUser(data.session?.user ?? null);
+        return checkRole(data.session?.user?.id);
+      })
+      .catch(() => {
+        // Falha de rede/timeout — não trava a tela em "Carregando…".
+      })
+      .finally(() => setLoading(false));
 
     return () => sub.subscription.unsubscribe();
   }, []);
