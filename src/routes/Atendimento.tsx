@@ -7,6 +7,7 @@ import { CTABanner } from "@/components/site/CTABanner";
 import { Modalities } from "@/components/site/sections/atendimento/Modalities";
 import { ProcessSteps } from "@/components/site/sections/atendimento/ProcessSteps";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
+import { PageJsonLd } from "@/components/site/PageJsonLd";
 import {
   fetchPaginaBySlug,
   fetchPublicPageData,
@@ -59,6 +60,15 @@ function AtendimentoPage() {
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
       <Header />
       <main>
+        <PageJsonLd
+          pageTitle="Atendimento"
+          pagePath="/Atendimento"
+          brand="Estação Aprender"
+          secoes={secoes}
+          team={team}
+          testimonials={testimonials}
+          servicos={servicos}
+        />
         <PageBanner
           eyebrow={pagina?.banner_eyebrow ?? FALLBACK.eyebrow}
           title={pagina?.banner_titulo ?? FALLBACK.title}
