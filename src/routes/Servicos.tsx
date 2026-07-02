@@ -7,6 +7,7 @@ import { PageBanner } from "@/components/site/PageBanner";
 import { ServicesAccordion } from "@/components/site/sections/servicos/ServicesAccordion";
 import { FadeUp } from "@/components/site/FadeUp";
 import { DynamicSections } from "@/components/site/sections/dynamic/DynamicSections";
+import { PageJsonLd } from "@/components/site/PageJsonLd";
 import {
   fetchPaginaBySlug,
   fetchPublicPageData,
@@ -60,6 +61,15 @@ function ServicosPage() {
     <div className="min-h-screen bg-white font-sans text-gray-900 antialiased">
       <Header />
       <main>
+        <PageJsonLd
+          pageTitle="Serviços"
+          pagePath="/Servicos"
+          brand="Estação Aprender"
+          secoes={secoes}
+          team={team}
+          testimonials={testimonials}
+          servicos={servicos}
+        />
         <PageBanner
           eyebrow={pagina?.banner_eyebrow ?? FALLBACK.eyebrow}
           title={pagina?.banner_titulo ?? FALLBACK.title}
