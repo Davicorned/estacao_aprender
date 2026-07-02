@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as GestaoRouteImport } from './routes/gestao'
 import { Route as ServicosRouteImport } from './routes/Servicos'
@@ -42,6 +43,11 @@ import { Route as GestaoSiteLayoutHeroRouteImport } from './routes/gestao.site.l
 import { Route as GestaoSiteLayoutHeaderRouteImport } from './routes/gestao.site.layout.header'
 import { Route as ApiPublicFileProxySplatRouteImport } from './routes/api/public/file-proxy.$'
 
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
   id: '/robots.txt',
   path: '/robots.txt',
@@ -212,6 +218,7 @@ export interface FileRoutesByFullPath {
   '/Servicos': typeof ServicosRoute
   '/gestao': typeof GestaoRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -245,6 +252,7 @@ export interface FileRoutesByTo {
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
   '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/Servicos': typeof ServicosRoute
   '/gestao': typeof GestaoRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
+  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/Servicos'
     | '/gestao'
     | '/robots.txt'
+    | '/sitemap.xml'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/QuemSomos'
     | '/Servicos'
     | '/robots.txt'
+    | '/sitemap.xml'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -379,6 +390,7 @@ export interface FileRouteTypes {
     | '/Servicos'
     | '/gestao'
     | '/robots.txt'
+    | '/sitemap.xml'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -414,11 +426,19 @@ export interface RootRouteChildren {
   ServicosRoute: typeof ServicosRoute
   GestaoRoute: typeof GestaoRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
+  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ApiPublicFileProxySplatRoute: typeof ApiPublicFileProxySplatRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/robots.txt': {
       id: '/robots.txt'
       path: '/robots.txt'
@@ -729,6 +749,7 @@ const rootRouteChildren: RootRouteChildren = {
   ServicosRoute: ServicosRoute,
   GestaoRoute: GestaoRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
+  SitemapDotxmlRoute: SitemapDotxmlRoute,
   ApiPublicFileProxySplatRoute: ApiPublicFileProxySplatRoute,
 }
 export const routeTree = rootRouteImport
