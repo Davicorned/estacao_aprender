@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/configuracoes";
 import { registrarEvento } from "@/lib/historico";
 import { calcularValorMensal, type Contrato } from "@/lib/contratos";
+import { hojeLocal } from "@/lib/datas";
 
 export type LancamentoStatus = "pendente" | "pago" | "atrasado" | "cancelado";
 export type LancamentoTipo = "receita" | "despesa";
@@ -57,7 +58,7 @@ export const FORMA_LABEL: Record<FormaPagamento, string> = {
 /** Calcula o status efetivo considerando atrasados dinamicamente. */
 export function statusEfetivo(l: Pick<Lancamento, "status" | "data_vencimento">): LancamentoStatus {
   if (l.status === "pendente") {
-    const hoje = new Date().toISOString().slice(0, 10);
+    const hoje = hojeLocal();
     if (l.data_vencimento < hoje) return "atrasado";
   }
   return l.status;
@@ -98,7 +99,7 @@ export async function listLancamentos(params: {
   }
   if (params.status && params.status !== "todos") {
     if (params.status === "atrasado") {
-      const hoje = new Date().toISOString().slice(0, 10);
+      const hoje = hojeLocal();
       q = q.eq("status", "pendente").lt("data_vencimento", hoje);
     } else {
       q = q.eq("status", params.status);
@@ -345,7 +346,7 @@ export type ResumoMes = {
 
 export async function resumoMes(mes: string, pacienteId?: string | null): Promise<ResumoMes> {
   const { start, end } = mesRange(mes);
-  const hoje = new Date().toISOString().slice(0, 10);
+  const hoje = hojeLocal();
 
   const baseL = () => {
     let q = supabase.from("lancamentos_financeiros").select("valor_centavos").eq("tipo", "receita");
