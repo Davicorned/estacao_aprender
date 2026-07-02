@@ -7,7 +7,7 @@ export function Testimonials({ initial }: { initial?: Testimonial[] } = {}) {
   const [items, setItems] = useState<Testimonial[]>(initial ?? []);
 
   useEffect(() => {
-    if (initial) { setItems(initial); return; }
+    if (initial && initial.length > 0) { setItems(initial); return; }
     void fetchTestimonials().then(setItems);
   }, [initial]);
 

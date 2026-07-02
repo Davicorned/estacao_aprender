@@ -575,6 +575,8 @@ export async function fetchPaginaBySlug(slug: string): Promise<SitePagina | null
 
 /**
  * SSR helper: fetches sections + shared collections in parallel for a public page.
+ * Uses direct REST fetches instead of supabase-js so public loaders work reliably
+ * in Cloudflare Workers and do not depend on module-level caches/inflight state.
  * Any individual failure resolves to an empty array so the loader never rejects.
  */
 export async function fetchPublicPageData(paginaId?: string | null): Promise<{
@@ -583,14 +585,91 @@ export async function fetchPublicPageData(paginaId?: string | null): Promise<{
   testimonials: Testimonial[];
   servicos: SiteServico[];
 }> {
-  const safe = async <T>(fn: () => Promise<T>, fallback: T): Promise<T> => {
-    try { return (await fn()) ?? fallback; } catch { return fallback; }
+  const viteEnv = import.meta.env as Record<string, string | undefined>;
+  const nodeEnv = typeof process !== "undefined" ? process.env : undefined;
+  const supabaseUrl =
+    viteEnv.VITE_SUPABASE_URL ||
+    nodeEnv?.VITE_SUPABASE_URL ||
+    "https://iscgrqldjytzhhvtgcmy.supabase.co";
+  const supabaseAnonKey =
+    viteEnv.VITE_SUPABASE_ANON_KEY ||
+    nodeEnv?.VITE_SUPABASE_ANON_KEY ||
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImlzY2dycWxkanl0emhodnRnY215Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA3NTI4NTYsImV4cCI6MjA5NjMyODg1Nn0.Gs-zqfjHl1UonVph9II1qbK-eCMki7h0yOoCPLLzEXA";
+
+  const toPublicImageUrl = (path: string | null | undefined): string | null => {
+    if (!path) return null;
+    if (path.startsWith("http://") || path.startsWith("https://")) return path;
+    const safePath = path
+      .split("/")
+      .map((part) => encodeURIComponent(part))
+      .join("/");
+    return `${supabaseUrl}/storage/v1/object/public/${SITE_IMAGES_BUCKET}/${safePath}`;
   };
+
+  const headers = {
+    apikey: supabaseAnonKey,
+    Authorization: `Bearer ${supabaseAnonKey}`,
+  };
+
+  const restUrl = (path: string) => `${supabaseUrl}/rest/v1/${path}`;
+
+  const fetchJson = async <T,>(label: string, path: string, fallback: T): Promise<T> => {
+    try {
+      const response = await fetch(restUrl(path), { headers });
+      if (!response.ok) {
+        const body = await response.text().catch(() => "");
+        throw new Error(`${label} REST ${response.status}: ${body}`);
+      }
+      return (await response.json()) as T;
+    } catch (error) {
+      console.error(`fetchPublicPageData ${label} error`, error);
+      return fallback;
+    }
+  };
+
+  const secoesPath = [
+    "site_secoes?select=*,itens:site_secao_itens(*)&enabled=eq.true",
+    paginaId ? `pagina_id=eq.${encodeURIComponent(paginaId)}` : null,
+    "order=order.asc",
+  ].filter(Boolean).join("&");
+
   const [secoes, team, testimonials, servicos] = await Promise.all([
-    safe<SiteSecao[]>(() => fetchSecoes(false, paginaId ?? undefined), []),
-    safe<TeamMember[]>(() => fetchTeam(), []),
-    safe<Testimonial[]>(() => fetchTestimonials(), []),
-    safe<SiteServico[]>(() => fetchServicos(false), []),
+    fetchJson<any[]>("site_secoes", secoesPath, []),
+    fetchJson<any[]>(
+      "team_members",
+      "team_members?select=id,nome,titulo,foto_url,especialidades,bio,registro,order,enabled&enabled=eq.true&order=order.asc",
+      [],
+    ),
+    fetchJson<any[]>(
+      "testimonials",
+      "testimonials?select=id,nome,texto,fonte,order,enabled&enabled=eq.true&order=order.asc",
+      [],
+    ),
+    fetchJson<any[]>(
+      "site_servicos",
+      "site_servicos?select=id,titulo,descricao,imagem_url,icone,link,order,enabled&enabled=eq.true&order=order.asc",
+      [],
+    ),
   ]);
-  return { secoes, team, testimonials, servicos };
+
+  return {
+    secoes: secoes.map((s: any) => ({
+      ...s,
+      imagem_url: toPublicImageUrl(s.imagem_url),
+      dados: s.dados ?? {},
+      itens: ((s.itens ?? []) as SiteSecaoItem[])
+        .slice()
+        .sort((a, b) => a.order - b.order),
+    })) as SiteSecao[],
+    team: team.map((m: any) => ({
+      ...m,
+      foto_url: toPublicImageUrl(m.foto_url),
+      especialidades: m.especialidades ?? [],
+    })) as TeamMember[],
+    testimonials: testimonials as Testimonial[],
+    servicos: servicos.map((s: any) => ({
+      ...s,
+      imagem_url: toPublicImageUrl(s.imagem_url),
+    })) as SiteServico[],
+  };
 }

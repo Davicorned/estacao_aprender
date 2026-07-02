@@ -30,12 +30,12 @@ export function DynamicSections({
   testimonials,
   servicos,
 }: Props = {}) {
-  const hasSSR = secoesProp !== undefined;
+  const hasSSR = Array.isArray(secoesProp) && secoesProp.length > 0;
   const [secoes, setSecoes] = useState<SiteSecao[]>(secoesProp ?? []);
 
   useEffect(() => {
     if (hasSSR) {
-      setSecoes(secoesProp ?? []);
+      setSecoes(secoesProp);
       return;
     }
     let cancelled = false;
