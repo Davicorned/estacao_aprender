@@ -1102,7 +1102,10 @@ export function SecoesManager({
                   }}
                   key={`${form.tipo}-${form.imagem_url ?? "x"}-${previewDevice}`}
                 >
-                  <DynamicSection secao={previewSecao} />
+                  <DynamicSection
+                    secao={previewSecao}
+                    testimonials={form.tipo === "depoimentos" ? PREVIEW_TESTIMONIALS : undefined}
+                  />
                 </div>
               </div>
               <p className="text-[11px] text-muted-foreground">
