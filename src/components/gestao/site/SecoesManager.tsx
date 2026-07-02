@@ -589,8 +589,6 @@ export function SecoesManager({
     editTo?: string;
   }[] = [
     { key: "hero", label: "Banner principal", fixed: true, editTo: "/gestao/site/layout/hero" },
-    { key: "when", label: "Quando procurar ajuda", fixed: true },
-    { key: "approach", label: "Nossa abordagem", fixed: true },
     ...items.map((s) => ({
       key: s.id,
       label: s.titulo || s.eyebrow || "(sem título)",
@@ -603,7 +601,6 @@ export function SecoesManager({
       : []),
     { key: "team", label: "Nossa equipe", fixed: true, editTo: "/gestao/site/equipe" },
     { key: "testimonials", label: "Depoimentos", fixed: true, editTo: "/gestao/site/depoimentos" },
-    { key: "contact", label: "Contato", fixed: true },
     { key: "footer", label: "Rodapé", fixed: true, editTo: "/gestao/site/layout/rodape" },
   ];
 
