@@ -2,6 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { formatBRL } from "@/lib/configuracoes";
 import { registrarEvento } from "@/lib/historico";
 import { gerarMensalidadeContrato } from "@/lib/financeiro";
+import { hojeLocal } from "@/lib/datas";
 
 export type ContratoStatus = "rascunho" | "ativo" | "encerrado" | "cancelado";
 export type Frequencia = "semanal" | "quinzenal" | "mensal" | "livre";
@@ -192,13 +193,13 @@ function maskCheckbox(checked: boolean): string {
 }
 
 function hoje(): string {
-  const d = new Date();
-  const dia = String(d.getDate()).padStart(2, "0");
+  const iso = hojeLocal(); // YYYY-MM-DD em America/Sao_Paulo
+  const [ano, mes, dia] = iso.split("-");
   const meses = [
     "janeiro", "fevereiro", "março", "abril", "maio", "junho",
     "julho", "agosto", "setembro", "outubro", "novembro", "dezembro",
   ];
-  return `${dia} de ${meses[d.getMonth()]} de ${d.getFullYear()}`;
+  return `${dia} de ${meses[Number(mes) - 1]} de ${ano}`;
 }
 
 export type MontarVarsInput = {
