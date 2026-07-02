@@ -952,6 +952,12 @@ export function SecoesManager({
                     onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
                   />
                 )}
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "depoimentos" && (
+                  <DadosDepoimentosEditor
+                    value={(form.dados as Partial<DadosDepoimentos>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
+                )}
               </TabsContent>
 
               {/* --- APARÊNCIA --- */}
