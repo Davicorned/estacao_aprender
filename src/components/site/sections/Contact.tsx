@@ -136,10 +136,10 @@ export function Contact({
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {Header}
           <FadeUp>
-            <div className="relative h-[560px] overflow-hidden rounded-3xl shadow-lg">
+            <div className="relative h-[560px] overflow-hidden rounded-3xl shadow-lg sm:h-[560px]">
               <div className="absolute inset-0">{mapEl}</div>
-              <div className="absolute inset-y-0 left-0 flex w-full max-w-md items-center p-4 sm:p-8">
-                <div className="w-full space-y-3 rounded-2xl bg-white/95 p-5 shadow-xl backdrop-blur">
+              <div className="absolute inset-x-0 bottom-0 flex items-end justify-start p-3 sm:inset-y-0 sm:bottom-auto sm:left-0 sm:right-auto sm:w-full sm:max-w-md sm:items-center sm:p-8">
+                <div className="w-full space-y-2 rounded-2xl bg-white/95 p-4 shadow-xl backdrop-blur sm:space-y-3 sm:p-5">
                   {cards}
                 </div>
               </div>
