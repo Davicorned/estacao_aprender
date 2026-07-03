@@ -26,7 +26,7 @@ export type SectionTemplate = {
   campos: TemplateCampo[];
   item?: TemplateItemConfig;
   /** Forma do objeto `dados` quando o template usa payload estruturado. */
-  dadosSchema?: "modalidades" | "contato-mapa" | "equipe" | "depoimentos";
+  dadosSchema?: "modalidades" | "contato-mapa" | "equipe" | "depoimentos" | "cta-banner";
 };
 
 export const SECTION_TEMPLATES: SectionTemplate[] = [
@@ -88,7 +88,8 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     descricao: "Faixa larga com título, descrição e botão sobre fundo da marca.",
     icon: "Megaphone",
     grupo: "chamada-contato",
-    campos: ["titulo", "descricao", "cta"],
+    campos: ["titulo", "descricao", "cta", "imagem_url"],
+    dadosSchema: "cta-banner",
   },
   {
     tipo: "destaque-pessoa",
@@ -305,4 +306,19 @@ export const DEFAULT_DEPOIMENTOS: DadosDepoimentos = {
   colunas: 3,
   mostrar_estrelas: true,
   mostrar_fonte: true,
+};
+
+/** CTA banner (faixa de chamada) */
+export type CtaBannerLayout =
+  | "centralizado"
+  | "dividido"
+  | "com-imagem"
+  | "minimalista";
+
+export type DadosCtaBanner = {
+  layout: CtaBannerLayout;
+};
+
+export const DEFAULT_CTA_BANNER: DadosCtaBanner = {
+  layout: "centralizado",
 };

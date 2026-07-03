@@ -18,10 +18,12 @@ import {
   DEFAULT_MODALIDADES,
   DEFAULT_EQUIPE,
   DEFAULT_DEPOIMENTOS,
+  DEFAULT_CTA_BANNER,
   type DadosContatoMapa,
   type DadosModalidades,
   type DadosEquipe,
   type DadosDepoimentos,
+  type DadosCtaBanner,
 } from "@/lib/site-templates";
 
 function Eyebrow({ text }: { text?: string | null }) {
@@ -273,15 +275,21 @@ export function DynamicSection({
           }))}
         />
       );
-    case "cta-banner":
+    case "cta-banner": {
+      const d = (secao.dados ?? {}) as Partial<DadosCtaBanner>;
+      const bg = buildBackground(secao.bg_cor, secao.bg_cor_2);
       return (
         <CTABanner
           title={secao.titulo ?? undefined}
           description={secao.descricao ?? undefined}
           buttonLabel={secao.cta_texto ?? undefined}
           href={secao.cta_link ?? undefined}
+          layout={d.layout ?? DEFAULT_CTA_BANNER.layout}
+          imagem_url={secao.imagem_url}
+          bg={bg || null}
         />
       );
+    }
     case "destaque-pessoa":
       return (
         <Founder

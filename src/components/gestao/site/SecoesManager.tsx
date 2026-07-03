@@ -35,11 +35,12 @@ import { IconPicker, getLucideIcon as getLucide } from "./IconPicker";
 import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
-  DEFAULT_EQUIPE, DEFAULT_DEPOIMENTOS,
+  DEFAULT_EQUIPE, DEFAULT_DEPOIMENTOS, DEFAULT_CTA_BANNER,
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
   type DadosEquipe, type EquipeLayout,
   type DadosDepoimentos, type DepoimentosLayout,
   type ContatoMapaLayout,
+  type DadosCtaBanner, type CtaBannerLayout,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -114,6 +115,7 @@ function defaultDadosForTipo(tipo: SecaoTipo): Record<string, any> {
   if (schema === "contato-mapa") return { ...DEFAULT_CONTATO_MAPA };
   if (schema === "equipe") return { ...DEFAULT_EQUIPE };
   if (schema === "depoimentos") return { ...DEFAULT_DEPOIMENTOS };
+  if (schema === "cta-banner") return { ...DEFAULT_CTA_BANNER };
   return {};
 }
 
@@ -1004,6 +1006,12 @@ export function SecoesManager({
                     onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
                   />
                 )}
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "cta-banner" && (
+                  <DadosCtaBannerEditor
+                    value={(form.dados as Partial<DadosCtaBanner>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
+                )}
               </TabsContent>
 
               {/* --- APARÊNCIA --- */}
@@ -1392,6 +1400,111 @@ function ContatoLayoutThumb({ layout }: { layout: ContatoMapaLayout }) {
         <div className={`h-1 w-full ${box}`} />
         <div className={`h-1 w-3/4 ${box}`} />
       </div>
+    </div>
+  );
+}
+
+const CTA_BANNER_LAYOUT_OPTIONS: { key: CtaBannerLayout; label: string; hint: string }[] = [
+  { key: "centralizado", label: "Centralizado", hint: "Título, descrição e botão no centro" },
+  { key: "dividido", label: "Dividido", hint: "Texto à esquerda, botão à direita" },
+  { key: "com-imagem", label: "Com imagem", hint: "Imagem de fundo com overlay" },
+  { key: "minimalista", label: "Minimalista", hint: "Faixa clara, compacta e discreta" },
+];
+
+function CtaBannerLayoutThumb({ layout }: { layout: CtaBannerLayout }) {
+  const box = "rounded-sm bg-white/80";
+  const btn = "rounded-full bg-white";
+  const brand = "bg-[#D67F43]";
+  if (layout === "centralizado") {
+    return (
+      <div className={`flex h-full w-full flex-col items-center justify-center gap-1 ${brand} p-2`}>
+        <div className={`h-1.5 w-16 ${box}`} />
+        <div className={`h-1 w-20 ${box}`} />
+        <div className={`mt-0.5 h-2 w-10 ${btn}`} />
+      </div>
+    );
+  }
+  if (layout === "dividido") {
+    return (
+      <div className={`flex h-full w-full items-center justify-between gap-2 ${brand} px-2`}>
+        <div className="flex flex-col gap-0.5">
+          <div className={`h-1.5 w-14 ${box}`} />
+          <div className={`h-1 w-16 ${box}`} />
+        </div>
+        <div className={`h-2 w-10 ${btn}`} />
+      </div>
+    );
+  }
+  if (layout === "com-imagem") {
+    return (
+      <div className="relative flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-500 to-slate-800 p-2">
+        <div className="absolute inset-0 bg-black/40" />
+        <div className="relative flex flex-col items-center gap-1">
+          <div className={`h-1.5 w-16 ${box}`} />
+          <div className={`h-1 w-20 ${box}`} />
+          <div className={`mt-0.5 h-2 w-10 ${btn}`} />
+        </div>
+      </div>
+    );
+  }
+  // minimalista
+  return (
+    <div className="flex h-full w-full items-center justify-between gap-2 bg-[#FEF3E8] px-2">
+      <div className="flex flex-col gap-0.5">
+        <div className="h-1.5 w-14 rounded-sm bg-[#D67F43]/70" />
+        <div className="h-1 w-16 rounded-sm bg-[#D67F43]/40" />
+      </div>
+      <div className="h-2 w-10 rounded-full bg-[#D67F43]" />
+    </div>
+  );
+}
+
+function DadosCtaBannerEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosCtaBanner>;
+  onChange: (v: DadosCtaBanner) => void;
+}) {
+  const v: DadosCtaBanner = {
+    layout: (value.layout as CtaBannerLayout) ?? DEFAULT_CTA_BANNER.layout,
+  };
+  const patch = (p: Partial<DadosCtaBanner>) => onChange({ ...v, ...p });
+  return (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <Label className="text-xs">Estilo do layout</Label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {CTA_BANNER_LAYOUT_OPTIONS.map((opt) => {
+            const selected = v.layout === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => patch({ layout: opt.key })}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border bg-white">
+                  <CtaBannerLayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {v.layout === "com-imagem" && (
+        <p className="rounded-md border border-dashed border-border bg-muted/30 p-2 text-[11px] text-muted-foreground">
+          Usa a imagem da aba <strong>Mídia</strong> (se vazia, usa a cor da marca).
+        </p>
+      )}
     </div>
   );
 }
