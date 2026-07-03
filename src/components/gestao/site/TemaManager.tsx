@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
+import { Upload } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
 import { invalidateCmsCache, TEMA_DEFAULTS, type SiteTema } from "@/lib/cms";
 import { ColorField } from "./ColorField";
 import { PreviewFrame } from "./PreviewFrame";
@@ -104,6 +105,69 @@ export function TemaManager() {
   const [form, setForm] = useState<Form>(TEMA_DEFAULTS);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [uploadingKey, setUploadingKey] = useState<null | "logo_url" | "logo_escuro_url" | "favicon_url">(null);
+
+  async function uploadTo(field: "logo_url" | "logo_escuro_url" | "favicon_url", file: File) {
+    setUploadingKey(field);
+    const ext = file.name.split(".").pop() ?? "png";
+    const path = `identidade/${field}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const { error } = await supabase.storage
+      .from(SITE_IMAGES_BUCKET)
+      .upload(path, file, { upsert: false, cacheControl: "3600" });
+    setUploadingKey(null);
+    if (error) return toast.error("Falha no upload: " + error.message);
+    setForm((f) => ({ ...f, [field]: path } as Form));
+    toast.success("Enviado — não esqueça de Salvar.");
+  }
+
+  function LogoField({
+    field,
+    label,
+    helper,
+    accept = "image/*",
+  }: { field: "logo_url" | "logo_escuro_url" | "favicon_url"; label: string; helper?: string; accept?: string }) {
+    const rawValue = (form as any)[field] as string | null;
+    const preview = rawValue
+      ? rawValue.startsWith("http") ? rawValue : publicImageUrl(rawValue)
+      : null;
+    return (
+      <div className="space-y-2">
+        <Label>{label}</Label>
+        <div className="flex items-start gap-4">
+          <div className="h-16 w-16 overflow-hidden rounded-lg bg-[#FEF3E8] flex items-center justify-center">
+            {preview ? (
+              <img src={preview} alt="" className="h-full w-full object-contain" />
+            ) : (
+              <span className="text-[10px] text-muted-foreground">vazio</span>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="inline-flex">
+              <input
+                type="file"
+                accept={accept}
+                hidden
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) void uploadTo(field, f);
+                  e.target.value = "";
+                }}
+              />
+              <Button asChild type="button" size="sm" variant="outline" disabled={uploadingKey === field}>
+                <span><Upload className="mr-2 h-4 w-4" />{uploadingKey === field ? "Enviando…" : "Enviar arquivo"}</span>
+              </Button>
+            </label>
+            {rawValue && (
+              <Button size="sm" variant="ghost" onClick={() => setForm((f) => ({ ...f, [field]: null } as Form))}>
+                Remover
+              </Button>
+            )}
+          </div>
+        </div>
+        {helper && <p className="text-[11px] text-muted-foreground">{helper}</p>}
+      </div>
+    );
+  }
 
   useEffect(() => {
     (async () => {
@@ -145,6 +209,16 @@ export function TemaManager() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,520px)_1fr]">
       <div className="space-y-6">
+        <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Logotipo e favicon</h2>
+          <p className="text-xs text-muted-foreground">
+            Fonte única do logo — usado no cabeçalho, rodapé, painel de gestão, tela de login, PDFs e favicon.
+          </p>
+          <LogoField field="logo_url" label="Logo (padrão)" helper="Recomendado: PNG/SVG com fundo transparente." />
+          <LogoField field="logo_escuro_url" label="Logo para fundo escuro (opcional)" helper="Usado quando o fundo for escuro (ex: cabeçalho colorido do PDF)." />
+          <LogoField field="favicon_url" label="Favicon (opcional)" helper="Ideal quadrado, 512×512 PNG. Em branco, usa o logo padrão." accept="image/png,image/x-icon,image/svg+xml,image/jpeg" />
+        </section>
+
         <section className="rounded-xl border border-border bg-card p-5 space-y-4">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Cores da marca</h2>
           <ColorField
