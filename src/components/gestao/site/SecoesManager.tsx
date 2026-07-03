@@ -35,11 +35,12 @@ import { IconPicker, getLucideIcon as getLucide } from "./IconPicker";
 import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
-  DEFAULT_EQUIPE, DEFAULT_DEPOIMENTOS,
+  DEFAULT_EQUIPE, DEFAULT_DEPOIMENTOS, DEFAULT_CTA_BANNER,
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
   type DadosEquipe, type EquipeLayout,
   type DadosDepoimentos, type DepoimentosLayout,
   type ContatoMapaLayout,
+  type DadosCtaBanner, type CtaBannerLayout,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -114,6 +115,7 @@ function defaultDadosForTipo(tipo: SecaoTipo): Record<string, any> {
   if (schema === "contato-mapa") return { ...DEFAULT_CONTATO_MAPA };
   if (schema === "equipe") return { ...DEFAULT_EQUIPE };
   if (schema === "depoimentos") return { ...DEFAULT_DEPOIMENTOS };
+  if (schema === "cta-banner") return { ...DEFAULT_CTA_BANNER };
   return {};
 }
 
