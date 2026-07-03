@@ -88,7 +88,8 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     descricao: "Faixa larga com título, descrição e botão sobre fundo da marca.",
     icon: "Megaphone",
     grupo: "chamada-contato",
-    campos: ["titulo", "descricao", "cta"],
+    campos: ["titulo", "descricao", "cta", "imagem_url"],
+    dadosSchema: "cta-banner",
   },
   {
     tipo: "destaque-pessoa",
