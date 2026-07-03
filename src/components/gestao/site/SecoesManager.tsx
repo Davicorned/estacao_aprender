@@ -1373,13 +1373,6 @@ function DadosContatoMapaEditor({
   );
 }
 
-function DadosEquipeEditor({
-  // -- prev fn --
-  ...args
-}: Parameters<typeof _DadosEquipeEditorImpl>[0]) {
-  return _DadosEquipeEditorImpl(args as never);
-}
-
 const EQUIPE_LAYOUT_OPTIONS: { key: EquipeLayout; label: string; hint: string }[] = [
   { key: "grade", label: "Grade", hint: "Cards em colunas" },
   { key: "carrossel", label: "Carrossel", hint: "Desliza com setas ‹ ›" },
@@ -1465,7 +1458,7 @@ function EquipeLayoutThumb({ layout }: { layout: EquipeLayout }) {
   );
 }
 
-function _DadosEquipeEditorImpl({
+function DadosEquipeEditor({
   value, onChange,
 }: {
   value: Partial<DadosEquipe>;
