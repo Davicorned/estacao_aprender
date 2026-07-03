@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 import { fetchTeam, type TeamMember } from "@/lib/cms";
 import type { EquipeLayout } from "@/lib/site-templates";
