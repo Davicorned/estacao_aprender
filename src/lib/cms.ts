@@ -159,6 +159,9 @@ export type SiteTema = {
   fonte_titulos: string;
   fonte_corpo: string;
   radius_px: number;
+  logo_url: string | null;
+  logo_escuro_url: string | null;
+  favicon_url: string | null;
 };
 
 export type SitePagina = {
@@ -187,6 +190,9 @@ export const TEMA_DEFAULTS: Omit<SiteTema, "id"> = {
   fonte_titulos: "Inter",
   fonte_corpo: "Inter",
   radius_px: 10,
+  logo_url: null,
+  logo_escuro_url: null,
+  favicon_url: null,
 };
 
 // Defaults usados como fallback quando o banco está vazio. Ficam aqui
