@@ -26,7 +26,13 @@ export type SectionTemplate = {
   campos: TemplateCampo[];
   item?: TemplateItemConfig;
   /** Forma do objeto `dados` quando o template usa payload estruturado. */
-  dadosSchema?: "modalidades" | "contato-mapa" | "equipe" | "depoimentos" | "cta-banner";
+  dadosSchema?:
+    | "modalidades"
+    | "contato-mapa"
+    | "equipe"
+    | "depoimentos"
+    | "cta-banner"
+    | "cards-icones";
 };
 
 export const SECTION_TEMPLATES: SectionTemplate[] = [
@@ -63,6 +69,7 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
     grupo: "cards",
     campos: ["eyebrow", "titulo", "itens"],
     item: { icone: true, descricao: true, link: true },
+    dadosSchema: "cards-icones",
   },
   {
     tipo: "passos-processo",
