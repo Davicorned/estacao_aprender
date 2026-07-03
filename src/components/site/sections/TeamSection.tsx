@@ -1,7 +1,15 @@
-import { useEffect, useRef, useState } from "react";
-import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ChevronDown } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 import { fetchTeam, type TeamMember } from "@/lib/cms";
+import type { EquipeLayout } from "@/lib/site-templates";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 type CardProps = {
   nome: string;
@@ -132,6 +140,7 @@ type TeamSectionProps = {
   eyebrow?: string | null;
   titulo?: string | null;
   descricao?: string | null;
+  layout?: EquipeLayout;
   colunas?: 2 | 3 | 4;
   mostrar_especialidades?: boolean;
   mostrar_registro?: boolean;
@@ -145,6 +154,7 @@ export function TeamSection({
   eyebrow = "Nossa equipe",
   titulo = "Profissionais especializados para o seu filho",
   descricao = "Cada profissional com dedicação específica ao desenvolvimento de crianças e adolescentes",
+  layout = "grade",
   colunas = 3,
   mostrar_especialidades = true,
   mostrar_registro = true,
@@ -152,9 +162,6 @@ export function TeamSection({
   textColor = null,
   initial,
 }: TeamSectionProps = {}) {
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-  const [canLeft, setCanLeft] = useState(false);
-  const [canRight, setCanRight] = useState(false);
   const [equipe, setEquipe] = useState<TeamMember[]>(initial ?? []);
 
   useEffect(() => {
@@ -162,45 +169,16 @@ export function TeamSection({
     void fetchTeam().then(setEquipe);
   }, [initial]);
 
-  const updateArrows = () => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    setCanLeft(el.scrollLeft > 4);
-    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 4);
-  };
-
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    updateArrows();
-    el.addEventListener("scroll", updateArrows, { passive: true });
-    window.addEventListener("resize", updateArrows);
-    return () => {
-      el.removeEventListener("scroll", updateArrows);
-      window.removeEventListener("resize", updateArrows);
-    };
-  }, []);
-
-  const scrollByCard = (dir: 1 | -1) => {
-    const el = scrollerRef.current;
-    if (!el) return;
-    const card = el.querySelector<HTMLElement>("[data-team-card]");
-    const step = card ? card.getBoundingClientRect().width + 24 : el.clientWidth * 0.8;
-    el.scrollBy({ left: dir * step, behavior: "smooth" });
-  };
-
-  const single = equipe.length === 1;
-
   if (equipe.length === 0) {
     return null;
   }
 
-  const basisByColunas =
+  const gridColsClass =
     colunas === 2
-      ? "sm:basis-[48%] md:basis-[48%] lg:basis-[48%] xl:basis-[48%]"
+      ? "grid-cols-1 sm:grid-cols-2"
       : colunas === 4
-        ? "sm:basis-[48%] md:basis-[32%] lg:basis-[24%] xl:basis-[24%]"
-        : "sm:basis-[48%] md:basis-[40%] lg:basis-[31%] xl:basis-[24%]";
+        ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+        : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
 
   return (
     <section
@@ -235,64 +213,260 @@ export function TeamSection({
           )}
         </FadeUp>
 
-        {single ? (
-          <div className="mx-auto max-w-sm">
-            <FadeUp>
+        <TeamLayout
+          layout={layout}
+          equipe={equipe}
+          colunas={colunas}
+          gridColsClass={gridColsClass}
+          mostrar_especialidades={mostrar_especialidades}
+          mostrar_registro={mostrar_registro}
+        />
+      </div>
+    </section>
+  );
+}
+
+function TeamLayout({
+  layout,
+  equipe,
+  colunas,
+  gridColsClass,
+  mostrar_especialidades,
+  mostrar_registro,
+}: {
+  layout: EquipeLayout;
+  equipe: TeamMember[];
+  colunas: 2 | 3 | 4;
+  gridColsClass: string;
+  mostrar_especialidades: boolean;
+  mostrar_registro: boolean;
+}) {
+  if (layout === "carrossel") {
+    return <TeamCarousel equipe={equipe} mostrar_especialidades={mostrar_especialidades} mostrar_registro={mostrar_registro} />;
+  }
+  if (layout === "circulos") {
+    return <TeamCirculos equipe={equipe} gridColsClass={gridColsClass} />;
+  }
+  if (layout === "lista-perfil") {
+    return <TeamListaPerfil equipe={equipe} mostrar_especialidades={mostrar_especialidades} mostrar_registro={mostrar_registro} />;
+  }
+  if (layout === "destaque-grade") {
+    return <TeamDestaqueGrade equipe={equipe} gridColsClass={gridColsClass} mostrar_especialidades={mostrar_especialidades} mostrar_registro={mostrar_registro} />;
+  }
+  if (layout === "mosaico") {
+    return <TeamMosaico equipe={equipe} gridColsClass={gridColsClass} />;
+  }
+  // grade (default)
+  return (
+    <div className={`grid gap-6 ${gridColsClass}`}>
+      {equipe.map((p, idx) => (
+        <FadeUp key={p.id} delay={idx * 0.05}>
+          <TeamCard
+            {...p}
+            foto={p.foto_url}
+            mostrar_especialidades={mostrar_especialidades}
+            mostrar_registro={mostrar_registro}
+          />
+        </FadeUp>
+      ))}
+    </div>
+  );
+}
+
+function TeamCarousel({
+  equipe,
+  mostrar_especialidades,
+  mostrar_registro,
+}: {
+  equipe: TeamMember[];
+  mostrar_especialidades: boolean;
+  mostrar_registro: boolean;
+}) {
+  return (
+    <div className="relative px-2 sm:px-12">
+      <Carousel opts={{ align: "start", loop: false }}>
+        <CarouselContent>
+          {equipe.map((p) => (
+            <CarouselItem key={p.id} className="basis-[85%] sm:basis-1/2 lg:basis-1/3">
               <TeamCard
-                {...equipe[0]}
-                foto={equipe[0].foto_url}
+                {...p}
+                foto={p.foto_url}
+                mostrar_especialidades={mostrar_especialidades}
+                mostrar_registro={mostrar_registro}
+              />
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        <CarouselPrevious className="hidden sm:flex" />
+        <CarouselNext className="hidden sm:flex" />
+      </Carousel>
+    </div>
+  );
+}
+
+function TeamCirculos({ equipe, gridColsClass }: { equipe: TeamMember[]; gridColsClass: string }) {
+  return (
+    <div className={`grid gap-8 ${gridColsClass}`}>
+      {equipe.map((p, idx) => {
+        const iniciais = p.nome.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+        return (
+          <FadeUp key={p.id} delay={idx * 0.05} className="flex flex-col items-center text-center">
+            <div className="h-40 w-40 overflow-hidden rounded-full bg-[var(--site-soft)] shadow-md">
+              {p.foto_url ? (
+                <img src={p.foto_url} alt={p.nome} className="h-full w-full object-cover object-top" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--site-primary)] to-[var(--site-primary-hover)] text-3xl font-bold text-white">
+                  {iniciais}
+                </div>
+              )}
+            </div>
+            <h3 className="mt-4 text-base font-semibold">{p.nome}</h3>
+            <p className="text-sm text-[var(--site-primary)]">{p.titulo}</p>
+          </FadeUp>
+        );
+      })}
+    </div>
+  );
+}
+
+function TeamListaPerfil({
+  equipe,
+  mostrar_especialidades,
+  mostrar_registro,
+}: {
+  equipe: TeamMember[];
+  mostrar_especialidades: boolean;
+  mostrar_registro: boolean;
+}) {
+  return (
+    <div className="space-y-12">
+      {equipe.map((p, idx) => {
+        const reverse = idx % 2 === 1;
+        const iniciais = p.nome.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+        return (
+          <FadeUp key={p.id} delay={idx * 0.05}>
+            <div className={`grid items-center gap-8 md:grid-cols-2 ${reverse ? "md:[&>*:first-child]:order-2" : ""}`}>
+              <div className="aspect-[4/3] overflow-hidden rounded-2xl bg-[var(--site-soft)] shadow-lg">
+                {p.foto_url ? (
+                  <img src={p.foto_url} alt={p.nome} className="h-full w-full object-cover object-top" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--site-primary)] to-[var(--site-primary-hover)] text-6xl font-bold text-white">
+                    {iniciais}
+                  </div>
+                )}
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold">{p.nome}</h3>
+                <p className="mt-1 text-sm font-medium text-[var(--site-primary)]">{p.titulo}</p>
+                {mostrar_registro && p.registro && (
+                  <p className="mt-1 text-xs uppercase tracking-wider opacity-70">{p.registro}</p>
+                )}
+                {p.bio && <p className="mt-4 text-sm leading-relaxed opacity-90">{p.bio}</p>}
+                {mostrar_especialidades && p.especialidades.length > 0 && (
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {p.especialidades.map((tag) => (
+                      <span key={tag} className="rounded-full bg-[var(--site-soft)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </FadeUp>
+        );
+      })}
+    </div>
+  );
+}
+
+function TeamDestaqueGrade({
+  equipe,
+  gridColsClass,
+  mostrar_especialidades,
+  mostrar_registro,
+}: {
+  equipe: TeamMember[];
+  gridColsClass: string;
+  mostrar_especialidades: boolean;
+  mostrar_registro: boolean;
+}) {
+  const [featured, ...rest] = equipe;
+  const iniciais = featured.nome.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+  return (
+    <div className="space-y-12">
+      <FadeUp>
+        <div className="grid items-center gap-8 rounded-3xl border border-gray-100 bg-white p-6 shadow-lg md:grid-cols-2 md:p-10">
+          <div className="aspect-square overflow-hidden rounded-2xl bg-[var(--site-soft)]">
+            {featured.foto_url ? (
+              <img src={featured.foto_url} alt={featured.nome} className="h-full w-full object-cover object-top" />
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--site-primary)] to-[var(--site-primary-hover)] text-6xl font-bold text-white">
+                {iniciais}
+              </div>
+            )}
+          </div>
+          <div className="text-gray-900">
+            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--site-primary)]">Em destaque</span>
+            <h3 className="mt-2 text-2xl font-bold md:text-3xl">{featured.nome}</h3>
+            <p className="mt-1 text-base font-medium text-[var(--site-primary)]">{featured.titulo}</p>
+            {mostrar_registro && featured.registro && (
+              <p className="mt-1 text-xs uppercase tracking-wider text-gray-500">{featured.registro}</p>
+            )}
+            {featured.bio && <p className="mt-4 leading-relaxed text-gray-600">{featured.bio}</p>}
+            {mostrar_especialidades && featured.especialidades.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-1.5">
+                {featured.especialidades.map((tag) => (
+                  <span key={tag} className="rounded-full bg-[var(--site-soft)] px-2.5 py-1 text-xs font-medium text-[var(--site-primary-hover)]">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </FadeUp>
+      {rest.length > 0 && (
+        <div className={`grid gap-6 ${gridColsClass}`}>
+          {rest.map((p, idx) => (
+            <FadeUp key={p.id} delay={idx * 0.05}>
+              <TeamCard
+                {...p}
+                foto={p.foto_url}
                 mostrar_especialidades={mostrar_especialidades}
                 mostrar_registro={mostrar_registro}
               />
             </FadeUp>
-          </div>
-        ) : (
-          <div className="relative">
-            <div
-              ref={scrollerRef}
-              className="flex snap-x snap-mandatory gap-4 sm:gap-6 overflow-x-auto scroll-smooth px-1 pb-4 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {equipe.map((profissional, idx) => (
-                <div
-                  key={profissional.id}
-                  data-team-card
-                  className={`snap-start shrink-0 basis-[85%] ${basisByColunas}`}
-                >
-                  <FadeUp delay={idx * 0.05}>
-                    <TeamCard
-                      {...profissional}
-                      foto={profissional.foto_url}
-                      mostrar_especialidades={mostrar_especialidades}
-                      mostrar_registro={mostrar_registro}
-                    />
-                  </FadeUp>
-                </div>
-              ))}
-            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
-            <button
-              type="button"
-              onClick={() => scrollByCard(-1)}
-              aria-label="Anterior"
-              className={`absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-[var(--site-primary)] shadow-lg backdrop-blur transition-all hover:bg-white sm:flex ${
-                canLeft ? "opacity-100" : "pointer-events-none opacity-0"
-              }`}
-            >
-              <ChevronLeft className="h-5 w-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollByCard(1)}
-              aria-label="Próximo"
-              className={`absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 z-10 hidden h-11 w-11 items-center justify-center rounded-full border border-gray-200 bg-white/80 text-[var(--site-primary)] shadow-lg backdrop-blur transition-all hover:bg-white sm:flex ${
-                canRight ? "opacity-100" : "pointer-events-none opacity-0"
-              }`}
-            >
-              <ChevronRight className="h-5 w-5" />
-            </button>
-          </div>
-        )}
-      </div>
-    </section>
+function TeamMosaico({ equipe, gridColsClass }: { equipe: TeamMember[]; gridColsClass: string }) {
+  return (
+    <div className={`grid gap-3 ${gridColsClass}`}>
+      {equipe.map((p, idx) => {
+        const iniciais = p.nome.split(" ").map((n) => n[0]).slice(0, 2).join("").toUpperCase();
+        return (
+          <FadeUp key={p.id} delay={idx * 0.04}>
+            <div className="group relative aspect-square overflow-hidden rounded-xl bg-[var(--site-soft)] shadow-md">
+              {p.foto_url ? (
+                <img src={p.foto_url} alt={p.nome} className="h-full w-full object-cover object-top transition-transform duration-500 group-hover:scale-105" />
+              ) : (
+                <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-[var(--site-primary)] to-[var(--site-primary-hover)] text-4xl font-bold text-white">
+                  {iniciais}
+                </div>
+              )}
+              <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <h3 className="text-base font-semibold text-white">{p.nome}</h3>
+                <p className="text-xs text-white/90">{p.titulo}</p>
+              </div>
+            </div>
+          </FadeUp>
+        );
+      })}
+    </div>
   );
 }

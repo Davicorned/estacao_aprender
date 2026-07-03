@@ -37,7 +37,8 @@ import {
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
   DEFAULT_EQUIPE, DEFAULT_DEPOIMENTOS,
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
-  type DadosEquipe, type DadosDepoimentos, type DepoimentosLayout,
+  type DadosEquipe, type EquipeLayout,
+  type DadosDepoimentos, type DepoimentosLayout,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -1372,6 +1373,91 @@ function DadosContatoMapaEditor({
   );
 }
 
+const EQUIPE_LAYOUT_OPTIONS: { key: EquipeLayout; label: string; hint: string }[] = [
+  { key: "grade", label: "Grade", hint: "Cards em colunas" },
+  { key: "carrossel", label: "Carrossel", hint: "Desliza com setas ‹ ›" },
+  { key: "circulos", label: "Círculos", hint: "Fotos redondas, minimalista" },
+  { key: "lista-perfil", label: "Lista perfil", hint: "Linhas alternando lados" },
+  { key: "destaque-grade", label: "Destaque + grade", hint: "1 grande no topo" },
+  { key: "mosaico", label: "Mosaico", hint: "Fotos com nome no hover" },
+];
+
+function EquipeLayoutThumb({ layout }: { layout: EquipeLayout }) {
+  const box = "rounded-sm bg-[#D67F43]/60";
+  if (layout === "grade") {
+    return (
+      <div className="flex h-full w-full items-center justify-center gap-1 p-2">
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+      </div>
+    );
+  }
+  if (layout === "carrossel") {
+    return (
+      <div className="flex h-full w-full items-center justify-between gap-1 px-1">
+        <span className="text-[10px] leading-none text-[#D67F43]">‹</span>
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <span className="text-[10px] leading-none text-[#D67F43]">›</span>
+      </div>
+    );
+  }
+  if (layout === "circulos") {
+    return (
+      <div className="flex h-full w-full items-center justify-center gap-2 p-2">
+        <span className="h-6 w-6 rounded-full bg-[#D67F43]/60" />
+        <span className="h-6 w-6 rounded-full bg-[#D67F43]/60" />
+        <span className="h-6 w-6 rounded-full bg-[#D67F43]/60" />
+      </div>
+    );
+  }
+  if (layout === "lista-perfil") {
+    return (
+      <div className="flex h-full w-full flex-col justify-center gap-1 px-2">
+        <div className="flex items-center gap-1">
+          <div className={`h-4 w-5 ${box}`} />
+          <div className="flex-1 space-y-0.5">
+            <div className={`h-1 w-full ${box}`} />
+            <div className={`h-1 w-2/3 ${box}`} />
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="flex-1 space-y-0.5">
+            <div className={`h-1 w-full ${box}`} />
+            <div className={`h-1 w-2/3 ${box}`} />
+          </div>
+          <div className={`h-4 w-5 ${box}`} />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "destaque-grade") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 p-2">
+        <div className={`h-5 w-12 ${box}`} />
+        <div className="flex gap-1">
+          <div className={`h-3 w-3 ${box}`} />
+          <div className={`h-3 w-3 ${box}`} />
+          <div className={`h-3 w-3 ${box}`} />
+        </div>
+      </div>
+    );
+  }
+  // mosaico
+  return (
+    <div className="grid h-full w-full grid-cols-3 gap-0.5 p-2">
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+    </div>
+  );
+}
+
 function DadosEquipeEditor({
   value, onChange,
 }: {
@@ -1379,11 +1465,14 @@ function DadosEquipeEditor({
   onChange: (v: DadosEquipe) => void;
 }) {
   const v: DadosEquipe = {
+    layout: (value.layout as EquipeLayout) ?? DEFAULT_EQUIPE.layout,
     colunas: (value.colunas as 2 | 3 | 4) ?? DEFAULT_EQUIPE.colunas,
     mostrar_especialidades: value.mostrar_especialidades ?? DEFAULT_EQUIPE.mostrar_especialidades,
     mostrar_registro: value.mostrar_registro ?? DEFAULT_EQUIPE.mostrar_registro,
   };
   const patch = (p: Partial<DadosEquipe>) => onChange({ ...v, ...p });
+  const supportsColunas =
+    v.layout === "grade" || v.layout === "circulos" || v.layout === "mosaico" || v.layout === "destaque-grade";
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-[#D67F43]/40 bg-[#FEF3E8] p-3 text-xs text-[#7a3f18] dark:bg-amber-950/30 dark:text-amber-200">
@@ -1393,6 +1482,37 @@ function DadosEquipeEditor({
         </Link>
         . Aqui você edita só o cabeçalho e as opções de exibição abaixo.
       </div>
+      <div className="space-y-2">
+        <Label className="text-xs">Estilo do layout</Label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {EQUIPE_LAYOUT_OPTIONS.map((opt) => {
+            const selected = v.layout === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => patch({ layout: opt.key })}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border bg-white">
+                  <EquipeLayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {supportsColunas && (
       <div className="space-y-2">
         <Label className="text-xs">Colunas</Label>
         <Select
@@ -1407,6 +1527,7 @@ function DadosEquipeEditor({
           </SelectContent>
         </Select>
       </div>
+      )}
       <div className="flex items-center justify-between rounded-lg border border-border p-3">
         <div>
           <p className="text-sm font-medium">Mostrar especialidades</p>
