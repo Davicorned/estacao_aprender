@@ -24,6 +24,7 @@ export function PreviewFrame({
   const [device, setDevice] = useState<Device>("desktop");
   const [scale, setScale] = useState(0.45);
   const [mountNode, setMountNode] = useState<HTMLElement | null>(null);
+  const [ready, setReady] = useState(false);
 
   const targetW = device === "desktop" ? 1280 : 390;
   const targetH = device === "mobile" ? mobileHeight : height;
@@ -39,38 +40,74 @@ export function PreviewFrame({
   }, [targetW]);
 
   // Inicializa o iframe: copia estilos da página pai e marca onde montar
-  // a árvore React via portal.
+  // a árvore React via portal — só depois que os stylesheets clonados
+  // terminarem de carregar (evita FOUC / conteúdo sem CSS por alguns ms).
   const handleIframeLoad = () => {
     const iframe = iframeRef.current;
     if (!iframe) return;
     const doc = iframe.contentDocument;
     if (!doc) return;
 
-    // Limpa head e copia tags de estilo do documento pai (Tailwind + fontes).
     doc.head.innerHTML = "";
-    const styleNodes = document.head.querySelectorAll(
-      'style, link[rel="stylesheet"], link[rel="preload"][as="style"]'
-    );
-    styleNodes.forEach((node) => {
-      doc.head.appendChild(node.cloneNode(true));
-    });
 
-    // Garante meta viewport para que media queries usem a largura do iframe.
+    // Meta viewport primeiro para media queries usarem a largura do iframe.
     const meta = doc.createElement("meta");
     meta.setAttribute("name", "viewport");
     meta.setAttribute("content", `width=${targetW}`);
     doc.head.appendChild(meta);
 
-    // Reset básico do body.
-    doc.body.style.margin = "0";
-    doc.body.style.background = "#ffffff";
+    // Clona estilos do pai; para cada <link> aguarda seu load.
+    const styleNodes = document.head.querySelectorAll(
+      'style, link[rel="stylesheet"], link[rel="preload"][as="style"]'
+    );
+    const linkPromises: Promise<void>[] = [];
+    styleNodes.forEach((node) => {
+      const clone = node.cloneNode(true) as HTMLElement;
+      if (clone.tagName === "LINK") {
+        const link = clone as HTMLLinkElement;
+        linkPromises.push(
+          new Promise<void>((resolve) => {
+            let done = false;
+            const finish = () => {
+              if (done) return;
+              done = true;
+              resolve();
+            };
+            link.addEventListener("load", finish, { once: true });
+            link.addEventListener("error", finish, { once: true });
+            // Timeout de segurança
+            setTimeout(finish, 800);
+          })
+        );
+      }
+      doc.head.appendChild(clone);
+    });
 
+    // Reset básico do body — invisível até estilos carregarem.
+    doc.body.style.margin = "0";
+    doc.body.style.background = "#FEF3E8";
+    doc.body.style.visibility = "hidden";
+
+    // Monta o portal já (React precisa do node), mas mantém invisível.
     setMountNode(doc.body);
+    setReady(false);
+
+    Promise.all(linkPromises).then(() => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (iframe.contentDocument === doc) {
+            doc.body.style.visibility = "visible";
+            setReady(true);
+          }
+        });
+      });
+    });
   };
 
   // Quando o device muda, o iframe é recriado (via key) e onLoad redispara.
   useEffect(() => {
     setMountNode(null);
+    setReady(false);
   }, [device]);
 
   return (
@@ -106,7 +143,7 @@ export function PreviewFrame({
       </div>
       <div
         ref={wrapRef}
-        className={`overflow-hidden rounded-xl border border-border bg-white ${
+        className={`relative overflow-hidden rounded-xl border border-border bg-[#FEF3E8] ${
           device === "mobile" ? "mx-auto max-w-[420px]" : ""
         }`}
         style={{ height: Math.round(targetH * scale) }}
@@ -123,7 +160,9 @@ export function PreviewFrame({
             border: 0,
             transform: `scale(${scale})`,
             transformOrigin: "top left",
-            background: "#fff",
+            background: "#FEF3E8",
+            opacity: ready ? 1 : 0,
+            transition: "opacity 120ms ease-out",
           }}
         />
         {mountNode ? createPortal(children, mountNode) : null}
