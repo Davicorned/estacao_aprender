@@ -2,10 +2,10 @@ import React, { useEffect, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { Instagram, Facebook, Linkedin, Youtube, Twitter, Music2, Phone, Mail, MapPin } from "lucide-react";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
-import { fetchRodape, RODAPE_DEFAULTS, type LinkItem, type RedeSocial, type SiteRodape } from "@/lib/cms";
+import { fetchRodape, fetchTema, RODAPE_DEFAULTS, type LinkItem, type RedeSocial, type SiteRodape, type SiteTema } from "@/lib/cms";
 import { buildBackground } from "@/components/gestao/site/ColorField";
 
-const LOGO = logoAsset.url;
+const FALLBACK_LOGO = logoAsset.url;
 
 const DEFAULT = RODAPE_DEFAULTS;
 
@@ -48,13 +48,16 @@ function mergeRodape(r: Partial<RodapeData> | null | undefined): RodapeData {
 export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
   const rootApi = getRouteApi("__root__");
   let initialFromLoader: Partial<RodapeData> | null = null;
+  let initialTema: SiteTema | null = null;
   try {
     const rootData = rootApi.useLoaderData();
     initialFromLoader = ((rootData as any)?.initial?.rodape as Partial<RodapeData> | undefined) ?? null;
+    initialTema = ((rootData as any)?.initial?.tema as SiteTema | undefined) ?? null;
   } catch { /* not inside root */ }
   const [data, setData] = useState<RodapeData>(() =>
     mergeRodape(override ?? initialFromLoader),
   );
+  const [tema, setTema] = useState<SiteTema | null>(initialTema);
   useEffect(() => {
     if (override) {
       setData(mergeRodape(override));
@@ -63,10 +66,18 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
     if (initialFromLoader) return;
     fetchRodape().then((r) => setData(mergeRodape(r)));
   }, [override, initialFromLoader]);
+  useEffect(() => {
+    if (initialTema) return;
+    let alive = true;
+    void fetchTema().then((t) => { if (alive) setTema(t); });
+    return () => { alive = false; };
+  }, [initialTema]);
+  // Rodapé usa preferencialmente o logo escuro (fundo geralmente escuro), depois o padrão.
+  const isLight = data.texto_cor === "escuro";
+  const LOGO = (isLight ? tema?.logo_url : tema?.logo_escuro_url || tema?.logo_url) || FALLBACK_LOGO;
 
   const customBg = buildBackground(data.bg_cor);
   // Decide a paleta de texto. "claro" => textos claros (fundo escuro). "escuro" => textos escuros (fundo claro).
-  const isLight = data.texto_cor === "escuro";
   const cls = isLight
     ? { footer: "text-gray-800", muted: "text-gray-600", strong: "text-gray-900", border: "border-gray-200", hover: "hover:text-gray-900", chip: "bg-black/5", link: "text-gray-600 hover:text-gray-900" }
     : { footer: "text-white", muted: "text-gray-400", strong: "text-gray-300", border: "border-gray-800", hover: "hover:text-white", chip: "bg-white/10", link: "text-gray-400 hover:text-white" };
