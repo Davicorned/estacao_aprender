@@ -71,6 +71,7 @@ export type SiteRodape = {
   texto_cor_hex: string | null; // hex livre — tem precedência sobre texto_cor
   card_bg_cor: string | null;
   card_texto_cor: string | null;
+  layout: string;
 };
 
 export type SecaoTipo =
@@ -241,6 +242,7 @@ export const RODAPE_DEFAULTS: Omit<SiteRodape, "id"> = {
   texto_cor_hex: null,
   card_bg_cor: null,
   card_texto_cor: null,
+  layout: "colunas",
 };
 
 export const HEADER_DEFAULTS: Omit<SiteHeader, "id"> = {

@@ -22,7 +22,7 @@ import {
   type SiteRodape,
 } from "@/lib/cms";
 import { PreviewFrame } from "./PreviewFrame";
-import { Footer } from "@/components/site/Footer";
+import { Footer, type FooterLayout } from "@/components/site/Footer";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
 
@@ -31,6 +31,94 @@ type Form = Omit<SiteRodape, "id">;
 const initial: Form = { ...RODAPE_DEFAULTS };
 
 const REDE_OPTS = ["instagram", "facebook", "linkedin", "youtube", "twitter", "whatsapp", "tiktok"];
+
+const FOOTER_LAYOUT_OPTIONS: { key: FooterLayout; label: string; hint: string }[] = [
+  { key: "colunas", label: "Colunas", hint: "Marca + navegação + serviços + contato" },
+  { key: "compacto", label: "Compacto", hint: "Uma linha só: logo, links, redes" },
+  { key: "centralizado", label: "Centralizado", hint: "Logo, links e redes no centro" },
+  { key: "com-mapa", label: "Com mapa", hint: "Mini-mapa do endereço + contato" },
+  { key: "duas-colunas", label: "Duas colunas", hint: "Marca + redes | links + contato" },
+];
+
+function FooterLayoutThumb({ layout }: { layout: FooterLayout }) {
+  const line = "rounded-sm bg-white/40";
+  const lineD = "rounded-sm bg-white/60";
+  const box = "bg-white/20 rounded";
+  if (layout === "colunas") {
+    return (
+      <div className="grid h-full w-full grid-cols-4 gap-1 bg-gray-800 p-2">
+        {[0,1,2,3].map((i) => (
+          <div key={i} className="flex flex-col gap-0.5">
+            <div className={`h-1 w-full ${lineD}`} />
+            <div className={`h-0.5 w-4/5 ${line}`} />
+            <div className={`h-0.5 w-3/5 ${line}`} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (layout === "compacto") {
+    return (
+      <div className="flex h-full w-full items-center justify-between gap-1 bg-gray-800 p-2">
+        <div className={`h-2 w-6 ${box}`} />
+        <div className="flex gap-1">
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+        </div>
+        <div className="flex gap-0.5">
+          <div className="h-2 w-2 rounded-full bg-white/40" />
+          <div className="h-2 w-2 rounded-full bg-white/40" />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "centralizado") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gray-800 p-2">
+        <div className={`h-2 w-6 ${box}`} />
+        <div className="flex gap-1">
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+        </div>
+        <div className="flex gap-0.5">
+          <div className="h-1.5 w-1.5 rounded-full bg-white/50" />
+          <div className="h-1.5 w-1.5 rounded-full bg-white/50" />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "com-mapa") {
+    return (
+      <div className="grid h-full w-full grid-cols-2 gap-1 bg-gray-800 p-2">
+        <div className="rounded bg-gradient-to-br from-emerald-400/60 to-sky-400/60" />
+        <div className="flex flex-col gap-0.5">
+          <div className={`h-1 w-full ${lineD}`} />
+          <div className={`h-0.5 w-4/5 ${line}`} />
+          <div className={`h-0.5 w-3/5 ${line}`} />
+          <div className={`h-0.5 w-4/5 ${line}`} />
+        </div>
+      </div>
+    );
+  }
+  // duas-colunas
+  return (
+    <div className="grid h-full w-full grid-cols-2 gap-1 bg-gray-800 p-2">
+      <div className="flex flex-col gap-0.5">
+        <div className={`h-2 w-6 ${box}`} />
+        <div className={`h-0.5 w-full ${line}`} />
+        <div className={`h-0.5 w-4/5 ${line}`} />
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <div className={`h-1 w-full ${lineD}`} />
+        <div className={`h-0.5 w-3/4 ${line}`} />
+        <div className={`h-0.5 w-3/4 ${line}`} />
+        <div className={`h-0.5 w-2/3 ${line}`} />
+      </div>
+    </div>
+  );
+}
 
 export function RodapeManager() {
   const [form, setForm] = useState<Form>(initial);
@@ -104,6 +192,37 @@ export function RodapeManager() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,560px)_1fr]">
       <div className="space-y-6">
+      <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estilo do rodapé</h2>
+        <p className="text-xs text-muted-foreground">Escolha como o rodapé aparece em todas as páginas.</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {FOOTER_LAYOUT_OPTIONS.map((opt) => {
+            const selected = ((form.layout as FooterLayout) || "colunas") === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => setForm((f) => ({ ...f, layout: opt.key }))}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border">
+                  <FooterLayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Texto institucional</h2>
         <Textarea rows={3} value={form.texto_institucional ?? ""} onChange={(e) => setForm({ ...form, texto_institucional: e.target.value })} />

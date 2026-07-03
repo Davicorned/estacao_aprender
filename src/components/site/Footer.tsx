@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { Instagram, Facebook, Linkedin, Youtube, Twitter, Music2, Phone, Mail, MapPin } from "lucide-react";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
@@ -19,13 +19,12 @@ const REDE_ICONS: Record<string, typeof Instagram> = {
   tiktok: Music2,
 };
 
-function FooterLink({ item }: { item: LinkItem }) {
-  return (
-    <a href={item.href} className="text-gray-400 transition-colors hover:text-white">
-      {item.label}
-    </a>
-  );
-}
+export type FooterLayout =
+  | "colunas"
+  | "compacto"
+  | "centralizado"
+  | "com-mapa"
+  | "duas-colunas";
 
 type RodapeData = Omit<SiteRodape, "id">;
 
@@ -83,29 +82,170 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
       }
     : undefined;
 
-  return (
-    <footer
-      className={`${customBg ? "" : "bg-gray-900"} ${cls.footer}`}
-      style={{
-        ...(customBg ? { background: customBg } : {}),
-        ...(textColor ? { color: textColor } : {}),
-      }}
-    >
-      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
-        {/* Brand */}
-        <div style={colStyle}>
-          <div className="flex items-center gap-3">
-            <img src={LOGO} alt="Estação Aprender" className="h-10 w-auto" />
-            <span className="text-lg font-semibold">Estação Aprender</span>
-          </div>
-          <p
-            className={`mt-4 text-sm leading-relaxed ${cardText || textColor ? "opacity-90" : cls.muted}`}
-            style={cardText ? { color: cardText } : textColor ? { color: textColor } : undefined}
+  const layout: FooterLayout = (data.layout as FooterLayout) || "colunas";
+
+  const brandBlock = (
+    <div style={colStyle}>
+      <div className="flex items-center gap-3">
+        <img src={LOGO} alt="Estação Aprender" className="h-10 w-auto" />
+        <span className="text-lg font-semibold">Estação Aprender</span>
+      </div>
+      <p
+        className={`mt-4 text-sm leading-relaxed ${cardText || textColor ? "opacity-90" : cls.muted}`}
+        style={cardText ? { color: cardText } : textColor ? { color: textColor } : undefined}
+      >
+        {data.texto_institucional}
+      </p>
+      <div className="mt-6 flex gap-3">
+        {data.redes_sociais.map((r: RedeSocial, i) => {
+          const Icon = REDE_ICONS[r.tipo] ?? Instagram;
+          return (
+            <a
+              key={i}
+              href={r.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={r.tipo}
+              className={`flex h-10 w-10 items-center justify-center rounded-full ${cls.chip} transition-colors hover:bg-[var(--site-primary)] hover:text-white`}
+            >
+              <Icon className="h-5 w-5" />
+            </a>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const navBlock = (
+    <div style={colStyle}>
+      <h4 className="text-sm font-semibold uppercase tracking-wider">Navegação</h4>
+      <ul className="mt-4 space-y-3 text-sm">
+        {data.links_rapidos.map((l, i) => (
+          <li key={i}><a href={l.href} className={`${cls.link} transition-colors`}>{l.label}</a></li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const servicosBlock = (
+    <div style={colStyle}>
+      <h4 className="text-sm font-semibold uppercase tracking-wider">Serviços</h4>
+      <ul className="mt-4 space-y-3 text-sm">
+        {data.links_servicos.map((l, i) => (
+          <li key={i}><a href={l.href} className={`${cls.link} transition-colors`}>{l.label}</a></li>
+        ))}
+      </ul>
+    </div>
+  );
+
+  const contatoBlock = (
+    <div style={colStyle}>
+      <h4 className="text-sm font-semibold uppercase tracking-wider">Contato</h4>
+      <ul className={`mt-4 space-y-4 text-sm ${cls.muted}`}>
+        <li className="flex items-start gap-3">
+          <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+          <a
+            id="whatsapp_start"
+            href={data.telefone_link ?? "#"}
+            target="_blank"
+            rel="noopener noreferrer"
+            className={cls.hover}
           >
-            {data.texto_institucional}
-          </p>
-          <div className="mt-6 flex gap-3">
-            {data.redes_sociais.map((r: RedeSocial, i) => {
+            {data.telefone}
+          </a>
+        </li>
+        <li className="flex items-start gap-3">
+          <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+          <a href={`mailto:${data.email ?? ""}`} className={`break-all ${cls.hover}`}>
+            {data.email}
+          </a>
+        </li>
+        <li className="flex items-start gap-3">
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+          <span>
+            <strong className={`block ${cls.strong}`}>{data.endereco_titulo}</strong>
+            {data.endereco_texto}
+          </span>
+        </li>
+      </ul>
+    </div>
+  );
+
+  const copyrightBar = (
+    <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className={`flex flex-col items-center justify-between gap-4 border-t ${cls.border} pt-8 pb-8 text-sm ${cls.muted} md:flex-row mt-0`}>
+        <p>{data.copyright}</p>
+        <a
+          href="https://www.solucoesmarketingdigital.com.br"
+          target="_blank"
+          rel="noopener noreferrer"
+          className={cls.hover}
+        >
+          Desenvolvimento: Soluções Marketing Digital
+        </a>
+      </div>
+    </div>
+  );
+
+  // ---------- Corpo por layout ----------
+  let body: React.ReactNode;
+
+  if (layout === "compacto") {
+    const allLinks: LinkItem[] = [...data.links_rapidos, ...data.links_servicos];
+    body = (
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+        <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
+          <div className="flex items-center gap-3">
+            <img src={LOGO} alt="Estação Aprender" className="h-8 w-auto" />
+            <span className="text-sm font-semibold">Estação Aprender</span>
+          </div>
+          <nav className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">
+            {allLinks.map((l, i) => (
+              <a key={i} href={l.href} className={`${cls.link} transition-colors`}>{l.label}</a>
+            ))}
+          </nav>
+          <div className="flex gap-2">
+            {data.redes_sociais.map((r, i) => {
+              const Icon = REDE_ICONS[r.tipo] ?? Instagram;
+              return (
+                <a
+                  key={i}
+                  href={r.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={r.tipo}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full ${cls.chip} transition-colors hover:bg-[var(--site-primary)] hover:text-white`}
+                >
+                  <Icon className="h-4 w-4" />
+                </a>
+              );
+            })}
+          </div>
+        </div>
+        <div className={`mt-6 border-t ${cls.border} pt-4 text-center text-xs ${cls.muted}`}>
+          {data.copyright}
+        </div>
+      </div>
+    );
+  } else if (layout === "centralizado") {
+    const allLinks: LinkItem[] = [...data.links_rapidos, ...data.links_servicos];
+    body = (
+      <>
+        <div className="mx-auto max-w-4xl px-4 py-14 text-center sm:px-6 lg:px-8">
+          <div className="flex flex-col items-center gap-3">
+            <img src={LOGO} alt="Estação Aprender" className="h-12 w-auto" />
+            <span className="text-lg font-semibold">Estação Aprender</span>
+            <p className={`max-w-xl text-sm leading-relaxed ${textColor ? "opacity-90" : cls.muted}`}>
+              {data.texto_institucional}
+            </p>
+          </div>
+          <nav className="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 text-sm">
+            {allLinks.map((l, i) => (
+              <a key={i} href={l.href} className={`${cls.link} transition-colors`}>{l.label}</a>
+            ))}
+          </nav>
+          <div className="mt-8 flex justify-center gap-3">
+            {data.redes_sociais.map((r, i) => {
               const Icon = REDE_ICONS[r.tipo] ?? Instagram;
               return (
                 <a
@@ -122,73 +262,85 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
             })}
           </div>
         </div>
-
-        {/* Navegação */}
-        <div style={colStyle}>
-          <h4 className="text-sm font-semibold uppercase tracking-wider">Navegação</h4>
-          <ul className="mt-4 space-y-3 text-sm">
-            {data.links_rapidos.map((l, i) => (
-              <li key={i}><a href={l.href} className={`${cls.link} transition-colors`}>{l.label}</a></li>
-            ))}
-          </ul>
+        {copyrightBar}
+      </>
+    );
+  } else if (layout === "com-mapa") {
+    const mapSrc = data.endereco_texto
+      ? `https://www.google.com/maps?q=${encodeURIComponent(data.endereco_texto)}&output=embed`
+      : null;
+    body = (
+      <>
+        <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            <div className="overflow-hidden rounded-xl border border-white/10 bg-black/20">
+              {mapSrc ? (
+                <iframe
+                  title="Mapa do endereço"
+                  src={mapSrc}
+                  loading="lazy"
+                  className="h-64 w-full lg:h-full"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              ) : (
+                <div className={`flex h-64 items-center justify-center text-sm ${cls.muted}`}>
+                  Endereço não configurado.
+                </div>
+              )}
+            </div>
+            <div className="space-y-6">
+              {brandBlock}
+              {contatoBlock}
+            </div>
+          </div>
+          <div className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2">
+            {navBlock}
+            {servicosBlock}
+          </div>
         </div>
-
-        {/* Serviços */}
-        <div style={colStyle}>
-          <h4 className="text-sm font-semibold uppercase tracking-wider">Serviços</h4>
-          <ul className="mt-4 space-y-3 text-sm">
-            {data.links_servicos.map((l, i) => (
-              <li key={i}><a href={l.href} className={`${cls.link} transition-colors`}>{l.label}</a></li>
-            ))}
-          </ul>
+        {copyrightBar}
+      </>
+    );
+  } else if (layout === "duas-colunas") {
+    body = (
+      <>
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:px-8">
+          {brandBlock}
+          <div className="grid grid-cols-1 gap-8 sm:grid-cols-2">
+            <div className="space-y-8">
+              {navBlock}
+              {servicosBlock}
+            </div>
+            {contatoBlock}
+          </div>
         </div>
-
-        {/* Contato */}
-        <div style={colStyle}>
-          <h4 className="text-sm font-semibold uppercase tracking-wider">Contato</h4>
-          <ul className={`mt-4 space-y-4 text-sm ${cls.muted}`}>
-            <li className="flex items-start gap-3">
-              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
-              <a
-                id="whatsapp_start"
-                href={data.telefone_link ?? "#"}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={cls.hover}
-              >
-                {data.telefone}
-              </a>
-            </li>
-            <li className="flex items-start gap-3">
-              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
-              <a href={`mailto:${data.email ?? ""}`} className={`break-all ${cls.hover}`}>
-                {data.email}
-              </a>
-            </li>
-            <li className="flex items-start gap-3">
-              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
-              <span>
-                <strong className={`block ${cls.strong}`}>{data.endereco_titulo}</strong>
-                {data.endereco_texto}
-              </span>
-            </li>
-          </ul>
+        {copyrightBar}
+      </>
+    );
+  } else {
+    // colunas (default)
+    body = (
+      <>
+        <div className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-16 sm:px-6 md:grid-cols-2 lg:grid-cols-4 lg:px-8">
+          {brandBlock}
+          {navBlock}
+          {servicosBlock}
+          {contatoBlock}
         </div>
-      </div>
+        {copyrightBar}
+      </>
+    );
+  }
 
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className={`flex flex-col items-center justify-between gap-4 border-t ${cls.border} pt-8 pb-8 text-sm ${cls.muted} md:flex-row mt-0`}>
-          <p>{data.copyright}</p>
-          <a
-            href="https://www.solucoesmarketingdigital.com.br"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cls.hover}
-          >
-            Desenvolvimento: Soluções Marketing Digital
-          </a>
-        </div>
-      </div>
+  return (
+    <footer
+      className={`${customBg ? "" : "bg-gray-900"} ${cls.footer}`}
+      style={{
+        ...(customBg ? { background: customBg } : {}),
+        ...(textColor ? { color: textColor } : {}),
+      }}
+    >
+      {body}
     </footer>
   );
 }
