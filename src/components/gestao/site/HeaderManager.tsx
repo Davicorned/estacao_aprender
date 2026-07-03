@@ -15,13 +15,90 @@ import {
   type SiteHeaderItem,
 } from "@/lib/cms";
 import { PreviewFrame } from "./PreviewFrame";
-import { Header } from "@/components/site/Header";
+import { Header, type HeaderLayout } from "@/components/site/Header";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
 
 type Form = Omit<SiteHeader, "id">;
 
 const initial: Form = { ...HEADER_DEFAULTS };
+
+const HEADER_LAYOUT_OPTIONS: { key: HeaderLayout; label: string; hint: string }[] = [
+  { key: "logo-esquerda", label: "Logo à esquerda", hint: "Logo à esquerda, menu à direita" },
+  { key: "logo-centralizado", label: "Logo centralizado", hint: "Logo em cima, menu abaixo" },
+  { key: "transparente", label: "Transparente", hint: "Sobre o banner, sólido ao rolar" },
+  { key: "com-barra-superior", label: "Com barra superior", hint: "Telefone/e-mail no topo" },
+  { key: "minimalista", label: "Minimalista", hint: "Só logo + menu, sem CTA" },
+];
+
+function HeaderLayoutThumb({ layout }: { layout: HeaderLayout }) {
+  const line = "rounded-sm bg-gray-300";
+  const btn = "rounded-full bg-[#D67F43]";
+  const logo = "rounded bg-gray-500";
+  if (layout === "logo-esquerda") {
+    return (
+      <div className="flex h-full w-full items-center gap-1.5 bg-white px-2">
+        <div className={`h-3 w-6 ${logo}`} />
+        <div className="flex flex-1 justify-center gap-1">
+          <div className={`h-1 w-4 ${line}`} />
+          <div className={`h-1 w-4 ${line}`} />
+          <div className={`h-1 w-4 ${line}`} />
+        </div>
+        <div className={`h-2 w-6 ${btn}`} />
+      </div>
+    );
+  }
+  if (layout === "logo-centralizado") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-white px-2 py-1">
+        <div className={`h-2.5 w-6 ${logo}`} />
+        <div className="flex gap-1">
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "transparente") {
+    return (
+      <div className="relative flex h-full w-full items-center gap-1.5 bg-gradient-to-br from-slate-500 to-slate-700 px-2">
+        <div className="h-3 w-6 rounded bg-white/70" />
+        <div className="flex flex-1 justify-center gap-1">
+          <div className="h-1 w-4 rounded-sm bg-white/70" />
+          <div className="h-1 w-4 rounded-sm bg-white/70" />
+        </div>
+        <div className={`h-2 w-6 ${btn}`} />
+      </div>
+    );
+  }
+  if (layout === "com-barra-superior") {
+    return (
+      <div className="flex h-full w-full flex-col bg-white">
+        <div className="h-2 w-full bg-[#D67F43]" />
+        <div className="flex flex-1 items-center gap-1.5 px-2">
+          <div className={`h-3 w-6 ${logo}`} />
+          <div className="flex flex-1 justify-center gap-1">
+            <div className={`h-1 w-4 ${line}`} />
+            <div className={`h-1 w-4 ${line}`} />
+          </div>
+          <div className={`h-2 w-6 ${btn}`} />
+        </div>
+      </div>
+    );
+  }
+  // minimalista
+  return (
+    <div className="flex h-full w-full items-center gap-1.5 bg-white px-2">
+      <div className={`h-3 w-6 ${logo}`} />
+      <div className="flex flex-1 justify-end gap-1">
+        <div className={`h-1 w-4 ${line}`} />
+        <div className={`h-1 w-4 ${line}`} />
+        <div className={`h-1 w-4 ${line}`} />
+      </div>
+    </div>
+  );
+}
 
 function newItem(order: number): SiteHeaderItem {
   return { id: `tmp-${Math.random().toString(36).slice(2, 9)}`, label: "", to: "/", order, visivel: true };
@@ -235,6 +312,37 @@ export function HeaderManager() {
           </TabsContent>
 
           <TabsContent value="aparencia" className="space-y-6 pt-4">
+            <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estilo do cabeçalho</h2>
+              <p className="text-xs text-muted-foreground">Escolha como o cabeçalho aparece em todas as páginas.</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {HEADER_LAYOUT_OPTIONS.map((opt) => {
+                  const selected = ((form.layout as HeaderLayout) || "logo-esquerda") === opt.key;
+                  return (
+                    <button
+                      type="button"
+                      key={opt.key}
+                      onClick={() => setForm((f) => ({ ...f, layout: opt.key }))}
+                      className={
+                        "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                        (selected
+                          ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                          : "border-border hover:border-[#D67F43]/60 bg-card")
+                      }
+                    >
+                      <div className="h-14 w-full border-b border-border">
+                        <HeaderLayoutThumb layout={opt.key} />
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                        <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
             <section className="rounded-xl border border-border bg-card p-5 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Fundo do cabeçalho</h2>
               <ColorField

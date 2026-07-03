@@ -143,6 +143,7 @@ export type SiteHeader = {
   texto_cor_hex: string | null; // hex livre — tem precedência sobre texto_cor
   cor_destaque: string | null;
   sticky: boolean;
+  layout: string;
   itens: SiteHeaderItem[];
 };
 
@@ -255,6 +256,7 @@ export const HEADER_DEFAULTS: Omit<SiteHeader, "id"> = {
   texto_cor_hex: null,
   cor_destaque: "#D67F43",
   sticky: true,
+  layout: "logo-esquerda",
   itens: [
     { id: "d1", label: "O Espaço", to: "/", order: 0, visivel: true },
     { id: "d2", label: "Quem Somos", to: "/QuemSomos", order: 1, visivel: true },
