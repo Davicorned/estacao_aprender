@@ -111,7 +111,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     return {
       seo: {
         brand: h.nome_marca ?? "Estação Aprender",
-        logo: h.logo_url ?? null,
+        // Logo unificado da Identidade; header pode override via h.logo_url
+        logo: h.logo_url ?? t.logo_url ?? null,
+        logoEscuro: t.logo_escuro_url ?? null,
+        favicon: t.favicon_url ?? t.logo_url ?? null,
         heroImage: he.imagem_url ?? null,
         telefone: r.telefone ?? null,
         telefoneLink: r.telefone_link ?? null,
@@ -177,6 +180,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rel: "stylesheet",
         href: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap",
       },
+      ...(loaderData?.seo.favicon
+        ? [{ rel: "icon", href: loaderData.seo.favicon as string }]
+        : []),
     ],
   }),
   shellComponent: RootShell,
