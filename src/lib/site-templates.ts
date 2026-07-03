@@ -307,3 +307,18 @@ export const DEFAULT_DEPOIMENTOS: DadosDepoimentos = {
   mostrar_estrelas: true,
   mostrar_fonte: true,
 };
+
+/** CTA banner (faixa de chamada) */
+export type CtaBannerLayout =
+  | "centralizado"
+  | "dividido"
+  | "com-imagem"
+  | "minimalista";
+
+export type DadosCtaBanner = {
+  layout: CtaBannerLayout;
+};
+
+export const DEFAULT_CTA_BANNER: DadosCtaBanner = {
+  layout: "centralizado",
+};
