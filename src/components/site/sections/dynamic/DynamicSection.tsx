@@ -19,11 +19,13 @@ import {
   DEFAULT_EQUIPE,
   DEFAULT_DEPOIMENTOS,
   DEFAULT_CTA_BANNER,
+  DEFAULT_CARDS_ICONES,
   type DadosContatoMapa,
   type DadosModalidades,
   type DadosEquipe,
   type DadosDepoimentos,
   type DadosCtaBanner,
+  type DadosCardsIcones,
 } from "@/lib/site-templates";
 
 function Eyebrow({ text }: { text?: string | null }) {
@@ -240,10 +242,14 @@ export function DynamicSection({
     case "grade-cards":
       return <GradeCards secao={secao} />;
     case "cards-icones":
+      {
+        const d = (secao.dados ?? {}) as Partial<DadosCardsIcones>;
       return (
         <OurValues
           eyebrow={secao.eyebrow ?? undefined}
           titulo={secao.titulo ?? undefined}
+          layout={d.layout ?? DEFAULT_CARDS_ICONES.layout}
+          colunas={(d.colunas as 2 | 3 | 4) ?? DEFAULT_CARDS_ICONES.colunas}
           itens={secao.itens.map((it) => ({
             icone: it.icone ?? "Sparkles",
             titulo: it.titulo,
@@ -252,6 +258,7 @@ export function DynamicSection({
           }))}
         />
       );
+      }
     case "passos-processo":
       return (
         <ProcessSteps
