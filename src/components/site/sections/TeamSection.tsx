@@ -459,7 +459,7 @@ function TeamMosaico({ equipe, gridColsClass }: { equipe: TeamMember[]; gridCols
                   {iniciais}
                 </div>
               )}
-              <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+              <div className="absolute inset-0 flex flex-col justify-end bg-gradient-to-t from-black/80 via-black/20 to-transparent p-4 opacity-100 transition-opacity duration-300 sm:opacity-0 sm:group-hover:opacity-100">
                 <h3 className="text-base font-semibold text-white">{p.nome}</h3>
                 <p className="text-xs text-white/90">{p.titulo}</p>
               </div>
