@@ -1314,6 +1314,88 @@ function DadosModalidadesEditor({
   );
 }
 
+const CONTATO_LAYOUT_OPTIONS: { key: ContatoMapaLayout; label: string; hint: string }[] = [
+  { key: "info-mapa", label: "Info + mapa", hint: "Cards à esquerda, mapa à direita" },
+  { key: "mapa-topo", label: "Mapa em cima", hint: "Mapa largo, contatos embaixo" },
+  { key: "so-info", label: "Só info", hint: "Cards centralizados, sem mapa" },
+  { key: "cards-grade", label: "Cards em grade", hint: "4 cards + mapa embaixo" },
+  { key: "faixa", label: "Faixa", hint: "Contatos em linha horizontal" },
+  { key: "mapa-fundo", label: "Mapa de fundo", hint: "Card flutuante sobre o mapa" },
+];
+
+function ContatoLayoutThumb({ layout }: { layout: ContatoMapaLayout }) {
+  const box = "rounded-sm bg-[#D67F43]/60";
+  const map = "rounded-sm bg-[#D67F43]/25";
+  if (layout === "info-mapa") {
+    return (
+      <div className="flex h-full w-full items-center gap-1 p-2">
+        <div className="flex h-full w-1/2 flex-col gap-0.5">
+          <div className={`h-2 w-full ${box}`} />
+          <div className={`h-2 w-full ${box}`} />
+          <div className={`h-2 w-full ${box}`} />
+        </div>
+        <div className={`h-full w-1/2 ${map}`} />
+      </div>
+    );
+  }
+  if (layout === "mapa-topo") {
+    return (
+      <div className="flex h-full w-full flex-col gap-1 p-2">
+        <div className={`h-6 w-full ${map}`} />
+        <div className="flex gap-0.5">
+          <div className={`h-2 flex-1 ${box}`} />
+          <div className={`h-2 flex-1 ${box}`} />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "so-info") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 p-2">
+        <div className={`h-2 w-14 ${box}`} />
+        <div className={`h-2 w-14 ${box}`} />
+        <div className={`h-2 w-14 ${box}`} />
+      </div>
+    );
+  }
+  if (layout === "cards-grade") {
+    return (
+      <div className="flex h-full w-full flex-col gap-1 p-2">
+        <div className="grid grid-cols-4 gap-0.5">
+          <div className={`h-3 ${box}`} />
+          <div className={`h-3 ${box}`} />
+          <div className={`h-3 ${box}`} />
+          <div className={`h-3 ${box}`} />
+        </div>
+        <div className={`h-4 w-full ${map}`} />
+      </div>
+    );
+  }
+  if (layout === "faixa") {
+    return (
+      <div className="flex h-full w-full flex-col justify-center gap-1 p-2">
+        <div className="flex gap-0.5">
+          <div className={`h-3 flex-1 ${box}`} />
+          <div className={`h-3 flex-1 ${box}`} />
+          <div className={`h-3 flex-1 ${box}`} />
+          <div className={`h-3 flex-1 ${box}`} />
+        </div>
+        <div className={`h-3 w-full ${map}`} />
+      </div>
+    );
+  }
+  // mapa-fundo
+  return (
+    <div className={`relative h-full w-full ${map} p-2`}>
+      <div className="absolute left-1 top-1 flex h-[85%] w-1/2 flex-col gap-0.5 rounded-sm bg-white/90 p-1 shadow">
+        <div className={`h-1 w-full ${box}`} />
+        <div className={`h-1 w-full ${box}`} />
+        <div className={`h-1 w-3/4 ${box}`} />
+      </div>
+    </div>
+  );
+}
+
 function DadosContatoMapaEditor({
   value, onChange,
 }: {
