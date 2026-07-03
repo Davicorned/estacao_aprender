@@ -25,6 +25,7 @@ import { PreviewFrame } from "./PreviewFrame";
 import { Footer, type FooterLayout } from "@/components/site/Footer";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
+import { EditorLayout, type EditorLayoutTab } from "./EditorLayout";
 
 type Form = Omit<SiteRodape, "id">;
 
@@ -189,40 +190,8 @@ export function RodapeManager() {
 
   if (loading) return <p className="text-sm text-muted-foreground">Carregando…</p>;
 
-  return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,560px)_1fr]">
-      <div className="space-y-6">
-      <section className="rounded-xl border border-border bg-card p-5 space-y-3">
-        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estilo do rodapé</h2>
-        <p className="text-xs text-muted-foreground">Escolha como o rodapé aparece em todas as páginas.</p>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {FOOTER_LAYOUT_OPTIONS.map((opt) => {
-            const selected = ((form.layout as FooterLayout) || "colunas") === opt.key;
-            return (
-              <button
-                type="button"
-                key={opt.key}
-                onClick={() => setForm((f) => ({ ...f, layout: opt.key }))}
-                className={
-                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
-                  (selected
-                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
-                    : "border-border hover:border-[#D67F43]/60 bg-card")
-                }
-              >
-                <div className="h-16 w-full border-b border-border">
-                  <FooterLayoutThumb layout={opt.key} />
-                </div>
-                <div className="p-2">
-                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
-                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
-                </div>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
+  const conteudoTab = (
+    <>
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Texto institucional</h2>
         <Textarea rows={3} value={form.texto_institucional ?? ""} onChange={(e) => setForm({ ...form, texto_institucional: e.target.value })} />
@@ -254,7 +223,15 @@ export function RodapeManager() {
         </div>
       </section>
 
-      <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+      <section className="rounded-xl border border-border bg-card p-5 space-y-2">
+        <Label>Texto de copyright</Label>
+        <Input value={form.copyright ?? ""} onChange={(e) => setForm({ ...form, copyright: e.target.value })} />
+      </section>
+    </>
+  );
+
+  const redesTab = (
+    <section className="rounded-xl border border-border bg-card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Redes sociais</h2>
           <Button size="sm" variant="outline" onClick={addRede}><Plus className="mr-1 h-4 w-4" /> Adicionar</Button>
@@ -272,8 +249,11 @@ export function RodapeManager() {
             <Button size="icon" variant="ghost" onClick={() => removeRede(i)}><Trash2 className="h-4 w-4 text-red-500" /></Button>
           </div>
         ))}
-      </section>
+    </section>
+  );
 
+  const linksTab = (
+    <>
       {(["links_rapidos", "links_servicos"] as const).map((field) => (
         <section key={field} className="rounded-xl border border-border bg-card p-5 space-y-3">
           <div className="flex items-center justify-between">
@@ -296,13 +276,44 @@ export function RodapeManager() {
           ))}
         </section>
       ))}
+    </>
+  );
 
-      <section className="rounded-xl border border-border bg-card p-5 space-y-2">
-        <Label>Texto de copyright</Label>
-        <Input value={form.copyright ?? ""} onChange={(e) => setForm({ ...form, copyright: e.target.value })} />
-      </section>
+  const estiloTab = (
+    <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+      <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estilo do rodapé</h2>
+      <p className="text-xs text-muted-foreground">Escolha como o rodapé aparece em todas as páginas.</p>
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {FOOTER_LAYOUT_OPTIONS.map((opt) => {
+          const selected = ((form.layout as FooterLayout) || "colunas") === opt.key;
+          return (
+            <button
+              type="button"
+              key={opt.key}
+              onClick={() => setForm((f) => ({ ...f, layout: opt.key }))}
+              className={
+                "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                (selected
+                  ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                  : "border-border hover:border-[#D67F43]/60 bg-card")
+              }
+            >
+              <div className="h-16 w-full border-b border-border">
+                <FooterLayoutThumb layout={opt.key} />
+              </div>
+              <div className="p-2">
+                <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+    </section>
+  );
 
-      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+  const aparenciaTab = (
+    <section className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Aparência</h2>
         <ColorField
           label="Cor de fundo do rodapé"
@@ -347,23 +358,37 @@ export function RodapeManager() {
           onChange={(v) => setForm((f) => ({ ...f, card_texto_cor: v }))}
           presets={["#FFFFFF", "#E5E7EB", "#0F172A", "#374151", "#D67F43", "#FEF3E8"]}
         />
-      </section>
+    </section>
+  );
 
-      <div className="flex justify-end">
-        <Button onClick={save} disabled={saving} className="bg-[#D67F43] hover:bg-[#B85A24]">
-          {saving ? "Salvando…" : "Salvar alterações"}
-        </Button>
-      </div>
-      </div>
+  const tabs: EditorLayoutTab[] = [
+    { value: "conteudo", label: "Conteúdo", content: conteudoTab },
+    { value: "links", label: "Links", content: linksTab },
+    { value: "redes", label: "Redes", content: redesTab },
+    { value: "estilo", label: "Estilo", content: estiloTab },
+    { value: "aparencia", label: "Aparência", content: aparenciaTab },
+  ];
 
-      <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
-        <PreviewFrame height={520} mobileHeight={1200}>
-          <Footer override={form} />
-        </PreviewFrame>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Aparece no final de todas as páginas. Atualiza enquanto você digita.
-        </p>
-      </div>
-    </div>
+  return (
+    <EditorLayout
+      tabs={tabs}
+      preview={
+        <>
+          <PreviewFrame height={520} mobileHeight={1200}>
+            <Footer override={form} />
+          </PreviewFrame>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Aparece no final de todas as páginas. Atualiza enquanto você digita.
+          </p>
+        </>
+      }
+      footer={
+        <div className="flex justify-end">
+          <Button onClick={save} disabled={saving} className="bg-[#D67F43] hover:bg-[#B85A24]">
+            {saving ? "Salvando…" : "Salvar alterações"}
+          </Button>
+        </div>
+      }
+    />
   );
 }

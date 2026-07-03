@@ -4,7 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
 import {
@@ -18,6 +17,7 @@ import { PreviewFrame } from "./PreviewFrame";
 import { Header, type HeaderLayout } from "@/components/site/Header";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
+import { EditorLayout, type EditorLayoutTab } from "./EditorLayout";
 
 type Form = Omit<SiteHeader, "id">;
 
@@ -213,17 +213,9 @@ export function HeaderManager() {
       : null,
   };
 
-  return (
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,560px)_1fr]">
-      <div className="space-y-4">
-        <Tabs defaultValue="conteudo">
-          <TabsList>
-            <TabsTrigger value="conteudo">Conteúdo</TabsTrigger>
-            <TabsTrigger value="aparencia">Aparência</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="conteudo" className="space-y-6 pt-4">
-            <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+  const conteudoTab = (
+    <>
+      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Logo e marca</h2>
               <div className="flex items-start gap-4">
                 <div className="h-16 w-16 overflow-hidden rounded-lg bg-[#FEF3E8] flex items-center justify-center">
@@ -266,9 +258,30 @@ export function HeaderManager() {
                   Mostrar
                 </label>
               </div>
-            </section>
+      </section>
 
-            <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Botão de ação (CTA)</h2>
+          <Switch checked={form.cta_visivel} onCheckedChange={(v) => setForm({ ...form, cta_visivel: v })} />
+        </div>
+        {form.cta_visivel && (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="space-y-2">
+              <Label>Texto</Label>
+              <Input value={form.cta_label ?? ""} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} />
+            </div>
+            <div className="min-w-0">
+              <LinkField label="Destino" value={form.cta_to ?? ""} onChange={(v) => setForm({ ...form, cta_to: v })} />
+            </div>
+          </div>
+        )}
+      </section>
+    </>
+  );
+
+  const menuTab = (
+    <section className="rounded-xl border border-border bg-card p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Itens do menu</h2>
                 <Button size="sm" variant="outline" onClick={addItem}><Plus className="mr-1 h-4 w-4" />Adicionar</Button>
@@ -290,29 +303,11 @@ export function HeaderManager() {
                   <p className="text-xs text-muted-foreground">Nenhum item — clique em Adicionar.</p>
                 )}
               </div>
-            </section>
+    </section>
+  );
 
-            <section className="rounded-xl border border-border bg-card p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Botão de ação (CTA)</h2>
-                <Switch checked={form.cta_visivel} onCheckedChange={(v) => setForm({ ...form, cta_visivel: v })} />
-              </div>
-              {form.cta_visivel && (
-                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label>Texto</Label>
-                    <Input value={form.cta_label ?? ""} onChange={(e) => setForm({ ...form, cta_label: e.target.value })} />
-                  </div>
-                  <div className="min-w-0">
-                    <LinkField label="Destino" value={form.cta_to ?? ""} onChange={(v) => setForm({ ...form, cta_to: v })} />
-                  </div>
-                </div>
-              )}
-            </section>
-          </TabsContent>
-
-          <TabsContent value="aparencia" className="space-y-6 pt-4">
-            <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+  const estiloTab = (
+    <section className="rounded-xl border border-border bg-card p-5 space-y-3">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estilo do cabeçalho</h2>
               <p className="text-xs text-muted-foreground">Escolha como o cabeçalho aparece em todas as páginas.</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
@@ -341,9 +336,12 @@ export function HeaderManager() {
                   );
                 })}
               </div>
-            </section>
+    </section>
+  );
 
-            <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+  const aparenciaTab = (
+    <>
+      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Fundo do cabeçalho</h2>
               <ColorField
                 label="Cor de fundo"
@@ -355,9 +353,9 @@ export function HeaderManager() {
                 presets={["#FFFFFF", "#FEF3E8", "#0F172A", "#1F2937", "#D67F43", "#FFFFFFCC"]}
                 helperText="Deixe em branco para usar o branco translúcido padrão."
               />
-            </section>
+      </section>
 
-            <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Texto e destaque</h2>
               <div className="space-y-2">
                 <Label>Contraste do texto</Label>
@@ -380,9 +378,9 @@ export function HeaderManager() {
                 presets={["#0F172A", "#1F2937", "#FFFFFF", "#475569", "#D67F43", "#FEF3E8"]}
                 helperText="Sobrescreve o contraste claro/escuro. Em branco, mantém o esquema acima."
               />
-            </section>
+      </section>
 
-            <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Fixar no topo</h2>
@@ -390,23 +388,35 @@ export function HeaderManager() {
                 </div>
                 <Switch checked={form.sticky} onCheckedChange={(v) => setForm({ ...form, sticky: v })} />
               </div>
-            </section>
-          </TabsContent>
-        </Tabs>
+      </section>
+    </>
+  );
 
+  const tabs: EditorLayoutTab[] = [
+    { value: "conteudo", label: "Conteúdo", content: conteudoTab },
+    { value: "menu", label: "Menu", content: menuTab },
+    { value: "estilo", label: "Estilo", content: estiloTab },
+    { value: "aparencia", label: "Aparência", content: aparenciaTab },
+  ];
+
+  return (
+    <EditorLayout
+      tabs={tabs}
+      preview={
+        <>
+          <PreviewFrame height={180} mobileHeight={180}>
+            <Header override={previewOverride} />
+          </PreviewFrame>
+          <p className="mt-2 text-xs text-muted-foreground">Prévia em tempo real do cabeçalho.</p>
+        </>
+      }
+      footer={
         <div className="flex justify-end">
           <Button onClick={save} disabled={saving} className="bg-[#D67F43] hover:bg-[#B85A24]">
             {saving ? "Salvando…" : "Salvar alterações"}
           </Button>
         </div>
-      </div>
-
-      <div className="lg:sticky lg:top-4 lg:self-start lg:max-h-[calc(100vh-2rem)] lg:overflow-y-auto">
-        <PreviewFrame height={180} mobileHeight={180}>
-          <Header override={previewOverride} />
-        </PreviewFrame>
-        <p className="mt-2 text-xs text-muted-foreground">Prévia em tempo real do cabeçalho.</p>
-      </div>
-    </div>
+      }
+    />
   );
 }
