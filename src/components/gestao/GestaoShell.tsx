@@ -31,8 +31,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useGestaoTheme } from "@/components/gestao/ThemeProvider";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
+import { fetchTema } from "@/lib/cms";
 
-const LOGO = logoAsset.url;
+const FALLBACK_LOGO = logoAsset.url;
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
 
