@@ -37,7 +37,8 @@ import {
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
   DEFAULT_EQUIPE, DEFAULT_DEPOIMENTOS,
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
-  type DadosEquipe, type DadosDepoimentos, type DepoimentosLayout,
+  type DadosEquipe, type EquipeLayout,
+  type DadosDepoimentos, type DepoimentosLayout,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
