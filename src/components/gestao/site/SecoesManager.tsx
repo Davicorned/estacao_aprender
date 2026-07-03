@@ -36,11 +36,13 @@ import {
   SECTION_TEMPLATES, SECTION_TEMPLATES_BY_TIPO, GRUPO_LABEL,
   ICONES_SUGERIDOS, DEFAULT_MODALIDADES, DEFAULT_CONTATO_MAPA,
   DEFAULT_EQUIPE, DEFAULT_DEPOIMENTOS, DEFAULT_CTA_BANNER,
+  DEFAULT_CARDS_ICONES,
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
   type DadosEquipe, type EquipeLayout,
   type DadosDepoimentos, type DepoimentosLayout,
   type ContatoMapaLayout,
   type DadosCtaBanner, type CtaBannerLayout,
+  type DadosCardsIcones, type CardsIconesLayout,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -116,6 +118,7 @@ function defaultDadosForTipo(tipo: SecaoTipo): Record<string, any> {
   if (schema === "equipe") return { ...DEFAULT_EQUIPE };
   if (schema === "depoimentos") return { ...DEFAULT_DEPOIMENTOS };
   if (schema === "cta-banner") return { ...DEFAULT_CTA_BANNER };
+  if (schema === "cards-icones") return { ...DEFAULT_CARDS_ICONES };
   return {};
 }
 
