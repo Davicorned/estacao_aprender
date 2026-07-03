@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Printer, MessageCircle, Download, Paperclip, FileText, Eye, RefreshCw, Trash2, Loader2, DollarSign, Palette } from "lucide-react";
 import { toast } from "sonner";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
+import { fetchTema } from "@/lib/cms";
 import {
   Dialog,
   DialogContent,
@@ -190,11 +191,24 @@ export function ContratoView({ contrato, open, onOpenChange, onChanged }: Props)
         });
       }
 
-      // Resolve logo: config first, otherwise fallback to Estação Aprender SVG recolored.
+      // Resolve logo: override do documento → Identidade (logo escuro para header colorido)
+      // → asset embutido (SVG tintado) como último recurso.
       let logoSrc: string | null = null;
       if (cfg.logo_url) {
         logoSrc = publicImageUrl(cfg.logo_url);
       } else {
+        try {
+          const tema = await fetchTema();
+          // Header colorido → prefere versão para fundo escuro; senão o padrão.
+          const identidadeLogo = tema?.logo_escuro_url || tema?.logo_url || null;
+          if (identidadeLogo) {
+            logoSrc = identidadeLogo;
+          }
+        } catch (e) {
+          console.warn("Falha ao carregar logo da Identidade", e);
+        }
+      }
+      if (!logoSrc) {
         try {
           const res = await fetch(logoAsset.url);
           if (res.ok) {
