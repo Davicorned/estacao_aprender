@@ -223,7 +223,7 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
   ) : null;
 
   // Corpo principal do cabeçalho por layout.
-  let body: JSX.Element;
+  let body: React.ReactNode;
   if (layout === "logo-centralizado") {
     body = (
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
