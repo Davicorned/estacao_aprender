@@ -198,6 +198,13 @@ export function GestaoShell({ title, children }: { title?: string; children: Rea
   const effectiveTitle = title ?? override ?? deriveTitle(location.pathname);
   const isPending = useRouterState({ select: (s) => s.status === "pending" });
   const [showLoading, setShowLoading] = useState(false);
+  const [temaLogo, setTemaLogo] = useState<string | null>(null);
+  useEffect(() => {
+    let alive = true;
+    void fetchTema().then((t) => { if (alive) setTemaLogo(t?.logo_url ?? null); });
+    return () => { alive = false; };
+  }, []);
+  const LOGO = temaLogo || FALLBACK_LOGO;
 
   useEffect(() => {
     if (!isPending) {
