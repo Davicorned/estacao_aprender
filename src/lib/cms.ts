@@ -48,6 +48,7 @@ export type SiteHero = {
   bg_cor: string | null;
   bg_cor_2: string | null;
   texto_cor: string | null; // hex livre — substitui o esquema claro/escuro
+  layout: string;
 };
 
 export type RedeSocial = { tipo: string; url: string };
@@ -206,6 +207,7 @@ export const HERO_DEFAULTS: Omit<SiteHero, "id"> = {
   bg_cor: null,
   bg_cor_2: null,
   texto_cor: null,
+  layout: "imagem-direita",
 };
 
 export const RODAPE_DEFAULTS: Omit<SiteRodape, "id"> = {
