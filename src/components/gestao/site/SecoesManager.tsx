@@ -1518,6 +1518,172 @@ function DadosCtaBannerEditor({
   );
 }
 
+const CARDS_ICONES_LAYOUT_OPTIONS: { key: CardsIconesLayout; label: string; hint: string }[] = [
+  { key: "grade", label: "Grade", hint: "Cards em grade com ícone no topo" },
+  { key: "icone-lado", label: "Ícone ao lado", hint: "Ícone à esquerda, texto à direita" },
+  { key: "circulos", label: "Círculos", hint: "Ícone em círculo grande, minimalista" },
+  { key: "lista", label: "Lista", hint: "Lista vertical com divisórias" },
+  { key: "borda-colorida", label: "Borda colorida", hint: "Cards com barra de destaque" },
+  { key: "numerados", label: "Numerados", hint: "Número sequencial no lugar do ícone" },
+];
+
+function CardsIconesLayoutThumb({ layout }: { layout: CardsIconesLayout }) {
+  const soft = "bg-[#FEF3E8]";
+  const brand = "bg-[#D67F43]";
+  const line = "rounded-sm bg-gray-300";
+  const card = "rounded-md bg-white border border-gray-200";
+  if (layout === "grade") {
+    return (
+      <div className="grid h-full w-full grid-cols-3 gap-1 bg-gray-50 p-1.5">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className={`${card} flex flex-col items-start gap-1 p-1`}>
+            <div className={`h-2 w-2 rounded ${soft}`} />
+            <div className={`h-1 w-6 ${line}`} />
+            <div className={`h-0.5 w-5 ${line}`} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (layout === "icone-lado") {
+    return (
+      <div className="grid h-full w-full grid-cols-2 gap-1 bg-gray-50 p-1.5">
+        {[0, 1].map((i) => (
+          <div key={i} className={`${card} flex items-center gap-1 p-1`}>
+            <div className={`h-3 w-3 rounded ${soft}`} />
+            <div className="flex flex-col gap-0.5">
+              <div className={`h-1 w-6 ${line}`} />
+              <div className={`h-0.5 w-5 ${line}`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (layout === "circulos") {
+    return (
+      <div className="flex h-full w-full items-center justify-around bg-gray-50 p-1.5">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex flex-col items-center gap-1">
+            <div className={`h-4 w-4 rounded-full ${brand}`} />
+            <div className={`h-1 w-6 ${line}`} />
+            <div className={`h-0.5 w-4 ${line}`} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (layout === "lista") {
+    return (
+      <div className={`flex h-full w-full flex-col bg-white ${card}`}>
+        {[0, 1, 2].map((i) => (
+          <div key={i} className={`flex items-center gap-1 p-1 ${i > 0 ? "border-t border-gray-200" : ""}`}>
+            <div className={`h-2.5 w-2.5 rounded ${soft}`} />
+            <div className="flex flex-col gap-0.5">
+              <div className={`h-1 w-8 ${line}`} />
+              <div className={`h-0.5 w-6 ${line}`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (layout === "borda-colorida") {
+    return (
+      <div className="grid h-full w-full grid-cols-3 gap-1 bg-gray-50 p-1.5">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className={`${card} flex flex-col overflow-hidden`}>
+            <div className={`h-1 w-full ${brand}`} />
+            <div className="flex flex-col gap-0.5 p-1">
+              <div className={`h-2 w-2 rounded ${soft}`} />
+              <div className={`h-1 w-6 ${line}`} />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+  // numerados
+  return (
+    <div className="grid h-full w-full grid-cols-2 gap-1 bg-gray-50 p-1.5">
+      {[1, 2].map((n) => (
+        <div key={n} className={`${card} flex items-center gap-1 p-1`}>
+          <div className={`flex h-3.5 w-3.5 items-center justify-center rounded-full ${brand} text-[6px] font-bold text-white`}>
+            {n}
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <div className={`h-1 w-6 ${line}`} />
+            <div className={`h-0.5 w-5 ${line}`} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function DadosCardsIconesEditor({
+  value, onChange,
+}: {
+  value: Partial<DadosCardsIcones>;
+  onChange: (v: DadosCardsIcones) => void;
+}) {
+  const v: DadosCardsIcones = {
+    layout: (value.layout as CardsIconesLayout) ?? DEFAULT_CARDS_ICONES.layout,
+    colunas: ((value.colunas as 2 | 3 | 4) ?? DEFAULT_CARDS_ICONES.colunas),
+  };
+  const patch = (p: Partial<DadosCardsIcones>) => onChange({ ...v, ...p });
+  const suportaColunas = v.layout === "grade" || v.layout === "circulos";
+  return (
+    <div className="space-y-3">
+      <div className="space-y-2">
+        <Label className="text-xs">Estilo do layout</Label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {CARDS_ICONES_LAYOUT_OPTIONS.map((opt) => {
+            const selected = v.layout === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => patch({ layout: opt.key })}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border bg-white">
+                  <CardsIconesLayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+      {suportaColunas && (
+        <div className="space-y-1">
+          <Label className="text-xs">Colunas</Label>
+          <Select
+            value={String(v.colunas)}
+            onValueChange={(val) => patch({ colunas: Number(val) as 2 | 3 | 4 })}
+          >
+            <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="2">2 colunas</SelectItem>
+              <SelectItem value="3">3 colunas</SelectItem>
+              <SelectItem value="4">4 colunas</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function DadosContatoMapaEditor({
   value, onChange,
 }: {
