@@ -15,13 +15,90 @@ import {
   type SiteHeaderItem,
 } from "@/lib/cms";
 import { PreviewFrame } from "./PreviewFrame";
-import { Header } from "@/components/site/Header";
+import { Header, type HeaderLayout } from "@/components/site/Header";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
 
 type Form = Omit<SiteHeader, "id">;
 
 const initial: Form = { ...HEADER_DEFAULTS };
+
+const HEADER_LAYOUT_OPTIONS: { key: HeaderLayout; label: string; hint: string }[] = [
+  { key: "logo-esquerda", label: "Logo à esquerda", hint: "Logo à esquerda, menu à direita" },
+  { key: "logo-centralizado", label: "Logo centralizado", hint: "Logo em cima, menu abaixo" },
+  { key: "transparente", label: "Transparente", hint: "Sobre o banner, sólido ao rolar" },
+  { key: "com-barra-superior", label: "Com barra superior", hint: "Telefone/e-mail no topo" },
+  { key: "minimalista", label: "Minimalista", hint: "Só logo + menu, sem CTA" },
+];
+
+function HeaderLayoutThumb({ layout }: { layout: HeaderLayout }) {
+  const line = "rounded-sm bg-gray-300";
+  const btn = "rounded-full bg-[#D67F43]";
+  const logo = "rounded bg-gray-500";
+  if (layout === "logo-esquerda") {
+    return (
+      <div className="flex h-full w-full items-center gap-1.5 bg-white px-2">
+        <div className={`h-3 w-6 ${logo}`} />
+        <div className="flex flex-1 justify-center gap-1">
+          <div className={`h-1 w-4 ${line}`} />
+          <div className={`h-1 w-4 ${line}`} />
+          <div className={`h-1 w-4 ${line}`} />
+        </div>
+        <div className={`h-2 w-6 ${btn}`} />
+      </div>
+    );
+  }
+  if (layout === "logo-centralizado") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-white px-2 py-1">
+        <div className={`h-2.5 w-6 ${logo}`} />
+        <div className="flex gap-1">
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "transparente") {
+    return (
+      <div className="relative flex h-full w-full items-center gap-1.5 bg-gradient-to-br from-slate-500 to-slate-700 px-2">
+        <div className="h-3 w-6 rounded bg-white/70" />
+        <div className="flex flex-1 justify-center gap-1">
+          <div className="h-1 w-4 rounded-sm bg-white/70" />
+          <div className="h-1 w-4 rounded-sm bg-white/70" />
+        </div>
+        <div className={`h-2 w-6 ${btn}`} />
+      </div>
+    );
+  }
+  if (layout === "com-barra-superior") {
+    return (
+      <div className="flex h-full w-full flex-col bg-white">
+        <div className="h-2 w-full bg-[#D67F43]" />
+        <div className="flex flex-1 items-center gap-1.5 px-2">
+          <div className={`h-3 w-6 ${logo}`} />
+          <div className="flex flex-1 justify-center gap-1">
+            <div className={`h-1 w-4 ${line}`} />
+            <div className={`h-1 w-4 ${line}`} />
+          </div>
+          <div className={`h-2 w-6 ${btn}`} />
+        </div>
+      </div>
+    );
+  }
+  // minimalista
+  return (
+    <div className="flex h-full w-full items-center gap-1.5 bg-white px-2">
+      <div className={`h-3 w-6 ${logo}`} />
+      <div className="flex flex-1 justify-end gap-1">
+        <div className={`h-1 w-4 ${line}`} />
+        <div className={`h-1 w-4 ${line}`} />
+        <div className={`h-1 w-4 ${line}`} />
+      </div>
+    </div>
+  );
+}
 
 function newItem(order: number): SiteHeaderItem {
   return { id: `tmp-${Math.random().toString(36).slice(2, 9)}`, label: "", to: "/", order, visivel: true };
