@@ -1006,6 +1006,12 @@ export function SecoesManager({
                     onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
                   />
                 )}
+                {SECTION_TEMPLATES_BY_TIPO[form.tipo]?.dadosSchema === "cta-banner" && (
+                  <DadosCtaBannerEditor
+                    value={(form.dados as Partial<DadosCtaBanner>) ?? {}}
+                    onChange={(v) => setForm((f) => ({ ...f, dados: v }))}
+                  />
+                )}
               </TabsContent>
 
               {/* --- APARÊNCIA --- */}
