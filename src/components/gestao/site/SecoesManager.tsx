@@ -1374,6 +1374,98 @@ function DadosContatoMapaEditor({
 }
 
 function DadosEquipeEditor({
+  // -- prev fn --
+  ...args
+}: Parameters<typeof _DadosEquipeEditorImpl>[0]) {
+  return _DadosEquipeEditorImpl(args as never);
+}
+
+const EQUIPE_LAYOUT_OPTIONS: { key: EquipeLayout; label: string; hint: string }[] = [
+  { key: "grade", label: "Grade", hint: "Cards em colunas" },
+  { key: "carrossel", label: "Carrossel", hint: "Desliza com setas ‹ ›" },
+  { key: "circulos", label: "Círculos", hint: "Fotos redondas, minimalista" },
+  { key: "lista-perfil", label: "Lista perfil", hint: "Linhas alternando lados" },
+  { key: "destaque-grade", label: "Destaque + grade", hint: "1 grande no topo" },
+  { key: "mosaico", label: "Mosaico", hint: "Fotos com nome no hover" },
+];
+
+function EquipeLayoutThumb({ layout }: { layout: EquipeLayout }) {
+  const box = "rounded-sm bg-[#D67F43]/60";
+  if (layout === "grade") {
+    return (
+      <div className="flex h-full w-full items-center justify-center gap-1 p-2">
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+      </div>
+    );
+  }
+  if (layout === "carrossel") {
+    return (
+      <div className="flex h-full w-full items-center justify-between gap-1 px-1">
+        <span className="text-[10px] leading-none text-[#D67F43]">‹</span>
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <div className={`h-8 w-4 ${box}`} />
+        <span className="text-[10px] leading-none text-[#D67F43]">›</span>
+      </div>
+    );
+  }
+  if (layout === "circulos") {
+    return (
+      <div className="flex h-full w-full items-center justify-center gap-2 p-2">
+        <span className="h-6 w-6 rounded-full bg-[#D67F43]/60" />
+        <span className="h-6 w-6 rounded-full bg-[#D67F43]/60" />
+        <span className="h-6 w-6 rounded-full bg-[#D67F43]/60" />
+      </div>
+    );
+  }
+  if (layout === "lista-perfil") {
+    return (
+      <div className="flex h-full w-full flex-col justify-center gap-1 px-2">
+        <div className="flex items-center gap-1">
+          <div className={`h-4 w-5 ${box}`} />
+          <div className="flex-1 space-y-0.5">
+            <div className={`h-1 w-full ${box}`} />
+            <div className={`h-1 w-2/3 ${box}`} />
+          </div>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="flex-1 space-y-0.5">
+            <div className={`h-1 w-full ${box}`} />
+            <div className={`h-1 w-2/3 ${box}`} />
+          </div>
+          <div className={`h-4 w-5 ${box}`} />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "destaque-grade") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 p-2">
+        <div className={`h-5 w-12 ${box}`} />
+        <div className="flex gap-1">
+          <div className={`h-3 w-3 ${box}`} />
+          <div className={`h-3 w-3 ${box}`} />
+          <div className={`h-3 w-3 ${box}`} />
+        </div>
+      </div>
+    );
+  }
+  // mosaico
+  return (
+    <div className="grid h-full w-full grid-cols-3 gap-0.5 p-2">
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+      <div className={`${box}`} />
+    </div>
+  );
+}
+
+function _DadosEquipeEditorImpl({
   value, onChange,
 }: {
   value: Partial<DadosEquipe>;
