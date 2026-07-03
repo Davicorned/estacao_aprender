@@ -531,8 +531,16 @@ export async function fetchTema(): Promise<SiteTema | null> {
       return null;
     }
     const mapped = data ? (data as SiteTema) : null;
-    temaCache = { data: mapped, at: Date.now() };
-    return mapped;
+    const withUrls = mapped
+      ? ({
+          ...mapped,
+          logo_url: publicImageUrl(mapped.logo_url),
+          logo_escuro_url: publicImageUrl(mapped.logo_escuro_url),
+          favicon_url: publicImageUrl(mapped.favicon_url),
+        } as SiteTema)
+      : null;
+    temaCache = { data: withUrls, at: Date.now() };
+    return withUrls;
   })();
   temaInflight = run.finally(() => { temaInflight = null; });
   return temaInflight;
