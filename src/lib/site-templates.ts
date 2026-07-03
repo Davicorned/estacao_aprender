@@ -252,13 +252,23 @@ export const DEFAULT_CONTATO_MAPA: DadosContatoMapa = {
 };
 
 /** Nossa equipe (puxa coleção team_members) */
+export type EquipeLayout =
+  | "grade"
+  | "carrossel"
+  | "circulos"
+  | "lista-perfil"
+  | "destaque-grade"
+  | "mosaico";
+
 export type DadosEquipe = {
+  layout: EquipeLayout;
   colunas: 2 | 3 | 4;
   mostrar_especialidades: boolean;
   mostrar_registro: boolean;
 };
 
 export const DEFAULT_EQUIPE: DadosEquipe = {
+  layout: "grade",
   colunas: 3,
   mostrar_especialidades: true,
   mostrar_registro: true,
