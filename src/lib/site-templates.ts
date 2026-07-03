@@ -329,3 +329,22 @@ export type DadosCtaBanner = {
 export const DEFAULT_CTA_BANNER: DadosCtaBanner = {
   layout: "centralizado",
 };
+
+/** Cards com ícones (layouts) */
+export type CardsIconesLayout =
+  | "grade"
+  | "icone-lado"
+  | "circulos"
+  | "lista"
+  | "borda-colorida"
+  | "numerados";
+
+export type DadosCardsIcones = {
+  layout: CardsIconesLayout;
+  colunas: 2 | 3 | 4;
+};
+
+export const DEFAULT_CARDS_ICONES: DadosCardsIcones = {
+  layout: "grade",
+  colunas: 3,
+};
