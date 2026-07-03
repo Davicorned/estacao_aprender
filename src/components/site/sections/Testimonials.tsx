@@ -182,8 +182,8 @@ export function Testimonials({
                   </CarouselItem>
                 ))}
               </CarouselContent>
-              <CarouselPrevious className="!-left-2 sm:!-left-8" />
-              <CarouselNext className="!-right-2 sm:!-right-8" />
+              <CarouselPrevious className="hidden sm:flex sm:!-left-8" />
+              <CarouselNext className="hidden sm:flex sm:!-right-8" />
             </Carousel>
           </div>
         )}
@@ -210,8 +210,8 @@ export function Testimonials({
               </CarouselContent>
               {items.length > 1 && (
                 <>
-                  <CarouselPrevious className="!-left-2 sm:!-left-8" />
-                  <CarouselNext className="!-right-2 sm:!-right-8" />
+                  <CarouselPrevious className="hidden sm:flex sm:!-left-8" />
+                  <CarouselNext className="hidden sm:flex sm:!-right-8" />
                 </>
               )}
             </Carousel>
