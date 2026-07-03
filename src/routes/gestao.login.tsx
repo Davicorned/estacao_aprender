@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
+import { fetchTema } from "@/lib/cms";
 
 export const Route = createFileRoute("/gestao/login")({
   component: GestaoLogin,
@@ -19,6 +20,12 @@ function GestaoLogin() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [logo, setLogo] = useState<string>(logoAsset.url);
+  useEffect(() => {
+    let alive = true;
+    void fetchTema().then((t) => { if (alive && t?.logo_url) setLogo(t.logo_url); });
+    return () => { alive = false; };
+  }, []);
 
   useEffect(() => {
     if (!loading && user) void navigate({ to: "/gestao/dashboard" });
@@ -49,7 +56,7 @@ function GestaoLogin() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#FEF3E8] to-white px-4">
       <div className="w-full max-w-sm rounded-2xl border border-gray-200 bg-white p-8 shadow-xl">
         <div className="flex justify-center">
-          <img src={logoAsset.url} alt="Estação Aprender" className="h-14" />
+          <img src={logo} alt="Estação Aprender" className="h-14" />
         </div>
         <p className="mt-4 text-center text-xs font-medium uppercase tracking-wider text-[#D67F43]">
           Sistema de Gestão

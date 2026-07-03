@@ -3,7 +3,7 @@ import { Calendar, Menu, Mail, Phone, Instagram, Facebook } from "lucide-react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
-import { fetchHeader, fetchRodape, HEADER_DEFAULTS, type SiteHeader, type SiteRodape } from "@/lib/cms";
+import { fetchHeader, fetchRodape, fetchTema, HEADER_DEFAULTS, type SiteHeader, type SiteRodape, type SiteTema } from "@/lib/cms";
 
 const FALLBACK_LOGO = logoAsset.url;
 
@@ -33,6 +33,18 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
   const [data, setData] = useState<SiteHeader | null>(initialFromLoader);
   const [rodape, setRodape] = useState<SiteRodape | null>(null);
   const [scrolled, setScrolled] = useState(false);
+  let initialTema: SiteTema | null = null;
+  try {
+    const rootData = rootApi.useLoaderData();
+    initialTema = ((rootData as any)?.initial?.tema as SiteTema | undefined) ?? null;
+  } catch { /* not inside root */ }
+  const [tema, setTema] = useState<SiteTema | null>(initialTema);
+  useEffect(() => {
+    if (initialTema) return;
+    let alive = true;
+    void fetchTema().then((t) => { if (alive) setTema(t); });
+    return () => { alive = false; };
+  }, [initialTema]);
 
   useEffect(() => {
     if (override) return;
@@ -86,7 +98,8 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
   const isTranspTop = layout === "transparente" && !scrolled;
   const accent = cfg.cor_destaque || "var(--site-primary)";
   const textColor = forceLight ? null : cfg.texto_cor_hex || null;
-  const logoSrc = cfg.logo_url || FALLBACK_LOGO;
+  // Ordem: override do cabeçalho → logo da Identidade → asset embutido
+  const logoSrc = cfg.logo_url || tema?.logo_url || FALLBACK_LOGO;
   const ctaTo = cfg.cta_to || "/Contato";
   const showCta = cfg.cta_visivel && cfg.cta_label && layout !== "minimalista";
 
