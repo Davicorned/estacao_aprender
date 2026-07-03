@@ -333,6 +333,7 @@ export function DynamicSection({
           eyebrow={secao.eyebrow ?? undefined}
           titulo={secao.titulo ?? undefined}
           descricao={secao.descricao ?? undefined}
+          layout={d.layout ?? DEFAULT_EQUIPE.layout}
           colunas={(d.colunas as 2 | 3 | 4) ?? DEFAULT_EQUIPE.colunas}
           mostrar_especialidades={d.mostrar_especialidades ?? DEFAULT_EQUIPE.mostrar_especialidades}
           mostrar_registro={d.mostrar_registro ?? DEFAULT_EQUIPE.mostrar_registro}
