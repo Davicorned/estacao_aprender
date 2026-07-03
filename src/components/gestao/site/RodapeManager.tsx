@@ -22,7 +22,7 @@ import {
   type SiteRodape,
 } from "@/lib/cms";
 import { PreviewFrame } from "./PreviewFrame";
-import { Footer } from "@/components/site/Footer";
+import { Footer, type FooterLayout } from "@/components/site/Footer";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
 
@@ -31,6 +31,94 @@ type Form = Omit<SiteRodape, "id">;
 const initial: Form = { ...RODAPE_DEFAULTS };
 
 const REDE_OPTS = ["instagram", "facebook", "linkedin", "youtube", "twitter", "whatsapp", "tiktok"];
+
+const FOOTER_LAYOUT_OPTIONS: { key: FooterLayout; label: string; hint: string }[] = [
+  { key: "colunas", label: "Colunas", hint: "Marca + navegação + serviços + contato" },
+  { key: "compacto", label: "Compacto", hint: "Uma linha só: logo, links, redes" },
+  { key: "centralizado", label: "Centralizado", hint: "Logo, links e redes no centro" },
+  { key: "com-mapa", label: "Com mapa", hint: "Mini-mapa do endereço + contato" },
+  { key: "duas-colunas", label: "Duas colunas", hint: "Marca + redes | links + contato" },
+];
+
+function FooterLayoutThumb({ layout }: { layout: FooterLayout }) {
+  const line = "rounded-sm bg-white/40";
+  const lineD = "rounded-sm bg-white/60";
+  const box = "bg-white/20 rounded";
+  if (layout === "colunas") {
+    return (
+      <div className="grid h-full w-full grid-cols-4 gap-1 bg-gray-800 p-2">
+        {[0,1,2,3].map((i) => (
+          <div key={i} className="flex flex-col gap-0.5">
+            <div className={`h-1 w-full ${lineD}`} />
+            <div className={`h-0.5 w-4/5 ${line}`} />
+            <div className={`h-0.5 w-3/5 ${line}`} />
+          </div>
+        ))}
+      </div>
+    );
+  }
+  if (layout === "compacto") {
+    return (
+      <div className="flex h-full w-full items-center justify-between gap-1 bg-gray-800 p-2">
+        <div className={`h-2 w-6 ${box}`} />
+        <div className="flex gap-1">
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+        </div>
+        <div className="flex gap-0.5">
+          <div className="h-2 w-2 rounded-full bg-white/40" />
+          <div className="h-2 w-2 rounded-full bg-white/40" />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "centralizado") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 bg-gray-800 p-2">
+        <div className={`h-2 w-6 ${box}`} />
+        <div className="flex gap-1">
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+          <div className={`h-1 w-3 ${line}`} />
+        </div>
+        <div className="flex gap-0.5">
+          <div className="h-1.5 w-1.5 rounded-full bg-white/50" />
+          <div className="h-1.5 w-1.5 rounded-full bg-white/50" />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "com-mapa") {
+    return (
+      <div className="grid h-full w-full grid-cols-2 gap-1 bg-gray-800 p-2">
+        <div className="rounded bg-gradient-to-br from-emerald-400/60 to-sky-400/60" />
+        <div className="flex flex-col gap-0.5">
+          <div className={`h-1 w-full ${lineD}`} />
+          <div className={`h-0.5 w-4/5 ${line}`} />
+          <div className={`h-0.5 w-3/5 ${line}`} />
+          <div className={`h-0.5 w-4/5 ${line}`} />
+        </div>
+      </div>
+    );
+  }
+  // duas-colunas
+  return (
+    <div className="grid h-full w-full grid-cols-2 gap-1 bg-gray-800 p-2">
+      <div className="flex flex-col gap-0.5">
+        <div className={`h-2 w-6 ${box}`} />
+        <div className={`h-0.5 w-full ${line}`} />
+        <div className={`h-0.5 w-4/5 ${line}`} />
+      </div>
+      <div className="flex flex-col gap-0.5">
+        <div className={`h-1 w-full ${lineD}`} />
+        <div className={`h-0.5 w-3/4 ${line}`} />
+        <div className={`h-0.5 w-3/4 ${line}`} />
+        <div className={`h-0.5 w-2/3 ${line}`} />
+      </div>
+    </div>
+  );
+}
 
 export function RodapeManager() {
   const [form, setForm] = useState<Form>(initial);
