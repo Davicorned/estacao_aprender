@@ -9,9 +9,92 @@ import { toast } from "sonner";
 import { supabase, SITE_IMAGES_BUCKET, publicImageUrl } from "@/integrations/supabase/client";
 import { invalidateCmsCache, HERO_DEFAULTS, type SiteHero } from "@/lib/cms";
 import { PreviewFrame } from "./PreviewFrame";
-import { Hero } from "@/components/site/sections/Hero";
+import { Hero, type HeroLayout } from "@/components/site/sections/Hero";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
+
+const HERO_LAYOUT_OPTIONS: { key: HeroLayout; label: string; hint: string }[] = [
+  { key: "imagem-direita", label: "Imagem à direita", hint: "Texto à esquerda, imagem à direita" },
+  { key: "imagem-esquerda", label: "Imagem à esquerda", hint: "Espelhado — texto à direita" },
+  { key: "imagem-fundo", label: "Imagem de fundo", hint: "Imagem full-bleed com overlay escuro" },
+  { key: "centralizado", label: "Centralizado", hint: "Texto e CTAs centrais, sem imagem grande" },
+  { key: "empilhado", label: "Empilhado", hint: "Texto em cima, imagem embaixo" },
+  { key: "minimalista", label: "Minimalista", hint: "Só título, subtítulo e CTAs" },
+];
+
+function HeroLayoutThumb({ layout }: { layout: HeroLayout }) {
+  const brand = "bg-[#D67F43]";
+  const soft = "bg-[#FEF3E8]";
+  const line = "rounded-sm bg-gray-300";
+  const btn = "rounded-full bg-[#D67F43]";
+  const img = "rounded bg-gradient-to-br from-slate-300 to-slate-500";
+  if (layout === "imagem-direita") {
+    return (
+      <div className={`flex h-full w-full items-center gap-1.5 ${soft} p-2`}>
+        <div className="flex flex-1 flex-col gap-0.5">
+          <div className={`h-1.5 w-full ${line}`} />
+          <div className={`h-1 w-4/5 ${line}`} />
+          <div className={`mt-0.5 h-1.5 w-8 ${btn}`} />
+        </div>
+        <div className={`h-10 w-10 ${img}`} />
+      </div>
+    );
+  }
+  if (layout === "imagem-esquerda") {
+    return (
+      <div className={`flex h-full w-full items-center gap-1.5 ${soft} p-2`}>
+        <div className={`h-10 w-10 ${img}`} />
+        <div className="flex flex-1 flex-col gap-0.5">
+          <div className={`h-1.5 w-full ${line}`} />
+          <div className={`h-1 w-4/5 ${line}`} />
+          <div className={`mt-0.5 h-1.5 w-8 ${btn}`} />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "imagem-fundo") {
+    return (
+      <div className={`relative flex h-full w-full items-center ${img} p-2`}>
+        <div className="absolute inset-0 bg-black/50" />
+        <div className="relative flex flex-col gap-0.5">
+          <div className="h-1.5 w-16 rounded-sm bg-white/90" />
+          <div className="h-1 w-12 rounded-sm bg-white/70" />
+          <div className={`mt-0.5 h-1.5 w-8 ${btn}`} />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "centralizado") {
+    return (
+      <div className={`flex h-full w-full flex-col items-center justify-center gap-1 ${soft} p-2`}>
+        <div className={`h-1.5 w-20 ${line}`} />
+        <div className={`h-1 w-16 ${line}`} />
+        <div className="mt-0.5 flex gap-1">
+          <div className={`h-1.5 w-6 ${btn}`} />
+          <div className="h-1.5 w-6 rounded-full border border-gray-300 bg-white" />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "empilhado") {
+    return (
+      <div className={`flex h-full w-full flex-col items-center gap-1 ${soft} p-1.5`}>
+        <div className={`h-1.5 w-16 ${line}`} />
+        <div className={`h-1 w-12 ${line}`} />
+        <div className={`h-1.5 w-6 ${btn}`} />
+        <div className={`h-6 w-full ${img}`} />
+      </div>
+    );
+  }
+  // minimalista
+  return (
+    <div className="flex h-full w-full flex-col justify-center gap-1 bg-white p-2">
+      <div className={`h-1.5 w-20 ${line}`} />
+      <div className={`h-1 w-14 ${line}`} />
+      <div className={`mt-0.5 h-1.5 w-8 ${btn}`} />
+    </div>
+  );
+}
 
 type Form = Omit<SiteHero, "id">;
 
@@ -90,6 +173,37 @@ export function HeroManager() {
   return (
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,560px)_1fr]">
       <div className="space-y-6">
+      <section className="rounded-xl border border-border bg-card p-5 space-y-4">
+        <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estilo do banner</h2>
+        <p className="text-xs text-muted-foreground">Escolha como o conteúdo aparece no topo da Home.</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {HERO_LAYOUT_OPTIONS.map((opt) => {
+            const selected = (form.layout || "imagem-direita") === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => setForm((f) => ({ ...f, layout: opt.key }))}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border bg-white">
+                  <HeroLayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Imagem do banner</h2>
         <div className="flex items-start gap-4">
