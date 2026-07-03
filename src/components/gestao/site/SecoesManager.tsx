@@ -39,6 +39,7 @@ import {
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
   type DadosEquipe, type EquipeLayout,
   type DadosDepoimentos, type DepoimentosLayout,
+  type ContatoMapaLayout,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -1320,6 +1321,7 @@ function DadosContatoMapaEditor({
   onChange: (v: DadosContatoMapa) => void;
 }) {
   const v: DadosContatoMapa = {
+    layout: (value.layout as ContatoMapaLayout) ?? DEFAULT_CONTATO_MAPA.layout,
     telefone: value.telefone ?? DEFAULT_CONTATO_MAPA.telefone,
     telefone_link: value.telefone_link ?? DEFAULT_CONTATO_MAPA.telefone_link,
     email: value.email ?? DEFAULT_CONTATO_MAPA.email,
@@ -1335,6 +1337,35 @@ function DadosContatoMapaEditor({
   const patch = (p: Partial<DadosContatoMapa>) => onChange({ ...v, ...p });
   return (
     <div className="space-y-3">
+      <div className="space-y-2">
+        <Label className="text-xs">Estilo do layout</Label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {CONTATO_LAYOUT_OPTIONS.map((opt) => {
+            const selected = v.layout === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => patch({ layout: opt.key })}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border bg-white">
+                  <ContatoLayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
         <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone exibido (ex: (11) 99999-9999)" />
         <IconPicker value={v.icone_telefone ?? "Phone"} onChange={(nm) => patch({ icone_telefone: nm })} />
