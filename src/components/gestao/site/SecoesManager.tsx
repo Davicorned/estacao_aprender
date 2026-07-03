@@ -1380,11 +1380,14 @@ function DadosEquipeEditor({
   onChange: (v: DadosEquipe) => void;
 }) {
   const v: DadosEquipe = {
+    layout: (value.layout as EquipeLayout) ?? DEFAULT_EQUIPE.layout,
     colunas: (value.colunas as 2 | 3 | 4) ?? DEFAULT_EQUIPE.colunas,
     mostrar_especialidades: value.mostrar_especialidades ?? DEFAULT_EQUIPE.mostrar_especialidades,
     mostrar_registro: value.mostrar_registro ?? DEFAULT_EQUIPE.mostrar_registro,
   };
   const patch = (p: Partial<DadosEquipe>) => onChange({ ...v, ...p });
+  const supportsColunas =
+    v.layout === "grade" || v.layout === "circulos" || v.layout === "mosaico" || v.layout === "destaque-grade";
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-[#D67F43]/40 bg-[#FEF3E8] p-3 text-xs text-[#7a3f18] dark:bg-amber-950/30 dark:text-amber-200">
@@ -1394,6 +1397,37 @@ function DadosEquipeEditor({
         </Link>
         . Aqui você edita só o cabeçalho e as opções de exibição abaixo.
       </div>
+      <div className="space-y-2">
+        <Label className="text-xs">Estilo do layout</Label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {EQUIPE_LAYOUT_OPTIONS.map((opt) => {
+            const selected = v.layout === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => patch({ layout: opt.key })}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border bg-white">
+                  <EquipeLayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {supportsColunas && (
       <div className="space-y-2">
         <Label className="text-xs">Colunas</Label>
         <Select
@@ -1408,6 +1442,7 @@ function DadosEquipeEditor({
           </SelectContent>
         </Select>
       </div>
+      )}
       <div className="flex items-center justify-between rounded-lg border border-border p-3">
         <div>
           <p className="text-sm font-medium">Mostrar especialidades</p>
