@@ -217,12 +217,15 @@ export function HeaderManager() {
     <>
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Logo e marca</h2>
+              <p className="text-xs text-muted-foreground">
+                Opcional — deixe vazio para usar o logo da <strong>Identidade</strong>. Preencha só para um logo diferente aqui.
+              </p>
               <div className="flex items-start gap-4">
                 <div className="h-16 w-16 overflow-hidden rounded-lg bg-[#FEF3E8] flex items-center justify-center">
                   {form.logo_url ? (
                     <img src={publicImageUrl(form.logo_url) ?? ""} alt="" className="h-full w-full object-contain" />
                   ) : (
-                    <span className="text-xs text-muted-foreground">padrão</span>
+                    <span className="text-[10px] text-muted-foreground text-center">Identidade</span>
                   )}
                 </div>
                 <div className="flex flex-col gap-2">
@@ -238,12 +241,12 @@ export function HeaderManager() {
                       }}
                     />
                     <Button asChild type="button" size="sm" variant="outline" disabled={uploading}>
-                      <span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Trocar logo"}</span>
+                      <span><Upload className="mr-2 h-4 w-4" />{uploading ? "Enviando…" : "Usar um logo só aqui"}</span>
                     </Button>
                   </label>
                   {form.logo_url && (
                     <Button size="sm" variant="ghost" onClick={() => setForm({ ...form, logo_url: null })}>
-                      Remover (usar padrão)
+                      Remover (usar Identidade)
                     </Button>
                   )}
                 </div>
