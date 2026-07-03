@@ -184,7 +184,16 @@ export type ModalidadeCard = {
 export type DadosModalidades = { cards: ModalidadeCard[] };
 
 /** Contato + mapa */
+export type ContatoMapaLayout =
+  | "info-mapa"
+  | "mapa-topo"
+  | "so-info"
+  | "cards-grade"
+  | "faixa"
+  | "mapa-fundo";
+
 export type DadosContatoMapa = {
+  layout: ContatoMapaLayout;
   telefone: string;
   telefone_link: string;
   email: string;
@@ -236,6 +245,7 @@ export const DEFAULT_MODALIDADES: DadosModalidades = {
 };
 
 export const DEFAULT_CONTATO_MAPA: DadosContatoMapa = {
+  layout: "info-mapa",
   telefone: "(11) 93213-9815",
   telefone_link:
     "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20no%20Esta%C3%A7%C3%A3o%20Aprender.",

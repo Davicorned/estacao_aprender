@@ -306,6 +306,7 @@ export function DynamicSection({
       const d = (secao.dados ?? {}) as Partial<DadosContatoMapa>;
       return (
         <Contact
+          layout={d.layout ?? DEFAULT_CONTATO_MAPA.layout}
           eyebrow={secao.eyebrow ?? undefined}
           titulo={secao.titulo ?? undefined}
           descricao={secao.descricao ?? undefined}

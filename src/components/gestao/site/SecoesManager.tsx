@@ -39,6 +39,7 @@ import {
   type DadosModalidades, type DadosContatoMapa, type ModalidadeCard,
   type DadosEquipe, type EquipeLayout,
   type DadosDepoimentos, type DepoimentosLayout,
+  type ContatoMapaLayout,
 } from "@/lib/site-templates";
 
 type ItemForm = { id?: string; titulo: string; descricao: string; icone: string; link: string };
@@ -1313,6 +1314,88 @@ function DadosModalidadesEditor({
   );
 }
 
+const CONTATO_LAYOUT_OPTIONS: { key: ContatoMapaLayout; label: string; hint: string }[] = [
+  { key: "info-mapa", label: "Info + mapa", hint: "Cards à esquerda, mapa à direita" },
+  { key: "mapa-topo", label: "Mapa em cima", hint: "Mapa largo, contatos embaixo" },
+  { key: "so-info", label: "Só info", hint: "Cards centralizados, sem mapa" },
+  { key: "cards-grade", label: "Cards em grade", hint: "4 cards + mapa embaixo" },
+  { key: "faixa", label: "Faixa", hint: "Contatos em linha horizontal" },
+  { key: "mapa-fundo", label: "Mapa de fundo", hint: "Card flutuante sobre o mapa" },
+];
+
+function ContatoLayoutThumb({ layout }: { layout: ContatoMapaLayout }) {
+  const box = "rounded-sm bg-[#D67F43]/60";
+  const map = "rounded-sm bg-[#D67F43]/25";
+  if (layout === "info-mapa") {
+    return (
+      <div className="flex h-full w-full items-center gap-1 p-2">
+        <div className="flex h-full w-1/2 flex-col gap-0.5">
+          <div className={`h-2 w-full ${box}`} />
+          <div className={`h-2 w-full ${box}`} />
+          <div className={`h-2 w-full ${box}`} />
+        </div>
+        <div className={`h-full w-1/2 ${map}`} />
+      </div>
+    );
+  }
+  if (layout === "mapa-topo") {
+    return (
+      <div className="flex h-full w-full flex-col gap-1 p-2">
+        <div className={`h-6 w-full ${map}`} />
+        <div className="flex gap-0.5">
+          <div className={`h-2 flex-1 ${box}`} />
+          <div className={`h-2 flex-1 ${box}`} />
+        </div>
+      </div>
+    );
+  }
+  if (layout === "so-info") {
+    return (
+      <div className="flex h-full w-full flex-col items-center justify-center gap-1 p-2">
+        <div className={`h-2 w-14 ${box}`} />
+        <div className={`h-2 w-14 ${box}`} />
+        <div className={`h-2 w-14 ${box}`} />
+      </div>
+    );
+  }
+  if (layout === "cards-grade") {
+    return (
+      <div className="flex h-full w-full flex-col gap-1 p-2">
+        <div className="grid grid-cols-4 gap-0.5">
+          <div className={`h-3 ${box}`} />
+          <div className={`h-3 ${box}`} />
+          <div className={`h-3 ${box}`} />
+          <div className={`h-3 ${box}`} />
+        </div>
+        <div className={`h-4 w-full ${map}`} />
+      </div>
+    );
+  }
+  if (layout === "faixa") {
+    return (
+      <div className="flex h-full w-full flex-col justify-center gap-1 p-2">
+        <div className="flex gap-0.5">
+          <div className={`h-3 flex-1 ${box}`} />
+          <div className={`h-3 flex-1 ${box}`} />
+          <div className={`h-3 flex-1 ${box}`} />
+          <div className={`h-3 flex-1 ${box}`} />
+        </div>
+        <div className={`h-3 w-full ${map}`} />
+      </div>
+    );
+  }
+  // mapa-fundo
+  return (
+    <div className={`relative h-full w-full ${map} p-2`}>
+      <div className="absolute left-1 top-1 flex h-[85%] w-1/2 flex-col gap-0.5 rounded-sm bg-white/90 p-1 shadow">
+        <div className={`h-1 w-full ${box}`} />
+        <div className={`h-1 w-full ${box}`} />
+        <div className={`h-1 w-3/4 ${box}`} />
+      </div>
+    </div>
+  );
+}
+
 function DadosContatoMapaEditor({
   value, onChange,
 }: {
@@ -1320,6 +1403,7 @@ function DadosContatoMapaEditor({
   onChange: (v: DadosContatoMapa) => void;
 }) {
   const v: DadosContatoMapa = {
+    layout: (value.layout as ContatoMapaLayout) ?? DEFAULT_CONTATO_MAPA.layout,
     telefone: value.telefone ?? DEFAULT_CONTATO_MAPA.telefone,
     telefone_link: value.telefone_link ?? DEFAULT_CONTATO_MAPA.telefone_link,
     email: value.email ?? DEFAULT_CONTATO_MAPA.email,
@@ -1335,6 +1419,35 @@ function DadosContatoMapaEditor({
   const patch = (p: Partial<DadosContatoMapa>) => onChange({ ...v, ...p });
   return (
     <div className="space-y-3">
+      <div className="space-y-2">
+        <Label className="text-xs">Estilo do layout</Label>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+          {CONTATO_LAYOUT_OPTIONS.map((opt) => {
+            const selected = v.layout === opt.key;
+            return (
+              <button
+                type="button"
+                key={opt.key}
+                onClick={() => patch({ layout: opt.key })}
+                className={
+                  "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                  (selected
+                    ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                    : "border-border hover:border-[#D67F43]/60 bg-card")
+                }
+              >
+                <div className="h-16 w-full border-b border-border bg-white">
+                  <ContatoLayoutThumb layout={opt.key} />
+                </div>
+                <div className="p-2">
+                  <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                  <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
         <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone exibido (ex: (11) 99999-9999)" />
         <IconPicker value={v.icone_telefone ?? "Phone"} onChange={(nm) => patch({ icone_telefone: nm })} />
