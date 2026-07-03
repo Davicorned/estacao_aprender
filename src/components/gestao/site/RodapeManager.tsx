@@ -25,6 +25,7 @@ import { PreviewFrame } from "./PreviewFrame";
 import { Footer, type FooterLayout } from "@/components/site/Footer";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
+import { EditorLayout, type EditorLayoutTab } from "./EditorLayout";
 
 type Form = Omit<SiteRodape, "id">;
 
