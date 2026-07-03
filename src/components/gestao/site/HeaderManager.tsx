@@ -18,6 +18,7 @@ import { PreviewFrame } from "./PreviewFrame";
 import { Header, type HeaderLayout } from "@/components/site/Header";
 import { ColorField } from "./ColorField";
 import { LinkField } from "./LinkField";
+import { EditorLayout, type EditorLayoutTab } from "./EditorLayout";
 
 type Form = Omit<SiteHeader, "id">;
 
