@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as RobotsDottxtRouteImport } from './routes/robots[.]txt'
 import { Route as GestaoRouteImport } from './routes/gestao'
-import { Route as DevPreviewRouteImport } from './routes/dev-preview'
 import { Route as ServicosRouteImport } from './routes/Servicos'
 import { Route as QuemSomosRouteImport } from './routes/QuemSomos'
 import { Route as ContatoRouteImport } from './routes/Contato'
@@ -57,11 +56,6 @@ const RobotsDottxtRoute = RobotsDottxtRouteImport.update({
 const GestaoRoute = GestaoRouteImport.update({
   id: '/gestao',
   path: '/gestao',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DevPreviewRoute = DevPreviewRouteImport.update({
-  id: '/dev-preview',
-  path: '/dev-preview',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ServicosRoute = ServicosRouteImport.update({
@@ -222,7 +216,6 @@ export interface FileRoutesByFullPath {
   '/Contato': typeof ContatoRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
-  '/dev-preview': typeof DevPreviewRoute
   '/gestao': typeof GestaoRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -258,7 +251,6 @@ export interface FileRoutesByTo {
   '/Contato': typeof ContatoRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
-  '/dev-preview': typeof DevPreviewRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
@@ -292,7 +284,6 @@ export interface FileRoutesById {
   '/Contato': typeof ContatoRoute
   '/QuemSomos': typeof QuemSomosRoute
   '/Servicos': typeof ServicosRoute
-  '/dev-preview': typeof DevPreviewRoute
   '/gestao': typeof GestaoRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -330,7 +321,6 @@ export interface FileRouteTypes {
     | '/Contato'
     | '/QuemSomos'
     | '/Servicos'
-    | '/dev-preview'
     | '/gestao'
     | '/robots.txt'
     | '/sitemap.xml'
@@ -366,7 +356,6 @@ export interface FileRouteTypes {
     | '/Contato'
     | '/QuemSomos'
     | '/Servicos'
-    | '/dev-preview'
     | '/robots.txt'
     | '/sitemap.xml'
     | '/gestao/agenda'
@@ -399,7 +388,6 @@ export interface FileRouteTypes {
     | '/Contato'
     | '/QuemSomos'
     | '/Servicos'
-    | '/dev-preview'
     | '/gestao'
     | '/robots.txt'
     | '/sitemap.xml'
@@ -436,7 +424,6 @@ export interface RootRouteChildren {
   ContatoRoute: typeof ContatoRoute
   QuemSomosRoute: typeof QuemSomosRoute
   ServicosRoute: typeof ServicosRoute
-  DevPreviewRoute: typeof DevPreviewRoute
   GestaoRoute: typeof GestaoRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -464,13 +451,6 @@ declare module '@tanstack/react-router' {
       path: '/gestao'
       fullPath: '/gestao'
       preLoaderRoute: typeof GestaoRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/dev-preview': {
-      id: '/dev-preview'
-      path: '/dev-preview'
-      fullPath: '/dev-preview'
-      preLoaderRoute: typeof DevPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/Servicos': {
@@ -767,7 +747,6 @@ const rootRouteChildren: RootRouteChildren = {
   ContatoRoute: ContatoRoute,
   QuemSomosRoute: QuemSomosRoute,
   ServicosRoute: ServicosRoute,
-  DevPreviewRoute: DevPreviewRoute,
   GestaoRoute: GestaoRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
