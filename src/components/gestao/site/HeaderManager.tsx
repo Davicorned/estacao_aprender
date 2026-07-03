@@ -312,6 +312,37 @@ export function HeaderManager() {
           </TabsContent>
 
           <TabsContent value="aparencia" className="space-y-6 pt-4">
+            <section className="rounded-xl border border-border bg-card p-5 space-y-3">
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Estilo do cabeçalho</h2>
+              <p className="text-xs text-muted-foreground">Escolha como o cabeçalho aparece em todas as páginas.</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {HEADER_LAYOUT_OPTIONS.map((opt) => {
+                  const selected = ((form.layout as HeaderLayout) || "logo-esquerda") === opt.key;
+                  return (
+                    <button
+                      type="button"
+                      key={opt.key}
+                      onClick={() => setForm((f) => ({ ...f, layout: opt.key }))}
+                      className={
+                        "flex flex-col overflow-hidden rounded-lg border text-left transition " +
+                        (selected
+                          ? "border-[#D67F43] ring-2 ring-[#D67F43]/40 bg-[#FEF3E8]/50"
+                          : "border-border hover:border-[#D67F43]/60 bg-card")
+                      }
+                    >
+                      <div className="h-14 w-full border-b border-border">
+                        <HeaderLayoutThumb layout={opt.key} />
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs font-medium leading-tight">{opt.label}</p>
+                        <p className="text-[10px] text-muted-foreground leading-snug">{opt.hint}</p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </section>
+
             <section className="rounded-xl border border-border bg-card p-5 space-y-4">
               <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Fundo do cabeçalho</h2>
               <ColorField
