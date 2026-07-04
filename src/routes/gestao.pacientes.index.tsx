@@ -277,6 +277,17 @@ function PacienteRow({
   stats?: PacienteAgendamentoStats;
 }) {
   const navigate = useNavigate();
+  const qc = useQueryClient();
+  async function handleDelete() {
+    try {
+      await deletePaciente(paciente.id);
+      toast.success("Paciente excluído");
+      await qc.invalidateQueries({ queryKey: ["pacientes"] });
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erro ao excluir paciente");
+    }
+  }
   return (
     <TableRow
       className="cursor-pointer hover:bg-gray-50"
@@ -311,6 +322,36 @@ function PacienteRow({
               <Calendar className="h-4 w-4" />
             </Link>
           </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                size="icon"
+                variant="ghost"
+                title="Excluir"
+                className="text-red-600 hover:bg-red-50 hover:text-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Excluir {paciente.nome}?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta ação é permanente. Se houver agendamentos ou contratos vinculados,
+                  a exclusão será bloqueada — nesse caso, inative o paciente.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={handleDelete}
+                  className="bg-red-600 hover:bg-red-700"
+                >
+                  Excluir
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </TableCell>
     </TableRow>
