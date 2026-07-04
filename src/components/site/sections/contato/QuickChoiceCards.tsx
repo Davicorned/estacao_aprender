@@ -1,17 +1,15 @@
 import * as Icons from "lucide-react";
 import { Phone, ArrowRight } from "lucide-react";
 import { FadeUp } from "../../FadeUp";
-
-const WA = "https://wa.me/5511932139815?text=Ol%C3%A1!%20Gostaria%20de%20agendar%20uma%20consulta%20particular%20no%20Esta%C3%A7%C3%A3o%20Aprender.";
+import { useSiteContatos } from "@/lib/useSiteContatos";
 
 type Item = { icone: string; titulo: string; descricao: string; link: string };
 
-const DEFAULT_ITENS: Item[] = [
+const DEFAULT_ITENS_TEMPLATE: Omit<Item, "link">[] = [
   {
     icone: "Phone",
     titulo: "Consulta Particular",
     descricao: "Atendimento rápido via WhatsApp. Agende sua consulta com nossa equipe.",
-    link: WA,
   },
 ];
 
@@ -23,13 +21,18 @@ function getIcon(name?: string | null) {
 
 type Props = { itens?: Item[] };
 
-export function QuickChoiceCards({ itens = DEFAULT_ITENS }: Props = {}) {
+export function QuickChoiceCards({ itens }: Props = {}) {
+  const { whatsappPrimarioHref } = useSiteContatos();
+  const resolvedItens: Item[] =
+    itens && itens.length > 0
+      ? itens
+      : DEFAULT_ITENS_TEMPLATE.map((t) => ({ ...t, link: whatsappPrimarioHref || "#" }));
   const external = (href: string) => href.startsWith("http");
   return (
     <section className="border-b border-gray-100 bg-white py-12">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className={`mx-auto grid gap-6 ${itens.length > 1 ? "max-w-5xl md:grid-cols-2" : "max-w-2xl"}`}>
-          {itens.map((it, i) => {
+        <div className={`mx-auto grid gap-6 ${resolvedItens.length > 1 ? "max-w-5xl md:grid-cols-2" : "max-w-2xl"}`}>
+          {resolvedItens.map((it, i) => {
             const Icon = getIcon(it.icone);
             const ext = external(it.link);
             return (
