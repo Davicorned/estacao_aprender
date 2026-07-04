@@ -19,7 +19,6 @@ import {
   Sparkles,
   Palette,
   Briefcase,
-  Phone,
   Stethoscope,
   Globe,
   MessageSquare,
