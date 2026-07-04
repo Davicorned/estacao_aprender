@@ -329,12 +329,15 @@ function BlogEditor({
           : form.publicado_em
             ? new Date(form.publicado_em).toISOString()
             : null;
+      const conteudoSanitizado = form.conteudo
+        ? DOMPurify.sanitize(form.conteudo, { USE_PROFILES: { html: true } })
+        : "";
       const patch = {
         ...(form.id ? { id: form.id } : {}),
         slug,
         titulo: form.titulo,
         resumo: form.resumo || null,
-        conteudo: form.conteudo || "",
+        conteudo: conteudoSanitizado,
         capa_url: form.capa_url,
         autor: form.autor || null,
         categoria: form.categoria || null,
