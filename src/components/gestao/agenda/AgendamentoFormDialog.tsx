@@ -361,6 +361,18 @@ export function AgendamentoFormDialog({
           setSaving(false);
           return;
         }
+        const confPac = await checarConflitoPaciente({
+          pacienteId: paciente!.id,
+          data,
+          horaInicio,
+          horaFim,
+          excludeId: agendamento.id,
+        });
+        if (confPac) {
+          toast.error("Este paciente já tem um agendamento neste horário.");
+          setSaving(false);
+          return;
+        }
         if (tipo === "presencial") {
           const cap = await checarCapacidadeSalas({
             data,
@@ -388,6 +400,17 @@ export function AgendamentoFormDialog({
         });
         if (conf) {
           toast.error("Já existe um agendamento neste horário");
+          setSaving(false);
+          return;
+        }
+        const confPac = await checarConflitoPaciente({
+          pacienteId: paciente!.id,
+          data,
+          horaInicio,
+          horaFim,
+        });
+        if (confPac) {
+          toast.error("Este paciente já tem um agendamento neste horário.");
           setSaving(false);
           return;
         }
