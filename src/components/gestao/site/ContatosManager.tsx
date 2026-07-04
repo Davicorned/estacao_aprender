@@ -198,7 +198,11 @@ export function ContatosManager() {
         )}
         <div className="space-y-3">
           {telefones.map((t, idx) => {
-            const preview = t.whatsapp_enabled ? buildWhatsappLink(t.telefone_exibido, t.whatsapp_mensagem) : "";
+            const trimmed = (t.telefone_exibido || "").trim();
+            const valido = trimmed === "" || isValidBrazilPhone(trimmed);
+            const preview = t.whatsapp_enabled && valido && trimmed
+              ? buildWhatsappLink(trimmed, t.whatsapp_mensagem)
+              : "";
             return (
               <div key={t.id ?? `new-${idx}`} className="rounded-lg border border-border p-4 space-y-3">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -215,8 +219,22 @@ export function ContatosManager() {
                     <Input
                       value={t.telefone_exibido}
                       onChange={(e) => patchTelefone(idx, { telefone_exibido: e.target.value })}
+                      onBlur={(e) => {
+                        const v = e.target.value.trim();
+                        if (!v) return;
+                        const formatted = formatBrazilPhoneDisplay(v);
+                        if (formatted !== t.telefone_exibido) {
+                          patchTelefone(idx, { telefone_exibido: formatted });
+                        }
+                      }}
                       placeholder="(11) 99999-9999"
+                      className={!valido ? "border-red-500 focus-visible:ring-red-500" : ""}
                     />
+                    {!valido && (
+                      <p className="text-xs text-red-500">
+                        Formato inválido. Use (XX) XXXXX-XXXX para celular ou (XX) XXXX-XXXX para fixo.
+                      </p>
+                    )}
                   </div>
                 </div>
 
