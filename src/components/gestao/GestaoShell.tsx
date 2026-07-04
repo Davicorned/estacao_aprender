@@ -19,8 +19,13 @@ import {
   Sparkles,
   Palette,
   Briefcase,
-  Phone,
-  FileText as FileTextIcon,
+  Stethoscope,
+  Globe,
+  MessageSquare,
+  Newspaper,
+  MessageCircle,
+  Bot,
+  Inbox,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -38,8 +43,9 @@ import { fetchTema } from "@/lib/cms";
 const FALLBACK_LOGO = logoAsset.url;
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type SoonItem = { label: string; icon: typeof LayoutDashboard; badge: "em breve" };
 
-const MAIN: NavItem[] = [
+const CLINICA: NavItem[] = [
   { to: "/gestao/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/gestao/agenda", label: "Agenda", icon: Calendar },
   { to: "/gestao/pacientes", label: "Pacientes", icon: Users },
@@ -47,17 +53,29 @@ const MAIN: NavItem[] = [
   { to: "/gestao/servicos", label: "Serviços", icon: Briefcase },
   { to: "/gestao/contratos", label: "Contratos", icon: FileText },
   { to: "/gestao/financeiro", label: "Financeiro", icon: DollarSign },
-  { to: "/gestao/configuracoes", label: "Configurações", icon: Settings },
 ];
 
-const SITE: NavItem[] = [
+const MEU_SITE: NavItem[] = [
   { to: "/gestao/site", label: "Visão geral", icon: LayoutDashboard, exact: true },
-  { to: "/gestao/site/paginas", label: "Páginas", icon: FileTextIcon },
-  { to: "/gestao/site/contatos", label: "Contatos", icon: Phone },
+  { to: "/gestao/site/paginas", label: "Páginas", icon: FileText },
+  { to: "/gestao/site/layout", label: "Layout", icon: Palette },
   { to: "/gestao/site/equipe", label: "Equipe", icon: UserCog },
   { to: "/gestao/site/depoimentos", label: "Depoimentos", icon: MessageSquareQuote },
-  { to: "/gestao/site/servicos", label: "Serviços", icon: Sparkles },
-  { to: "/gestao/site/layout", label: "Layout", icon: Palette },
+  { to: "/gestao/site/servicos", label: "Serviços do site", icon: Sparkles },
+];
+
+const MEU_SITE_SOON: SoonItem[] = [
+  { label: "Blog", icon: Newspaper, badge: "em breve" },
+];
+
+const MENSAGENS_SOON: SoonItem[] = [
+  { label: "WhatsApp", icon: MessageCircle, badge: "em breve" },
+  { label: "Automações", icon: Bot, badge: "em breve" },
+];
+
+const MENSAGENS: NavItem[] = [
+  // TODO: avaliar se o antigo "Contatos" (site) é leads de formulário. Se sim, manter aqui.
+  { to: "/gestao/site/contatos", label: "Leads", icon: Inbox },
 ];
 
 const TITLE_MAP: { match: RegExp; title: string }[] = [
@@ -74,7 +92,7 @@ const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/site\/equipe/, title: "Equipe (site)" },
   { match: /^\/gestao\/site\/depoimentos/, title: "Depoimentos (site)" },
   { match: /^\/gestao\/site\/servicos/, title: "Serviços (site)" },
-  { match: /^\/gestao\/site\/contatos/, title: "Contatos (site)" },
+  { match: /^\/gestao\/site\/contatos/, title: "Leads" },
   { match: /^\/gestao\/site\/paginas/, title: "Páginas do site" },
   { match: /^\/gestao\/site\/layout\/hero/, title: "Layout · Banner" },
   { match: /^\/gestao\/site\/layout\/secoes/, title: "Layout · Seções" },
@@ -125,14 +143,51 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     );
   };
 
+  const renderSoon = (item: SoonItem) => {
+    const Icon = item.icon;
+    return (
+      <div
+        key={item.label}
+        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-400 dark:text-muted-foreground cursor-not-allowed"
+        aria-label={`${item.label} (em breve)`}
+        title="Em breve"
+      >
+        <span className="flex items-center gap-3">
+          <Icon className="h-4 w-4" />
+          {item.label}
+        </span>
+        <span className="text-[10px] font-medium uppercase tracking-wider bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded dark:bg-muted dark:text-muted-foreground">
+          em breve
+        </span>
+      </div>
+    );
+  };
+
   return (
     <>
-      <nav className="space-y-1">{MAIN.map(renderItem)}</nav>
-      <div className="my-4 border-t border-gray-200 dark:border-border" />
-      <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
-        Admin do site
-      </p>
-      <nav className="space-y-1">{SITE.map(renderItem)}</nav>
+      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+        <Stethoscope className="h-3.5 w-3.5" />
+        Clínica
+      </div>
+      <nav className="space-y-1 mb-5">{CLINICA.map(renderItem)}</nav>
+
+      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+        <Globe className="h-3.5 w-3.5" />
+        Meu site
+      </div>
+      <nav className="space-y-1 mb-5">
+        {MEU_SITE.map(renderItem)}
+        {MEU_SITE_SOON.map(renderSoon)}
+      </nav>
+
+      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+        <MessageSquare className="h-3.5 w-3.5" />
+        Mensagens
+      </div>
+      <nav className="space-y-1 mb-5">
+        {MENSAGENS.map(renderItem)}
+        {MENSAGENS_SOON.map(renderSoon)}
+      </nav>
     </>
   );
 }
@@ -171,6 +226,13 @@ function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
   const { user } = useAuth();
   return (
     <div className="space-y-1 border-t border-gray-200 p-3 dark:border-border">
+      <Link
+        to="/gestao/configuracoes"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
+      >
+        <Settings className="h-4 w-4" />
+        Configurações
+      </Link>
       <ThemeToggle />
       <a
         href="/"
