@@ -379,18 +379,25 @@ function AgendaGrid({
               )}
 
               {/* Blocos */}
-              {ags.map((a) => {
+              {layoutAgendamentos(ags).map(({ ag: a, lane, lanes }) => {
                 const { top, altura: h } = blocoPosicao(
                   a.hora_inicio.slice(0, 5),
                   a.hora_fim.slice(0, 5),
                 );
+                const widthPct = 100 / lanes;
+                const leftPct = widthPct * lane;
                 return (
                   <button
                     key={a.id}
                     type="button"
                     onClick={() => onBlocoClick(a)}
-                    className={`absolute left-1 right-1 overflow-hidden rounded border-l-4 px-1.5 py-1 text-left text-[11px] shadow-sm hover:shadow ${STATUS_STYLES[a.status]}`}
-                    style={{ top: top + 1, height: h - 2 }}
+                    className={`absolute overflow-hidden rounded border-l-4 px-1.5 py-1 text-left text-[11px] shadow-sm hover:z-10 hover:shadow ${STATUS_STYLES[a.status]}`}
+                    style={{
+                      top: top + 1,
+                      height: h - 2,
+                      left: `calc(${leftPct}% + 2px)`,
+                      width: `calc(${widthPct}% - 4px)`,
+                    }}
                   >
                     <p className="font-bold">{a.hora_inicio.slice(0, 5)}</p>
                     <p className="truncate">{a.paciente?.nome ?? "—"}</p>
@@ -424,3 +431,59 @@ function AgendaGrid({
 
 // silence unused import warnings
 void parseIsoDate;
+
+/**
+ * Distribui agendamentos sobrepostos em faixas (lanes) lado a lado.
+ * Agrupa por cluster de sobreposição — clusters independentes voltam a ocupar 100%.
+ */
+function layoutAgendamentos(
+  ags: AgendamentoComJoin[],
+): Array<{ ag: AgendamentoComJoin; lane: number; lanes: number }> {
+  const ordenados = [...ags].sort((a, b) =>
+    a.hora_inicio.localeCompare(b.hora_inicio) ||
+    a.hora_fim.localeCompare(b.hora_fim),
+  );
+  const result: Array<{ ag: AgendamentoComJoin; lane: number; lanes: number }> = [];
+  let cluster: AgendamentoComJoin[] = [];
+  let clusterEnd = 0;
+
+  const flush = () => {
+    if (cluster.length === 0) return;
+    // Aloca lanes greedy: cada item ocupa a menor lane livre
+    const laneEnds: number[] = []; // fim (min) do último bloco em cada lane
+    const assignments = new Map<string, number>();
+    for (const it of cluster) {
+      const ini = timeToMin(it.hora_inicio.slice(0, 5));
+      const fim = timeToMin(it.hora_fim.slice(0, 5));
+      let lane = laneEnds.findIndex((end) => end <= ini);
+      if (lane === -1) {
+        lane = laneEnds.length;
+        laneEnds.push(fim);
+      } else {
+        laneEnds[lane] = fim;
+      }
+      assignments.set(it.id, lane);
+    }
+    const total = laneEnds.length;
+    for (const it of cluster) {
+      result.push({ ag: it, lane: assignments.get(it.id) ?? 0, lanes: total });
+    }
+    cluster = [];
+    clusterEnd = 0;
+  };
+
+  for (const a of ordenados) {
+    const ini = timeToMin(a.hora_inicio.slice(0, 5));
+    const fim = timeToMin(a.hora_fim.slice(0, 5));
+    if (cluster.length === 0 || ini < clusterEnd) {
+      cluster.push(a);
+      clusterEnd = Math.max(clusterEnd, fim);
+    } else {
+      flush();
+      cluster.push(a);
+      clusterEnd = fim;
+    }
+  }
+  flush();
+  return result;
+}
