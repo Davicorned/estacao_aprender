@@ -3,7 +3,8 @@ import { Calendar, Menu, Mail, Phone, Instagram, Facebook } from "lucide-react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
-import { fetchHeader, fetchRodape, fetchTema, HEADER_DEFAULTS, type SiteHeader, type SiteRodape, type SiteTema } from "@/lib/cms";
+import { fetchHeader, fetchRodape, fetchTema, HEADER_DEFAULTS, telefoneHref, type SiteHeader, type SiteRodape, type SiteTema } from "@/lib/cms";
+import { useSiteContatos } from "@/lib/useSiteContatos";
 
 const FALLBACK_LOGO = logoAsset.url;
 
@@ -25,6 +26,7 @@ export type HeaderLayout =
 export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
   const [open, setOpen] = useState(false);
   const rootApi = getRouteApi("__root__");
+  const contatos = useSiteContatos();
   let initialFromLoader: SiteHeader | null = null;
   try {
     const rootData = rootApi.useLoaderData();
