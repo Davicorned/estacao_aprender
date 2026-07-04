@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, ArrowRight } from "lucide-react";
+import { Link } from "@tanstack/react-router";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -199,27 +200,21 @@ export function RodapeManager() {
 
       <section className="rounded-xl border border-border bg-card p-5 space-y-4">
         <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Contato</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="space-y-2">
-            <Label>Telefone (exibido)</Label>
-            <Input value={form.telefone ?? ""} onChange={(e) => setForm({ ...form, telefone: e.target.value })} placeholder="(11) 93213-9815" />
-          </div>
-          <div className="space-y-2">
-            <Label>Telefone (link)</Label>
-            <Input value={form.telefone_link ?? ""} onChange={(e) => setForm({ ...form, telefone_link: e.target.value })} placeholder="https://wa.me/5511…" />
-          </div>
-          <div className="space-y-2 sm:col-span-2">
-            <Label>E-mail</Label>
-            <Input value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} />
-          </div>
-          <div className="space-y-2">
-            <Label>Endereço — título</Label>
-            <Input value={form.endereco_titulo ?? ""} onChange={(e) => setForm({ ...form, endereco_titulo: e.target.value })} />
-          </div>
-          <div className="space-y-2">
-            <Label>Endereço — texto</Label>
-            <Input value={form.endereco_texto ?? ""} onChange={(e) => setForm({ ...form, endereco_texto: e.target.value })} />
-          </div>
+        <div className="rounded-lg border border-[#D67F43]/40 bg-[#FEF3E8] p-4 text-sm text-[#7a3f18] dark:bg-amber-950/30 dark:text-amber-200">
+          <p>
+            Telefones, e-mails e endereços agora são gerenciados de forma centralizada em{" "}
+            <Link to="/gestao/site/contatos" className="font-semibold underline">
+              Site → Contatos
+            </Link>
+            . O rodapé, o header, o botão flutuante de WhatsApp e a seção de contato leem daquela tela automaticamente —
+            sem precisar duplicar aqui.
+          </p>
+          <Link
+            to="/gestao/site/contatos"
+            className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-[#B85A24] underline"
+          >
+            Abrir Contatos <ArrowRight className="h-3 w-3" />
+          </Link>
         </div>
       </section>
 
