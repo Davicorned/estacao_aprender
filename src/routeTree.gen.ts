@@ -19,6 +19,7 @@ import { Route as AtendimentoRouteImport } from './routes/Atendimento'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GestaoIndexRouteImport } from './routes/gestao.index'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
 import { Route as GestaoServicosRouteImport } from './routes/gestao.servicos'
 import { Route as GestaoProfissionaisRouteImport } from './routes/gestao.profissionais'
 import { Route as GestaoPacientesRouteImport } from './routes/gestao.pacientes'
@@ -96,6 +97,11 @@ const GestaoIndexRoute = GestaoIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => GestaoRoute,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const GestaoServicosRoute = GestaoServicosRouteImport.update({
   id: '/servicos',
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/gestao/pacientes': typeof GestaoPacientesRouteWithChildren
   '/gestao/profissionais': typeof GestaoProfissionaisRoute
   '/gestao/servicos': typeof GestaoServicosRoute
+  '/blog/': typeof BlogIndexRoute
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
@@ -289,6 +296,7 @@ export interface FileRoutesByTo {
   '/gestao/login': typeof GestaoLoginRoute
   '/gestao/profissionais': typeof GestaoProfissionaisRoute
   '/gestao/servicos': typeof GestaoServicosRoute
+  '/blog': typeof BlogIndexRoute
   '/gestao': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
@@ -328,6 +336,7 @@ export interface FileRoutesById {
   '/gestao/pacientes': typeof GestaoPacientesRouteWithChildren
   '/gestao/profissionais': typeof GestaoProfissionaisRoute
   '/gestao/servicos': typeof GestaoServicosRoute
+  '/blog/': typeof BlogIndexRoute
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/gestao/pacientes'
     | '/gestao/profissionais'
     | '/gestao/servicos'
+    | '/blog/'
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
@@ -406,6 +416,7 @@ export interface FileRouteTypes {
     | '/gestao/login'
     | '/gestao/profissionais'
     | '/gestao/servicos'
+    | '/blog'
     | '/gestao'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
@@ -444,6 +455,7 @@ export interface FileRouteTypes {
     | '/gestao/pacientes'
     | '/gestao/profissionais'
     | '/gestao/servicos'
+    | '/blog/'
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
@@ -475,6 +487,7 @@ export interface RootRouteChildren {
   GestaoRoute: typeof GestaoRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicFileProxySplatRoute: typeof ApiPublicFileProxySplatRoute
 }
 
@@ -549,6 +562,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/gestao/'
       preLoaderRoute: typeof GestaoIndexRouteImport
       parentRoute: typeof GestaoRoute
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/gestao/servicos': {
       id: '/gestao/servicos'
@@ -834,6 +854,7 @@ const rootRouteChildren: RootRouteChildren = {
   GestaoRoute: GestaoRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  BlogIndexRoute: BlogIndexRoute,
   ApiPublicFileProxySplatRoute: ApiPublicFileProxySplatRoute,
 }
 export const routeTree = rootRouteImport

@@ -8,7 +8,7 @@ import { fetchPostsPublicados, type BlogPost } from "@/lib/blog";
 
 const BRAND = "Estação Aprender";
 
-export const Route = createFileRoute("/blog")({
+export const Route = createFileRoute("/blog/")({
   loader: async () => {
     try {
       const posts = await fetchPostsPublicados();
@@ -65,7 +65,7 @@ function BlogIndexPage() {
             </FadeUp>
           ) : (
             <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {posts.map((post) => (
+              {posts.map((post: BlogPost) => (
                 <FadeUp key={post.id}>
                   <Link
                     to="/blog/$slug"
