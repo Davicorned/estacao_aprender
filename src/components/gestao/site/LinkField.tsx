@@ -22,6 +22,7 @@ const BUILTIN: PageOption[] = [
   { titulo: "Serviços", path: "/Servicos" },
   { titulo: "Atendimento", path: "/Atendimento" },
   { titulo: "Contato", path: "/Contato" },
+  { titulo: "Blog", path: "/blog" },
 ];
 
 function pageFromCms(p: SitePagina): PageOption {
