@@ -825,13 +825,14 @@ export function AgendamentoFormDialog({
             <div className="max-h-72 overflow-y-auto rounded-md border border-gray-200 divide-y">
               {previewDatas.map((d) => {
                 const conf = previewConflitos.has(d);
+                const semSala = previewSemSala.has(d);
                 const sel = previewSelecionadas.has(d);
                 const dt = parseIsoDate(d);
                 return (
                   <label
                     key={d}
                     className={`flex items-center gap-3 px-3 py-2 text-sm ${
-                      conf ? "bg-red-50" : "bg-white"
+                      conf || semSala ? "bg-red-50" : "bg-white"
                     }`}
                   >
                     <Checkbox
@@ -857,6 +858,11 @@ export function AgendamentoFormDialog({
                         CONFLITO
                       </span>
                     )}
+                    {!conf && semSala && (
+                      <span className="rounded-full bg-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-800">
+                        SEM SALA
+                      </span>
+                    )}
                   </label>
                 );
               })}
@@ -864,6 +870,7 @@ export function AgendamentoFormDialog({
             <div className="text-xs text-gray-500">
               {previewSelecionadas.size} de {previewDatas.length} sessões serão criadas
               {previewConflitos.size > 0 && ` · ${previewConflitos.size} em conflito`}
+              {previewSemSala.size > 0 && ` · ${previewSemSala.size} sem sala disponível`}
               {contratoVinculadoId && " · vinculadas ao contrato"}
             </div>
             <DialogFooter>
