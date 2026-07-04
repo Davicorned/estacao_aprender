@@ -29,6 +29,7 @@ import { Route as GestaoDashboardRouteImport } from './routes/gestao.dashboard'
 import { Route as GestaoContratosRouteImport } from './routes/gestao.contratos'
 import { Route as GestaoConfiguracoesRouteImport } from './routes/gestao.configuracoes'
 import { Route as GestaoAgendaRouteImport } from './routes/gestao.agenda'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as GestaoSiteIndexRouteImport } from './routes/gestao.site.index'
 import { Route as GestaoPacientesIndexRouteImport } from './routes/gestao.pacientes.index'
 import { Route as GestaoSiteServicosRouteImport } from './routes/gestao.site.servicos'
@@ -148,6 +149,11 @@ const GestaoAgendaRoute = GestaoAgendaRouteImport.update({
   path: '/agenda',
   getParentRoute: () => GestaoRoute,
 } as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GestaoSiteIndexRoute = GestaoSiteIndexRouteImport.update({
   id: '/site/',
   path: '/site/',
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/gestao': typeof GestaoRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/Servicos': typeof ServicosRoute
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -327,6 +335,7 @@ export interface FileRoutesById {
   '/gestao': typeof GestaoRouteWithChildren
   '/robots.txt': typeof RobotsDottxtRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/gestao/agenda': typeof GestaoAgendaRoute
   '/gestao/configuracoes': typeof GestaoConfiguracoesRoute
   '/gestao/contratos': typeof GestaoContratosRoute
@@ -369,6 +378,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/blog/$slug'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -408,6 +418,7 @@ export interface FileRouteTypes {
     | '/Servicos'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/blog/$slug'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -446,6 +457,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/robots.txt'
     | '/sitemap.xml'
+    | '/blog/$slug'
     | '/gestao/agenda'
     | '/gestao/configuracoes'
     | '/gestao/contratos'
@@ -487,6 +499,7 @@ export interface RootRouteChildren {
   GestaoRoute: typeof GestaoRouteWithChildren
   RobotsDottxtRoute: typeof RobotsDottxtRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicFileProxySplatRoute: typeof ApiPublicFileProxySplatRoute
 }
@@ -632,6 +645,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/gestao/agenda'
       preLoaderRoute: typeof GestaoAgendaRouteImport
       parentRoute: typeof GestaoRoute
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/gestao/site/': {
       id: '/gestao/site/'
@@ -854,6 +874,7 @@ const rootRouteChildren: RootRouteChildren = {
   GestaoRoute: GestaoRouteWithChildren,
   RobotsDottxtRoute: RobotsDottxtRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  BlogSlugRoute: BlogSlugRoute,
   BlogIndexRoute: BlogIndexRoute,
   ApiPublicFileProxySplatRoute: ApiPublicFileProxySplatRoute,
 }

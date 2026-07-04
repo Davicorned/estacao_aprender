@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import { pageCanonicalUrl } from "@/lib/site-page-routes";
 
-const STATIC_ROUTES = ["/", "/QuemSomos", "/Servicos", "/Atendimento", "/Contato"];
+const STATIC_ROUTES = ["/", "/QuemSomos", "/Servicos", "/Atendimento", "/Contato", "/blog"];
 
 function xmlEscape(v: string): string {
   return v
@@ -42,6 +42,19 @@ export const Route = createFileRoute("/sitemap.xml")({
           }
         } catch (err) {
           console.error("sitemap fetch error", err);
+        }
+
+        try {
+          const { data } = await supabase
+            .from("blog_posts")
+            .select("slug, updated_at")
+            .eq("status", "publicado");
+          for (const row of (data ?? []) as Array<{ slug: string; updated_at?: string | null }>) {
+            const path = `/blog/${row.slug}`;
+            entries.set(path, { path, lastmod: row.updated_at ?? undefined });
+          }
+        } catch (err) {
+          console.error("sitemap blog fetch error", err);
         }
 
         const urls = Array.from(entries.values())
