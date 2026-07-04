@@ -27,6 +27,8 @@ import {
   addMin,
   checarConflito,
   checarConflitosLote,
+  checarCapacidadeSalas,
+  checarCapacidadeSalasLote,
   createAgendamento,
   createAgendamentosLote,
   DIAS_SEMANA_LABEL,
@@ -42,7 +44,7 @@ import {
   toIsoDate,
   updateAgendamento,
 } from "@/lib/agendamentos";
-import type { Profissional, Servico } from "@/lib/configuracoes";
+import { fetchClinica, type Profissional, type Servico } from "@/lib/configuracoes";
 import {
   FREQUENCIA_LABEL,
   listarContratosAtivosPorPaciente,
@@ -117,6 +119,20 @@ export function AgendamentoFormDialog({
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [qtdSalas, setQtdSalas] = useState<number>(2);
+
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    fetchClinica()
+      .then((c) => {
+        if (alive && c && typeof c.qtd_salas === "number") setQtdSalas(c.qtd_salas);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   // Reset ao abrir
   useEffect(() => {
