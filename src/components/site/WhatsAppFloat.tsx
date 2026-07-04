@@ -1,11 +1,14 @@
-const WA_LINK =
-  "https://wa.me/5511932139815?text=Ol%C3%A1!%20Vim%20pelo%20site%20e%20gostaria%20de%20mais%20informa%C3%A7%C3%B5es%20sobre%20o%20atendimento%20do%20Esta%C3%A7%C3%A3o%20Aprender.";
+import { useSiteContatos } from "@/lib/useSiteContatos";
+import { telefoneHref } from "@/lib/cms";
 
 export function WhatsAppFloat() {
+  const { botaoFlutuante } = useSiteContatos();
+  if (!botaoFlutuante) return null;
+  const href = telefoneHref(botaoFlutuante);
   return (
     <a
       id="whatsapp_start"
-      href={WA_LINK}
+      href={href}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Falar no WhatsApp"
