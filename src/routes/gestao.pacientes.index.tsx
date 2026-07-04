@@ -1,10 +1,22 @@
 import { useEffect, useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
-import { Calendar, Pencil, Search, UserPlus } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Calendar, Pencil, Search, Trash2, UserPlus } from "lucide-react";
+import { toast } from "sonner";
 import { PacienteAvatar } from "@/components/gestao/pacientes/PacienteAvatar";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   Select,
   SelectContent,
@@ -29,6 +41,7 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
+  deletePaciente,
   formatTelefoneDisplay,
   formatRelativoData,
   getPacientesAgendamentoStats,
