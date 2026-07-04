@@ -27,6 +27,8 @@ import {
   addMin,
   checarConflito,
   checarConflitosLote,
+  checarCapacidadeSalas,
+  checarCapacidadeSalasLote,
   createAgendamento,
   createAgendamentosLote,
   DIAS_SEMANA_LABEL,
@@ -42,7 +44,7 @@ import {
   toIsoDate,
   updateAgendamento,
 } from "@/lib/agendamentos";
-import type { Profissional, Servico } from "@/lib/configuracoes";
+import { fetchClinica, type Profissional, type Servico } from "@/lib/configuracoes";
 import {
   FREQUENCIA_LABEL,
   listarContratosAtivosPorPaciente,
@@ -113,10 +115,25 @@ export function AgendamentoFormDialog({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDatas, setPreviewDatas] = useState<string[]>([]);
   const [previewConflitos, setPreviewConflitos] = useState<Set<string>>(new Set());
+  const [previewSemSala, setPreviewSemSala] = useState<Set<string>>(new Set());
   const [previewSelecionadas, setPreviewSelecionadas] = useState<Set<string>>(new Set());
   const [previewLoading, setPreviewLoading] = useState(false);
 
   const [saving, setSaving] = useState(false);
+  const [qtdSalas, setQtdSalas] = useState<number>(2);
+
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    fetchClinica()
+      .then((c) => {
+        if (alive && c && typeof c.qtd_salas === "number") setQtdSalas(c.qtd_salas);
+      })
+      .catch(() => {});
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   // Reset ao abrir
   useEffect(() => {
@@ -278,9 +295,21 @@ export function AgendamentoFormDialog({
         horaInicio,
         horaFim,
       });
+      const semSala =
+        tipo === "presencial"
+          ? await checarCapacidadeSalasLote({
+              datas,
+              horaInicio,
+              horaFim,
+              qtdSalas,
+            })
+          : new Set<string>();
       setPreviewDatas(datas);
       setPreviewConflitos(conflitos);
-      setPreviewSelecionadas(new Set(datas.filter((d) => !conflitos.has(d))));
+      setPreviewSemSala(semSala);
+      setPreviewSelecionadas(
+        new Set(datas.filter((d) => !conflitos.has(d) && !semSala.has(d))),
+      );
       setPreviewOpen(true);
     } catch (e) {
       console.error(e);
@@ -316,6 +345,22 @@ export function AgendamentoFormDialog({
           setSaving(false);
           return;
         }
+        if (tipo === "presencial") {
+          const cap = await checarCapacidadeSalas({
+            data,
+            horaInicio,
+            horaFim,
+            qtdSalas,
+            excludeId: agendamento.id,
+          });
+          if (!cap.ok) {
+            toast.error(
+              `As ${qtdSalas} salas já estão ocupadas neste horário. Escolha outro horário.`,
+            );
+            setSaving(false);
+            return;
+          }
+        }
         await updateAgendamento(agendamento.id, input);
         toast.success("Agendamento atualizado");
       } else {
@@ -329,6 +374,21 @@ export function AgendamentoFormDialog({
           toast.error("Já existe um agendamento neste horário");
           setSaving(false);
           return;
+        }
+        if (tipo === "presencial") {
+          const cap = await checarCapacidadeSalas({
+            data,
+            horaInicio,
+            horaFim,
+            qtdSalas,
+          });
+          if (!cap.ok) {
+            toast.error(
+              `As ${qtdSalas} salas já estão ocupadas neste horário. Escolha outro horário.`,
+            );
+            setSaving(false);
+            return;
+          }
         }
         await createAgendamento({ ...input, contrato_id: contratoVinculadoId });
         toast.success("Agendamento criado");
@@ -765,13 +825,14 @@ export function AgendamentoFormDialog({
             <div className="max-h-72 overflow-y-auto rounded-md border border-gray-200 divide-y">
               {previewDatas.map((d) => {
                 const conf = previewConflitos.has(d);
+                const semSala = previewSemSala.has(d);
                 const sel = previewSelecionadas.has(d);
                 const dt = parseIsoDate(d);
                 return (
                   <label
                     key={d}
                     className={`flex items-center gap-3 px-3 py-2 text-sm ${
-                      conf ? "bg-red-50" : "bg-white"
+                      conf || semSala ? "bg-red-50" : "bg-white"
                     }`}
                   >
                     <Checkbox
@@ -797,6 +858,11 @@ export function AgendamentoFormDialog({
                         CONFLITO
                       </span>
                     )}
+                    {!conf && semSala && (
+                      <span className="rounded-full bg-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-800">
+                        SEM SALA
+                      </span>
+                    )}
                   </label>
                 );
               })}
@@ -804,6 +870,7 @@ export function AgendamentoFormDialog({
             <div className="text-xs text-gray-500">
               {previewSelecionadas.size} de {previewDatas.length} sessões serão criadas
               {previewConflitos.size > 0 && ` · ${previewConflitos.size} em conflito`}
+              {previewSemSala.size > 0 && ` · ${previewSemSala.size} sem sala disponível`}
               {contratoVinculadoId && " · vinculadas ao contrato"}
             </div>
             <DialogFooter>

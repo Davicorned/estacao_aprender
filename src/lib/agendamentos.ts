@@ -410,6 +410,105 @@ export async function checarConflitosLote(params: {
   return conflitos;
 }
 
+// =========== Capacidade de salas (presencial) ===========
+
+/**
+ * Verifica se, ao adicionar um novo agendamento presencial em [horaInicio, horaFim]
+ * na `data`, o pico de presenciais simultâneos ultrapassaria `qtdSalas`.
+ * Agendamentos que apenas se encostam nas pontas (fim == início do próximo) NÃO
+ * são considerados sobrepostos.
+ */
+export async function checarCapacidadeSalas(params: {
+  data: string;
+  horaInicio: string;
+  horaFim: string;
+  qtdSalas: number;
+  excludeId?: string;
+}): Promise<{ ok: boolean; pico: number }> {
+  let q = supabase
+    .from("agendamentos")
+    .select("id, hora_inicio, hora_fim")
+    .eq("data", params.data)
+    .eq("tipo", "presencial")
+    .neq("status", "cancelado");
+  if (params.excludeId) q = q.neq("id", params.excludeId);
+  const { data, error } = await q;
+  if (error) throw error;
+  const novoIni = timeToMin(params.horaInicio);
+  const novoFim = timeToMin(params.horaFim);
+  const eventos: Array<{ t: number; delta: number }> = [
+    { t: novoIni, delta: +1 },
+    { t: novoFim, delta: -1 },
+  ];
+  for (const row of data ?? []) {
+    const a = timeToMin(row.hora_inicio as string);
+    const b = timeToMin(row.hora_fim as string);
+    // considera só quem se sobrepõe ao intervalo do novo
+    if (a < novoFim && b > novoIni) {
+      eventos.push({ t: a, delta: +1 });
+      eventos.push({ t: b, delta: -1 });
+    }
+  }
+  // Ordena: mesmo instante, saída antes de entrada (fim toca início = ok)
+  eventos.sort((x, y) => (x.t - y.t) || (x.delta - y.delta));
+  let atual = 0;
+  let pico = 0;
+  for (const e of eventos) {
+    atual += e.delta;
+    if (atual > pico) pico = atual;
+  }
+  return { ok: pico <= params.qtdSalas, pico };
+}
+
+/** Retorna o conjunto de datas do lote em que a capacidade de salas estouraria. */
+export async function checarCapacidadeSalasLote(params: {
+  datas: string[];
+  horaInicio: string;
+  horaFim: string;
+  qtdSalas: number;
+}): Promise<Set<string>> {
+  if (params.datas.length === 0) return new Set();
+  const { data, error } = await supabase
+    .from("agendamentos")
+    .select("data, hora_inicio, hora_fim")
+    .in("data", params.datas)
+    .eq("tipo", "presencial")
+    .neq("status", "cancelado");
+  if (error) throw error;
+  const novoIni = timeToMin(params.horaInicio);
+  const novoFim = timeToMin(params.horaFim);
+  const porData = new Map<string, Array<{ t: number; delta: number }>>();
+  for (const d of params.datas) {
+    porData.set(d, [
+      { t: novoIni, delta: +1 },
+      { t: novoFim, delta: -1 },
+    ]);
+  }
+  for (const row of data ?? []) {
+    const a = timeToMin(row.hora_inicio as string);
+    const b = timeToMin(row.hora_fim as string);
+    if (a < novoFim && b > novoIni) {
+      const arr = porData.get(row.data as string);
+      if (arr) {
+        arr.push({ t: a, delta: +1 });
+        arr.push({ t: b, delta: -1 });
+      }
+    }
+  }
+  const cheias = new Set<string>();
+  for (const [d, eventos] of porData) {
+    eventos.sort((x, y) => (x.t - y.t) || (x.delta - y.delta));
+    let atual = 0;
+    let pico = 0;
+    for (const e of eventos) {
+      atual += e.delta;
+      if (atual > pico) pico = atual;
+    }
+    if (pico > params.qtdSalas) cheias.add(d);
+  }
+  return cheias;
+}
+
 export async function updateAgendamento(
   id: string,
   patch: Partial<AgendamentoInput>,

@@ -20,6 +20,7 @@ const blank: ClinicaConfig = {
   horario_sab_fim: null,
   horario_almoco_inicio: "12:00",
   horario_almoco_fim: "13:00",
+  qtd_salas: 2,
 };
 
 export function ClinicaSection() {
@@ -51,6 +52,7 @@ export function ClinicaSection() {
       horario_sab_fim: form.horario_sab_fim || null,
       horario_almoco_inicio: form.horario_almoco_inicio || null,
       horario_almoco_fim: form.horario_almoco_fim || null,
+      qtd_salas: Math.max(1, Math.min(50, Number(form.qtd_salas) || 1)),
       updated_at: new Date().toISOString(),
     };
     const { error } = await supabase
@@ -113,6 +115,26 @@ export function ClinicaSection() {
               placeholder="contato@estacaoaprender.com"
               maxLength={255}
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Salas de atendimento</Label>
+            <Input
+              type="number"
+              min={1}
+              max={50}
+              value={form.qtd_salas}
+              onChange={(e) =>
+                setField(
+                  "qtd_salas",
+                  Math.max(1, Math.min(50, Number(e.target.value) || 1)),
+                )
+              }
+              className="w-32"
+            />
+            <p className="text-xs text-gray-500">
+              Limita quantos atendimentos presenciais simultâneos são permitidos.
+              Sessões online não ocupam sala.
+            </p>
           </div>
           <div className="space-y-2 md:col-span-2">
             <Label>Endereço completo</Label>
