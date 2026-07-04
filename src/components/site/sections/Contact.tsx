@@ -2,19 +2,14 @@ import { ArrowRight } from "lucide-react";
 import { FadeUp } from "../FadeUp";
 import { DEFAULT_CONTATO_MAPA, type ContatoMapaLayout } from "@/lib/site-templates";
 import { getLucideIcon } from "@/components/gestao/site/IconPicker";
+import { useSiteContatos } from "@/lib/useSiteContatos";
+import { telefoneHref } from "@/lib/cms";
 
 type Props = {
   layout?: ContatoMapaLayout;
   eyebrow?: string;
   titulo?: string;
   descricao?: string;
-  telefone?: string;
-  telefone_link?: string;
-  email?: string;
-  endereco_titulo?: string;
-  endereco_texto?: string;
-  horarios?: string[];
-  mapa_embed_url?: string;
   icone_telefone?: string;
   icone_email?: string;
   icone_endereco?: string;
@@ -26,84 +21,97 @@ export function Contact({
   eyebrow = "Contato",
   titulo = "Entre em contato",
   descricao = "Estamos prontos para ajudar você e sua família",
-  telefone = DEFAULT_CONTATO_MAPA.telefone,
-  telefone_link = DEFAULT_CONTATO_MAPA.telefone_link,
-  email = DEFAULT_CONTATO_MAPA.email,
-  endereco_titulo = DEFAULT_CONTATO_MAPA.endereco_titulo,
-  endereco_texto = DEFAULT_CONTATO_MAPA.endereco_texto,
-  horarios = DEFAULT_CONTATO_MAPA.horarios,
-  mapa_embed_url = DEFAULT_CONTATO_MAPA.mapa_embed_url,
   icone_telefone,
   icone_email,
   icone_endereco,
   icone_horario,
 }: Props = {}) {
-  const waExternal = telefone_link.startsWith("http");
   const PhoneIcon = getLucideIcon(icone_telefone ?? DEFAULT_CONTATO_MAPA.icone_telefone ?? "Phone");
   const MailIcon = getLucideIcon(icone_email ?? DEFAULT_CONTATO_MAPA.icone_email ?? "Mail");
   const MapPinIcon = getLucideIcon(icone_endereco ?? DEFAULT_CONTATO_MAPA.icone_endereco ?? "MapPin");
   const ClockIcon = getLucideIcon(icone_horario ?? DEFAULT_CONTATO_MAPA.icone_horario ?? "Clock");
 
+  const contatos = useSiteContatos();
+  const primeiroEndereco = contatos.enderecos[0] ?? null;
+  const mapa_embed_url = primeiroEndereco?.mapa_embed_url ?? "";
   const hasMap = !!mapa_embed_url;
+  const endereco_titulo = primeiroEndereco?.rotulo ?? "";
 
-  const whatsappCard = telefone_link ? (
-    <a
-      id="whatsapp_start"
-      href={telefone_link}
-      target={waExternal ? "_blank" : undefined}
-      rel={waExternal ? "noopener noreferrer" : undefined}
-      className="group flex items-center gap-4 rounded-2xl bg-green-50 p-4 transition-colors hover:bg-green-100"
-    >
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-green-500">
-        <PhoneIcon className="h-6 w-6 text-white" />
-      </div>
-      <div className="flex-1">
-        <p className="text-sm font-semibold text-gray-900">WhatsApp</p>
-        <p className="text-sm text-gray-600">{telefone}</p>
-      </div>
-      <ArrowRight className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1" />
-    </a>
-  ) : null;
+  const telefoneCards = contatos.telefones.map((t) => {
+    const href = telefoneHref(t);
+    const isWpp = t.whatsapp_enabled;
+    return (
+      <a
+        key={t.id}
+        id={isWpp ? "whatsapp_start" : undefined}
+        href={href}
+        target={isWpp ? "_blank" : undefined}
+        rel={isWpp ? "noopener noreferrer" : undefined}
+        className={`group flex items-center gap-4 rounded-2xl p-4 transition-colors ${
+          isWpp ? "bg-green-50 hover:bg-green-100" : "bg-gray-50 hover:bg-gray-100"
+        }`}
+      >
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full ${
+            isWpp ? "bg-green-500" : "bg-[var(--site-soft)]"
+          }`}
+        >
+          <PhoneIcon className={`h-6 w-6 ${isWpp ? "text-white" : "text-[var(--site-primary)]"}`} />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-gray-900">
+            {t.rotulo || (isWpp ? "WhatsApp" : "Telefone")}
+          </p>
+          <p className="text-sm text-gray-600">{t.telefone_exibido}</p>
+        </div>
+        <ArrowRight className="h-5 w-5 text-gray-400 transition-transform group-hover:translate-x-1" />
+      </a>
+    );
+  });
 
-  const emailCard = email ? (
-    <a href={`mailto:${email}`} className="flex items-center gap-4 rounded-2xl bg-gray-50 p-4">
+  const emailCards = contatos.emails.map((e) => (
+    <a key={e.id} href={`mailto:${e.email}`} className="flex items-center gap-4 rounded-2xl bg-gray-50 p-4">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
         <MailIcon className="h-6 w-6 text-[var(--site-primary)]" />
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-gray-900">E-mail</p>
-        <p className="break-all text-sm text-gray-600">{email}</p>
+        <p className="text-sm font-semibold text-gray-900">{e.rotulo || "E-mail"}</p>
+        <p className="break-all text-sm text-gray-600">{e.email}</p>
       </div>
     </a>
-  ) : null;
+  ));
 
-  const enderecoCard = (endereco_titulo || endereco_texto) ? (
-    <div className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
+  const enderecoCards = contatos.enderecos.map((en) => (
+    <div key={`end-${en.id}`} className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
       <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
         <MapPinIcon className="h-6 w-6 text-[var(--site-primary)]" />
       </div>
       <div className="flex-1">
-        {endereco_titulo && <p className="text-sm font-semibold text-gray-900">{endereco_titulo}</p>}
-        {endereco_texto && <p className="text-sm text-gray-600">{endereco_texto}</p>}
+        {en.rotulo && <p className="text-sm font-semibold text-gray-900">{en.rotulo}</p>}
+        <p className="text-sm text-gray-600">{en.endereco_texto}</p>
       </div>
     </div>
-  ) : null;
+  ));
 
-  const horariosCard = horarios && horarios.length > 0 ? (
-    <div className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
-      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
-        <ClockIcon className="h-6 w-6 text-[var(--site-primary)]" />
+  const horarioCards = contatos.enderecos
+    .filter((en) => !!en.horarios?.trim())
+    .map((en) => (
+      <div key={`hr-${en.id}`} className="flex items-start gap-4 rounded-2xl bg-gray-50 p-4">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-[var(--site-soft)]">
+          <ClockIcon className="h-6 w-6 text-[var(--site-primary)]" />
+        </div>
+        <div className="flex-1">
+          <p className="text-sm font-semibold text-gray-900">
+            {en.rotulo ? `Horário — ${en.rotulo}` : "Horário de Funcionamento"}
+          </p>
+          {(en.horarios ?? "").split(/\r?\n/).filter(Boolean).map((h, i) => (
+            <p key={i} className="text-sm text-gray-600">{h}</p>
+          ))}
+        </div>
       </div>
-      <div className="flex-1">
-        <p className="text-sm font-semibold text-gray-900">Horário de Funcionamento</p>
-        {horarios.map((h, i) => (
-          <p key={i} className="text-sm text-gray-600">{h}</p>
-        ))}
-      </div>
-    </div>
-  ) : null;
+    ));
 
-  const cards = [whatsappCard, emailCard, enderecoCard, horariosCard].filter(Boolean);
+  const cards = [...telefoneCards, ...emailCards, ...enderecoCards, ...horarioCards];
 
   const mapEl = hasMap ? (
     <iframe
