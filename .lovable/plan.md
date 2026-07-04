@@ -1,38 +1,28 @@
 ## Problema
 
-O `PreviewFrame` monta a árvore React no `<body>` do iframe via portal ANTES dos estilos (Tailwind + fontes) terminarem de ser aplicados. O fluxo hoje é:
+Hoje só validamos conflito por **profissional** e capacidade de **salas**. Não há validação de conflito por **paciente**, então é possível agendar o mesmo paciente no mesmo horário com profissionais diferentes.
 
-1. iframe carrega com `srcDoc` vazio → `onLoad` dispara.
-2. Copiamos `<style>` e `<link rel="stylesheet">` do documento pai para o `<head>` do iframe.
-3. Imediatamente setamos `mountNode = doc.body`, e o portal renderiza os componentes.
-4. Os `<link rel="stylesheet">` clonados ainda estão baixando/aplicando → o conteúdo aparece **sem estilo** por alguns ms (FOUC — flash of unstyled content) e depois "conserta".
+## Solução
 
-Também não ajuda que o `<body>` fique visível desde o primeiro frame, mesmo antes de qualquer conteúdo montar.
+Adicionar validação de conflito de horário por paciente (independente do profissional / tipo online ou presencial). Cancelados são ignorados. Em edição, ignora o próprio `id`.
 
-## Correção
+## Mudanças
 
-Ajustar apenas `src/components/gestao/site/PreviewFrame.tsx`:
+### 1) `src/lib/agendamentos.ts`
+- Nova função `checarConflitoPaciente({ pacienteId, data, horaInicio, horaFim, excludeId? }) → Promise<boolean>` — consulta `agendamentos` filtrando por `paciente_id`, `data`, `status != 'cancelado'` e detecta overlap `inicio < b && fim > a`.
+- Nova função `checarConflitosPacienteLote({ pacienteId, datas, horaInicio, horaFim, excludeId? }) → Promise<Set<string>>` (mesmo padrão de `checarConflitosLote`), para uso em recorrência.
 
-1. **Esperar os stylesheets carregarem antes de montar o portal.**
-   - Ao clonar cada `<link rel="stylesheet">`, coletar uma `Promise` que resolve no `load`/`error` do link clonado (para links inline `<style>` não precisa esperar).
-   - Só chamar `setMountNode(doc.body)` depois de `Promise.all(...)` resolver. Com timeout de segurança (~500ms) para nunca travar caso um link nunca dispare load.
+### 2) `src/components/gestao/agenda/AgendamentoFormDialog.tsx`
+- No submit (criar e editar), antes de `createAgendamento` / `updateAgendamento`, chamar `checarConflitoPaciente` com `pacienteId = paciente!.id` (passando `excludeId` na edição). Se conflito → toast: **"Este paciente já tem um agendamento neste horário."** e aborta.
+- No preview de recorrência (onde já roda `checarConflitosLote` e `checarCapacidadeSalasLote`), rodar também `checarConflitosPacienteLote` e unir ao conjunto de datas bloqueadas (mostrando contador tipo "X com conflito de paciente" no rodapé do preview).
+- Na criação em lote da recorrência, pular datas que caiam em conflito de paciente da mesma forma que já pula conflitos e falta de sala.
 
-2. **Esconder o conteúdo até estar pronto.**
-   - Iniciar `doc.body.style.visibility = "hidden"` (ou `opacity: 0` com `transition`) logo no `onLoad`.
-   - Ao resolver o passo 1 e no próximo frame (`requestAnimationFrame`), setar `visibility = "visible"`.
+### 3) Sem migration
+Regra puramente de aplicação (mesma abordagem já usada para conflito de profissional). Não altera schema.
 
-3. **Overlay de carregando no wrapper externo** (fallback visual enquanto `mountNode` for `null`): manter o `div` do iframe com fundo `#FEF3E8` (mesmo tom creme da Home) em vez de branco puro, para o "flash" antes do primeiro paint não parecer uma tela quebrada. Simples: trocar `background: #ffffff` do body do iframe e o `bg-white` do wrapper para um tom neutro claro.
-
-4. **Reaproveitar o `<head>` já preparado ao trocar device.**
-   - Hoje ao alternar Desktop/Mobile o iframe é recriado (via `key={device}`) e o processo inteiro roda de novo, gerando outro flash.
-   - Alternativa: manter o mesmo iframe e apenas atualizar `targetW`/meta viewport + reescalar. Isso elimina o segundo FOUC ao trocar device.
-
-## Validação
-
-- Abrir Layout › Banner (e Cabeçalho/Rodapé): a prévia deve aparecer já estilizada, sem "piscada" de conteúdo sem CSS.
-- Alternar Desktop ↔ Mobile não deve reintroduzir o flash.
-- Testar em dev (build sem cache) — é onde o FOUC é mais visível.
-
-## Arquivos
-
-- `src/components/gestao/site/PreviewFrame.tsx` (único arquivo alterado)
+## Casos de teste
+1. Paciente A com Prof. X 09:00–10:00 → agendar Paciente A com Prof. Y 09:30–10:30 → **BLOQUEADO**.
+2. Paciente A online + Paciente A presencial no mesmo horário → **BLOQUEADO** (regra é por paciente, tipo irrelevante).
+3. Editar o próprio agendamento sem mudar horário → **PERMITIDO** (excludeId).
+4. Recorrência: datas com conflito de paciente ficam marcadas no preview e não são criadas.
+5. Paciente B em qualquer horário do Paciente A → **PERMITIDO**.
