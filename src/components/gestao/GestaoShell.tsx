@@ -226,6 +226,13 @@ function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
   const { user } = useAuth();
   return (
     <div className="space-y-1 border-t border-gray-200 p-3 dark:border-border">
+      <Link
+        to="/gestao/configuracoes"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
+      >
+        <Settings className="h-4 w-4" />
+        Configurações
+      </Link>
       <ThemeToggle />
       <a
         href="/"
