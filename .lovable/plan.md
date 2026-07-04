@@ -1,34 +1,47 @@
-## Objetivo
+## Relatório de auditoria: `/gestao/servicos` é a fonte única
 
-1. Tirar **Serviços** de Configurações e criar página própria `/gestao/servicos`, abaixo de **Profissionais** no menu.
-2. Em **Profissionais**, trocar o campo texto de especialidades (separado por vírgulas) por um **multi-select** com as opções vindas dos **Serviços cadastrados**.
+Confirmação: tudo que consome "serviço" no sistema lê a tabela `servicos` (a mesma que a página `/gestao/servicos` edita). Nada ficou apontando para lista hardcoded. Detalhe por tela:
 
-## Mudanças
+### Agenda / Agendamento
+- `AgendaPage.tsx` carrega `fetchServicos(false)` (só ativos) via React Query e passa para `AgendamentoFormDialog`.
+- `AgendamentoFormDialog.tsx`:
+  - `<Select>` de serviço renderiza `servicos.map(...)`.
+  - `duracao_min` do serviço define automaticamente `horaFim`.
+  - Ao vincular um contrato, usa `servico_id` do contrato.
+  - Salva em `agendamentos.servico_id`.
+- **Resultado:** criar/editar/desativar serviço reflete imediatamente nos novos agendamentos. Agendamentos antigos preservam o `servico_id` original mesmo se o serviço for desativado.
 
-### 1) Nova rota `src/routes/gestao.servicos.tsx`
-- Renderiza `<ServicosSection />` (o componente já existe e não precisa mudar).
+### Contratos
+- `ContratosPage.tsx` carrega `fetchServicos(false)` e passa para `ContratoFormDialog`.
+- `ContratoFormDialog.tsx`:
+  - `<Select>` de serviço renderiza `servicos.map(...)`.
+  - `valor_centavos` e `duracao_min` do serviço alimentam preço e cálculo do contrato.
+  - Salva em `contratos.servico_id`.
+- Visualização/geração do PDF do contrato faz join `servico:servicos!contratos_servico_id_fkey(id,nome)` — pega nome direto da tabela.
+- **Resultado:** renomear um serviço atualiza contratos existentes (porque é join por id, não cópia).
 
-### 2) `src/routes/gestao.configuracoes.tsx`
-- Remover import e uso de `ServicosSection`. A página passa a mostrar apenas `ClinicaSection` (e o que mais estiver lá).
+### Financeiro
+- `financeiro.ts` lê `contratos.servico_id` → busca em `servicos` para nome/valor ao gerar lançamentos.
+- Filtros por serviço usam `.eq("servico_id", ...)`.
+- **Resultado:** valores e nomes seguem a configuração atual do serviço.
 
-### 3) `src/components/gestao/GestaoShell.tsx`
-- Adicionar item de menu **Serviços** (ícone `Briefcase` ou `Stethoscope`) logo abaixo de **Profissionais**, apontando para `/gestao/servicos`.
-- Adicionar o `match` no mapa de títulos para `/gestao/servicos`.
+### Prontuário (Ficha Clínica)
+- `FichaClinicaTab.tsx` usa `fetchServicos(false)` para listar serviços ativos como opções da ficha.
+- **Resultado:** OK.
 
-### 4) `src/components/gestao/config/ProfissionaisSection.tsx` — multi-select de especialidades
-- Ao montar, carregar `fetchServicos(true)` e derivar a lista de nomes como opções (`servico.nome`).
-- Substituir o `<Input>` de especialidades (linha de edição) por um componente multi-select com checkboxes usando `Popover` + `Command` (já disponíveis em `src/components/ui`), padrão combobox multi do shadcn:
-  - Trigger mostra as especialidades selecionadas como badges (mesmo estilo laranja usado na tabela) + placeholder "Selecionar…".
-  - Lista com busca, cada item com checkbox; clicar alterna seleção.
-  - Estado no `draft.especialidades` passa a ser `string[]` em vez de `string`.
-- Migração dos dados atuais: conforme escolhido, **manter como está**. Ao abrir a edição, os valores atuais viram o array inicial; os que casam (case-insensitive) com um serviço aparecem marcados na lista, os que não casam continuam salvos e aparecem como badge extra (com um "×" para remover), mas não são reintroduzidos automaticamente. Nada é reescrito até o usuário salvar.
-- Salvamento continua igual: `especialidades: string[]` direto no update/insert.
-- Exibição na tabela (linha não-editando) permanece igual — já usa `p.especialidades.map(...)`.
+### Profissionais
+- Novo multi-select de especialidades usa `fetchServicos(true)` (inclui inativos como opção, porque especialidade histórica pode não ser um serviço ativo).
+- **Resultado:** OK — combina com decisão anterior de não normalizar dados antigos.
 
-### 5) Sem migration
-Nenhuma alteração de schema. `profissionais.especialidades` continua `text[]`.
+### Site público (`site_servicos`)
+- É uma tabela **separada**, do CMS (o que aparece na home/página Serviços do site).
+- Não se confunde com `servicos` da gestão. Isso é intencional (site tem descrição/ordem/link próprios).
+- **Nada a mudar** — mas vale saber que editar em `/gestao/servicos` não altera o site, e vice-versa.
 
-## Fora de escopo
-- Não criar CRUD/tabela separada de especialidades.
-- Não normalizar/renomear especialidades existentes automaticamente.
-- Não mexer em agendamentos nem em outras telas.
+## Pontos de atenção (não são bugs, mas convém saber)
+1. **Serviço desativado**: some dos selects novos, mas continua aparecendo em agendamentos/contratos antigos que já o referenciam (comportamento correto — histórico preservado).
+2. **Excluir serviço**: se houver `agendamentos`/`contratos` vinculados, o Postgres bloqueia por FK. Recomendação: sempre **desativar**, não excluir. (Mesmo padrão que já aplicamos em pacientes.)
+3. **`site_servicos` ≠ `servicos`**: se um dia você quiser unificar (o serviço da gestão gerar automaticamente o card do site), é uma mudança de escopo separado.
+
+## Conclusão
+Nada a corrigir. A refatoração foi puramente de navegação — o modelo de dados já era único e todas as telas consomem `servicos` corretamente.
