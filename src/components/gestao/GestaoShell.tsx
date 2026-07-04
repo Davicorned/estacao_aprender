@@ -26,6 +26,7 @@ import {
   MessageCircle,
   Bot,
   Inbox,
+  Phone,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -69,14 +70,12 @@ const MEU_SITE_SOON: SoonItem[] = [
 ];
 
 const MENSAGENS_SOON: SoonItem[] = [
+  { label: "Leads", icon: Inbox, badge: "em breve" },
   { label: "WhatsApp", icon: MessageCircle, badge: "em breve" },
   { label: "Automações", icon: Bot, badge: "em breve" },
 ];
 
-const MENSAGENS: NavItem[] = [
-  // TODO: avaliar se o antigo "Contatos" (site) é leads de formulário. Se sim, manter aqui.
-  { to: "/gestao/site/contatos", label: "Leads", icon: Inbox },
-];
+const MENSAGENS: NavItem[] = [];
 
 const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/dashboard/, title: "Dashboard" },
@@ -92,7 +91,7 @@ const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/site\/equipe/, title: "Equipe (site)" },
   { match: /^\/gestao\/site\/depoimentos/, title: "Depoimentos (site)" },
   { match: /^\/gestao\/site\/servicos/, title: "Serviços (site)" },
-  { match: /^\/gestao\/site\/contatos/, title: "Leads" },
+  { match: /^\/gestao\/site\/contatos/, title: "Contato" },
   { match: /^\/gestao\/site\/paginas/, title: "Páginas do site" },
   { match: /^\/gestao\/site\/layout\/hero/, title: "Layout · Banner" },
   { match: /^\/gestao\/site\/layout\/secoes/, title: "Layout · Seções" },
@@ -229,6 +228,13 @@ function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
   return (
     <div className="space-y-1 p-3">
       <div className="my-3 border-t border-gray-200 dark:border-border" />
+      <Link
+        to="/gestao/site/contatos"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
+      >
+        <Phone className="h-4 w-4" />
+        Contato
+      </Link>
       <Link
         to="/gestao/configuracoes"
         className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
