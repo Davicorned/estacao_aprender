@@ -115,6 +115,7 @@ export function AgendamentoFormDialog({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewDatas, setPreviewDatas] = useState<string[]>([]);
   const [previewConflitos, setPreviewConflitos] = useState<Set<string>>(new Set());
+  const [previewSemSala, setPreviewSemSala] = useState<Set<string>>(new Set());
   const [previewSelecionadas, setPreviewSelecionadas] = useState<Set<string>>(new Set());
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -294,9 +295,21 @@ export function AgendamentoFormDialog({
         horaInicio,
         horaFim,
       });
+      const semSala =
+        tipo === "presencial"
+          ? await checarCapacidadeSalasLote({
+              datas,
+              horaInicio,
+              horaFim,
+              qtdSalas,
+            })
+          : new Set<string>();
       setPreviewDatas(datas);
       setPreviewConflitos(conflitos);
-      setPreviewSelecionadas(new Set(datas.filter((d) => !conflitos.has(d))));
+      setPreviewSemSala(semSala);
+      setPreviewSelecionadas(
+        new Set(datas.filter((d) => !conflitos.has(d) && !semSala.has(d))),
+      );
       setPreviewOpen(true);
     } catch (e) {
       console.error(e);
@@ -332,6 +345,22 @@ export function AgendamentoFormDialog({
           setSaving(false);
           return;
         }
+        if (tipo === "presencial") {
+          const cap = await checarCapacidadeSalas({
+            data,
+            horaInicio,
+            horaFim,
+            qtdSalas,
+            excludeId: agendamento.id,
+          });
+          if (!cap.ok) {
+            toast.error(
+              `As ${qtdSalas} salas já estão ocupadas neste horário. Escolha outro horário.`,
+            );
+            setSaving(false);
+            return;
+          }
+        }
         await updateAgendamento(agendamento.id, input);
         toast.success("Agendamento atualizado");
       } else {
@@ -345,6 +374,21 @@ export function AgendamentoFormDialog({
           toast.error("Já existe um agendamento neste horário");
           setSaving(false);
           return;
+        }
+        if (tipo === "presencial") {
+          const cap = await checarCapacidadeSalas({
+            data,
+            horaInicio,
+            horaFim,
+            qtdSalas,
+          });
+          if (!cap.ok) {
+            toast.error(
+              `As ${qtdSalas} salas já estão ocupadas neste horário. Escolha outro horário.`,
+            );
+            setSaving(false);
+            return;
+          }
         }
         await createAgendamento({ ...input, contrato_id: contratoVinculadoId });
         toast.success("Agendamento criado");
