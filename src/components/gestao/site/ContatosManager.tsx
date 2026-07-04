@@ -85,9 +85,15 @@ export function ContatosManager() {
     try {
       // upsert telefones
       for (const t of telefones) {
+        const telExibido = formatBrazilPhoneDisplay(t.telefone_exibido.trim());
+        if (telExibido && !isValidBrazilPhone(telExibido)) {
+          toast.error(`Telefone inválido: "${t.telefone_exibido}". Use (XX) XXXXX-XXXX.`);
+          setSaving(false);
+          return;
+        }
         const payload = {
           rotulo: (t.rotulo || "").trim() || null,
-          telefone_exibido: t.telefone_exibido.trim(),
+          telefone_exibido: telExibido,
           whatsapp_enabled: !!t.whatsapp_enabled,
           whatsapp_mensagem: t.whatsapp_enabled ? (t.whatsapp_mensagem?.trim() || null) : null,
           usar_no_botao_flutuante: !!t.usar_no_botao_flutuante && !!t.whatsapp_enabled,
