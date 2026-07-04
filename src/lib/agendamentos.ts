@@ -410,6 +410,62 @@ export async function checarConflitosLote(params: {
   return conflitos;
 }
 
+/** Verifica se o PACIENTE já tem outro agendamento sobreposto no mesmo horário
+ *  (independente de profissional ou tipo). Cancelados são ignorados. */
+export async function checarConflitoPaciente(params: {
+  pacienteId: string;
+  data: string;
+  horaInicio: string;
+  horaFim: string;
+  excludeId?: string;
+}): Promise<boolean> {
+  let q = supabase
+    .from("agendamentos")
+    .select("id, hora_inicio, hora_fim")
+    .eq("paciente_id", params.pacienteId)
+    .eq("data", params.data)
+    .neq("status", "cancelado");
+  if (params.excludeId) q = q.neq("id", params.excludeId);
+  const { data, error } = await q;
+  if (error) throw error;
+  const inicio = timeToMin(params.horaInicio);
+  const fim = timeToMin(params.horaFim);
+  return (data ?? []).some((row) => {
+    const a = timeToMin(row.hora_inicio as string);
+    const b = timeToMin(row.hora_fim as string);
+    return inicio < b && fim > a;
+  });
+}
+
+/** Retorna o conjunto de datas do lote em que o paciente já tem outro agendamento sobreposto. */
+export async function checarConflitosPacienteLote(params: {
+  pacienteId: string;
+  datas: string[];
+  horaInicio: string;
+  horaFim: string;
+  excludeId?: string;
+}): Promise<Set<string>> {
+  if (params.datas.length === 0) return new Set();
+  let q = supabase
+    .from("agendamentos")
+    .select("id, data, hora_inicio, hora_fim")
+    .eq("paciente_id", params.pacienteId)
+    .in("data", params.datas)
+    .neq("status", "cancelado");
+  if (params.excludeId) q = q.neq("id", params.excludeId);
+  const { data, error } = await q;
+  if (error) throw error;
+  const inicio = timeToMin(params.horaInicio);
+  const fim = timeToMin(params.horaFim);
+  const conflitos = new Set<string>();
+  for (const row of data ?? []) {
+    const a = timeToMin(row.hora_inicio as string);
+    const b = timeToMin(row.hora_fim as string);
+    if (inicio < b && fim > a) conflitos.add(row.data as string);
+  }
+  return conflitos;
+}
+
 // =========== Capacidade de salas (presencial) ===========
 
 /**
