@@ -19,6 +19,7 @@ import { Route as AtendimentoRouteImport } from './routes/Atendimento'
 import { Route as SlugRouteImport } from './routes/$slug'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GestaoIndexRouteImport } from './routes/gestao.index'
+import { Route as GestaoProfissionaisRouteImport } from './routes/gestao.profissionais'
 import { Route as GestaoPacientesRouteImport } from './routes/gestao.pacientes'
 import { Route as GestaoLoginRouteImport } from './routes/gestao.login'
 import { Route as GestaoFinanceiroRouteImport } from './routes/gestao.financeiro'
@@ -91,6 +92,11 @@ const IndexRoute = IndexRouteImport.update({
 const GestaoIndexRoute = GestaoIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => GestaoRoute,
+} as any)
+const GestaoProfissionaisRoute = GestaoProfissionaisRouteImport.update({
+  id: '/profissionais',
+  path: '/profissionais',
   getParentRoute: () => GestaoRoute,
 } as any)
 const GestaoPacientesRoute = GestaoPacientesRouteImport.update({
@@ -226,6 +232,7 @@ export interface FileRoutesByFullPath {
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
   '/gestao/login': typeof GestaoLoginRoute
   '/gestao/pacientes': typeof GestaoPacientesRouteWithChildren
+  '/gestao/profissionais': typeof GestaoProfissionaisRoute
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
@@ -259,6 +266,7 @@ export interface FileRoutesByTo {
   '/gestao/dashboard': typeof GestaoDashboardRoute
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
   '/gestao/login': typeof GestaoLoginRoute
+  '/gestao/profissionais': typeof GestaoProfissionaisRoute
   '/gestao': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
@@ -294,6 +302,7 @@ export interface FileRoutesById {
   '/gestao/financeiro': typeof GestaoFinanceiroRoute
   '/gestao/login': typeof GestaoLoginRoute
   '/gestao/pacientes': typeof GestaoPacientesRouteWithChildren
+  '/gestao/profissionais': typeof GestaoProfissionaisRoute
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
@@ -331,6 +340,7 @@ export interface FileRouteTypes {
     | '/gestao/financeiro'
     | '/gestao/login'
     | '/gestao/pacientes'
+    | '/gestao/profissionais'
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
@@ -364,6 +374,7 @@ export interface FileRouteTypes {
     | '/gestao/dashboard'
     | '/gestao/financeiro'
     | '/gestao/login'
+    | '/gestao/profissionais'
     | '/gestao'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
@@ -398,6 +409,7 @@ export interface FileRouteTypes {
     | '/gestao/financeiro'
     | '/gestao/login'
     | '/gestao/pacientes'
+    | '/gestao/profissionais'
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
@@ -500,6 +512,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/gestao/'
       preLoaderRoute: typeof GestaoIndexRouteImport
+      parentRoute: typeof GestaoRoute
+    }
+    '/gestao/profissionais': {
+      id: '/gestao/profissionais'
+      path: '/profissionais'
+      fullPath: '/gestao/profissionais'
+      preLoaderRoute: typeof GestaoProfissionaisRouteImport
       parentRoute: typeof GestaoRoute
     }
     '/gestao/pacientes': {
@@ -711,6 +730,7 @@ interface GestaoRouteChildren {
   GestaoFinanceiroRoute: typeof GestaoFinanceiroRoute
   GestaoLoginRoute: typeof GestaoLoginRoute
   GestaoPacientesRoute: typeof GestaoPacientesRouteWithChildren
+  GestaoProfissionaisRoute: typeof GestaoProfissionaisRoute
   GestaoIndexRoute: typeof GestaoIndexRoute
   GestaoSiteDepoimentosRoute: typeof GestaoSiteDepoimentosRoute
   GestaoSiteEquipeRoute: typeof GestaoSiteEquipeRoute
@@ -728,6 +748,7 @@ const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoFinanceiroRoute: GestaoFinanceiroRoute,
   GestaoLoginRoute: GestaoLoginRoute,
   GestaoPacientesRoute: GestaoPacientesRouteWithChildren,
+  GestaoProfissionaisRoute: GestaoProfissionaisRoute,
   GestaoIndexRoute: GestaoIndexRoute,
   GestaoSiteDepoimentosRoute: GestaoSiteDepoimentosRoute,
   GestaoSiteEquipeRoute: GestaoSiteEquipeRoute,
