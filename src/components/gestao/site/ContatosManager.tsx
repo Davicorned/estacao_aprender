@@ -11,6 +11,8 @@ import {
   buildWhatsappLink,
   fetchSiteContatos,
   invalidateCmsCache,
+  formatBrazilPhoneDisplay,
+  isValidBrazilPhone,
   type ContatoTelefone,
   type ContatoEmail,
   type ContatoEndereco,
@@ -83,9 +85,15 @@ export function ContatosManager() {
     try {
       // upsert telefones
       for (const t of telefones) {
+        const telExibido = formatBrazilPhoneDisplay(t.telefone_exibido.trim());
+        if (telExibido && !isValidBrazilPhone(telExibido)) {
+          toast.error(`Telefone inválido: "${t.telefone_exibido}". Use (XX) XXXXX-XXXX.`);
+          setSaving(false);
+          return;
+        }
         const payload = {
           rotulo: (t.rotulo || "").trim() || null,
-          telefone_exibido: t.telefone_exibido.trim(),
+          telefone_exibido: telExibido,
           whatsapp_enabled: !!t.whatsapp_enabled,
           whatsapp_mensagem: t.whatsapp_enabled ? (t.whatsapp_mensagem?.trim() || null) : null,
           usar_no_botao_flutuante: !!t.usar_no_botao_flutuante && !!t.whatsapp_enabled,
@@ -190,7 +198,11 @@ export function ContatosManager() {
         )}
         <div className="space-y-3">
           {telefones.map((t, idx) => {
-            const preview = t.whatsapp_enabled ? buildWhatsappLink(t.telefone_exibido, t.whatsapp_mensagem) : "";
+            const trimmed = (t.telefone_exibido || "").trim();
+            const valido = trimmed === "" || isValidBrazilPhone(trimmed);
+            const preview = t.whatsapp_enabled && valido && trimmed
+              ? buildWhatsappLink(trimmed, t.whatsapp_mensagem)
+              : "";
             return (
               <div key={t.id ?? `new-${idx}`} className="rounded-lg border border-border p-4 space-y-3">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -207,8 +219,22 @@ export function ContatosManager() {
                     <Input
                       value={t.telefone_exibido}
                       onChange={(e) => patchTelefone(idx, { telefone_exibido: e.target.value })}
+                      onBlur={(e) => {
+                        const v = e.target.value.trim();
+                        if (!v) return;
+                        const formatted = formatBrazilPhoneDisplay(v);
+                        if (formatted !== t.telefone_exibido) {
+                          patchTelefone(idx, { telefone_exibido: formatted });
+                        }
+                      }}
                       placeholder="(11) 99999-9999"
+                      className={!valido ? "border-red-500 focus-visible:ring-red-500" : ""}
                     />
+                    {!valido && (
+                      <p className="text-xs text-red-500">
+                        Formato inválido. Use (XX) XXXXX-XXXX para celular ou (XX) XXXX-XXXX para fixo.
+                      </p>
+                    )}
                   </div>
                 </div>
 

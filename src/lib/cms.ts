@@ -217,16 +217,52 @@ export type SiteContatos = {
   enderecos: ContatoEndereco[];
 };
 
-/** Gera link wa.me a partir do telefone exibido (extrai dígitos; prefixa 55 se BR). */
+/**
+ * Normaliza um telefone (BR por padrão) para apenas dígitos com DDI.
+ * Retorna string vazia se inválido.
+ * Regras:
+ *  - remove tudo que não é dígito
+ *  - descarta zeros à esquerda (tronco antigo tipo 0XX)
+ *  - 10 dígitos (fixo BR) ou 11 dígitos (celular BR) → prefixa 55
+ *  - 12 ou 13 dígitos começando com 55 → mantém
+ *  - qualquer outro comprimento → considerado inválido
+ */
+export function normalizeWhatsappDigits(telefoneExibido: string): string {
+  let d = (telefoneExibido || "").replace(/\D/g, "");
+  if (!d) return "";
+  d = d.replace(/^0+/, "");
+  if (d.length === 10 || d.length === 11) return "55" + d;
+  if ((d.length === 12 || d.length === 13) && d.startsWith("55")) return d;
+  return "";
+}
+
+/** Valida telefone brasileiro (fixo 10 ou celular 11 dígitos, com ou sem DDI 55). */
+export function isValidBrazilPhone(telefoneExibido: string): boolean {
+  return normalizeWhatsappDigits(telefoneExibido) !== "";
+}
+
+/**
+ * Formata número BR para exibição no padrão (XX) XXXXX-XXXX ou (XX) XXXX-XXXX.
+ * Se inválido, devolve a string original sem alterações.
+ */
+export function formatBrazilPhoneDisplay(telefoneExibido: string): string {
+  const digits = normalizeWhatsappDigits(telefoneExibido);
+  if (!digits) return telefoneExibido;
+  const local = digits.startsWith("55") ? digits.slice(2) : digits;
+  const ddd = local.slice(0, 2);
+  const rest = local.slice(2);
+  if (rest.length === 9) return `(${ddd}) ${rest.slice(0, 5)}-${rest.slice(5)}`;
+  if (rest.length === 8) return `(${ddd}) ${rest.slice(0, 4)}-${rest.slice(4)}`;
+  return telefoneExibido;
+}
+
+/** Gera link wa.me a partir do telefone exibido. Retorna "#" se inválido. */
 export function buildWhatsappLink(
   telefoneExibido: string,
   mensagem?: string | null,
 ): string {
-  let digits = (telefoneExibido || "").replace(/\D/g, "");
+  const digits = normalizeWhatsappDigits(telefoneExibido);
   if (!digits) return "#";
-  if (digits.startsWith("0")) digits = digits.replace(/^0+/, "");
-  // Brasil sem DDI (10 ou 11 dígitos) → prefixa 55
-  if (digits.length === 10 || digits.length === 11) digits = "55" + digits;
   const base = `https://wa.me/${digits}`;
   const msg = (mensagem || "").trim();
   return msg ? `${base}?text=${encodeURIComponent(msg)}` : base;
