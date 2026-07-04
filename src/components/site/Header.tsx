@@ -3,7 +3,8 @@ import { Calendar, Menu, Mail, Phone, Instagram, Facebook } from "lucide-react";
 import { Link, getRouteApi } from "@tanstack/react-router";
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from "@/components/ui/sheet";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
-import { fetchHeader, fetchRodape, fetchTema, HEADER_DEFAULTS, type SiteHeader, type SiteRodape, type SiteTema } from "@/lib/cms";
+import { fetchHeader, fetchRodape, fetchTema, HEADER_DEFAULTS, telefoneHref, type SiteHeader, type SiteRodape, type SiteTema } from "@/lib/cms";
+import { useSiteContatos } from "@/lib/useSiteContatos";
 
 const FALLBACK_LOGO = logoAsset.url;
 
@@ -25,6 +26,7 @@ export type HeaderLayout =
 export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
   const [open, setOpen] = useState(false);
   const rootApi = getRouteApi("__root__");
+  const contatos = useSiteContatos();
   let initialFromLoader: SiteHeader | null = null;
   try {
     const rootData = rootApi.useLoaderData();
@@ -208,18 +210,41 @@ export function Header({ override }: { override?: Partial<SiteHeader> } = {}) {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-1.5 sm:px-6 lg:px-8">
         <div className="flex items-center gap-4">
-          {rodape?.telefone && (
-            <a href={rodape.telefone_link || `tel:${rodape.telefone}`} className="inline-flex items-center gap-1.5 opacity-90 hover:opacity-100">
-              <Phone className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{rodape.telefone}</span>
-            </a>
-          )}
-          {rodape?.email && (
-            <a href={`mailto:${rodape.email}`} className="inline-flex items-center gap-1.5 opacity-90 hover:opacity-100">
-              <Mail className="h-3.5 w-3.5" />
-              <span className="hidden sm:inline">{rodape.email}</span>
-            </a>
-          )}
+          {(() => {
+            const tel = contatos.headerTelefone
+              ?? contatos.whatsappPrimario
+              ?? contatos.telefones[0]
+              ?? null;
+            if (!tel) {
+              return rodape?.telefone ? (
+                <a href={rodape.telefone_link || `tel:${rodape.telefone}`} className="inline-flex items-center gap-1.5 opacity-90 hover:opacity-100">
+                  <Phone className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">{rodape.telefone}</span>
+                </a>
+              ) : null;
+            }
+            return (
+              <a
+                href={telefoneHref(tel)}
+                target={tel.whatsapp_enabled ? "_blank" : undefined}
+                rel={tel.whatsapp_enabled ? "noopener noreferrer" : undefined}
+                className="inline-flex items-center gap-1.5 opacity-90 hover:opacity-100"
+              >
+                <Phone className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{tel.telefone_exibido}</span>
+              </a>
+            );
+          })()}
+          {(() => {
+            const email = contatos.emails[0]?.email ?? rodape?.email ?? null;
+            if (!email) return null;
+            return (
+              <a href={`mailto:${email}`} className="inline-flex items-center gap-1.5 opacity-90 hover:opacity-100">
+                <Mail className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{email}</span>
+              </a>
+            );
+          })()}
         </div>
         <div className="flex items-center gap-3">
           {(rodape?.redes_sociais ?? []).map((r, i) => {

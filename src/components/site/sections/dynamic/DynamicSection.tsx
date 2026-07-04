@@ -325,13 +325,6 @@ export function DynamicSection({
           eyebrow={secao.eyebrow ?? undefined}
           titulo={secao.titulo ?? undefined}
           descricao={secao.descricao ?? undefined}
-          telefone={d.telefone ?? DEFAULT_CONTATO_MAPA.telefone}
-          telefone_link={d.telefone_link ?? DEFAULT_CONTATO_MAPA.telefone_link}
-          email={d.email ?? DEFAULT_CONTATO_MAPA.email}
-          endereco_titulo={d.endereco_titulo ?? DEFAULT_CONTATO_MAPA.endereco_titulo}
-          endereco_texto={d.endereco_texto ?? DEFAULT_CONTATO_MAPA.endereco_texto}
-          horarios={d.horarios ?? DEFAULT_CONTATO_MAPA.horarios}
-          mapa_embed_url={d.mapa_embed_url ?? DEFAULT_CONTATO_MAPA.mapa_embed_url}
           icone_telefone={d.icone_telefone}
           icone_email={d.icone_email}
           icone_endereco={d.icone_endereco}

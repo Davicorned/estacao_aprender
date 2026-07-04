@@ -35,6 +35,7 @@ import { Route as GestaoSitePaginasRouteImport } from './routes/gestao.site.pagi
 import { Route as GestaoSiteLayoutRouteImport } from './routes/gestao.site.layout'
 import { Route as GestaoSiteEquipeRouteImport } from './routes/gestao.site.equipe'
 import { Route as GestaoSiteDepoimentosRouteImport } from './routes/gestao.site.depoimentos'
+import { Route as GestaoSiteContatosRouteImport } from './routes/gestao.site.contatos'
 import { Route as GestaoPacientesNovoRouteImport } from './routes/gestao.pacientes.novo'
 import { Route as GestaoPacientesIdRouteImport } from './routes/gestao.pacientes.$id'
 import { Route as GestaoSiteLayoutIndexRouteImport } from './routes/gestao.site.layout.index'
@@ -175,6 +176,11 @@ const GestaoSiteDepoimentosRoute = GestaoSiteDepoimentosRouteImport.update({
   path: '/site/depoimentos',
   getParentRoute: () => GestaoRoute,
 } as any)
+const GestaoSiteContatosRoute = GestaoSiteContatosRouteImport.update({
+  id: '/site/contatos',
+  path: '/site/contatos',
+  getParentRoute: () => GestaoRoute,
+} as any)
 const GestaoPacientesNovoRoute = GestaoPacientesNovoRouteImport.update({
   id: '/novo',
   path: '/novo',
@@ -243,6 +249,7 @@ export interface FileRoutesByFullPath {
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
+  '/gestao/site/contatos': typeof GestaoSiteContatosRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/site/layout': typeof GestaoSiteLayoutRouteWithChildren
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/gestao': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
+  '/gestao/site/contatos': typeof GestaoSiteContatosRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/site/paginas': typeof GestaoSitePaginasRoute
@@ -315,6 +323,7 @@ export interface FileRoutesById {
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
+  '/gestao/site/contatos': typeof GestaoSiteContatosRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
   '/gestao/site/layout': typeof GestaoSiteLayoutRouteWithChildren
@@ -354,6 +363,7 @@ export interface FileRouteTypes {
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
+    | '/gestao/site/contatos'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/site/layout'
@@ -389,6 +399,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
+    | '/gestao/site/contatos'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/site/paginas'
@@ -425,6 +436,7 @@ export interface FileRouteTypes {
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
+    | '/gestao/site/contatos'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
     | '/gestao/site/layout'
@@ -638,6 +650,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoSiteDepoimentosRouteImport
       parentRoute: typeof GestaoRoute
     }
+    '/gestao/site/contatos': {
+      id: '/gestao/site/contatos'
+      path: '/site/contatos'
+      fullPath: '/gestao/site/contatos'
+      preLoaderRoute: typeof GestaoSiteContatosRouteImport
+      parentRoute: typeof GestaoRoute
+    }
     '/gestao/pacientes/novo': {
       id: '/gestao/pacientes/novo'
       path: '/novo'
@@ -752,6 +771,7 @@ interface GestaoRouteChildren {
   GestaoProfissionaisRoute: typeof GestaoProfissionaisRoute
   GestaoServicosRoute: typeof GestaoServicosRoute
   GestaoIndexRoute: typeof GestaoIndexRoute
+  GestaoSiteContatosRoute: typeof GestaoSiteContatosRoute
   GestaoSiteDepoimentosRoute: typeof GestaoSiteDepoimentosRoute
   GestaoSiteEquipeRoute: typeof GestaoSiteEquipeRoute
   GestaoSiteLayoutRoute: typeof GestaoSiteLayoutRouteWithChildren
@@ -771,6 +791,7 @@ const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoProfissionaisRoute: GestaoProfissionaisRoute,
   GestaoServicosRoute: GestaoServicosRoute,
   GestaoIndexRoute: GestaoIndexRoute,
+  GestaoSiteContatosRoute: GestaoSiteContatosRoute,
   GestaoSiteDepoimentosRoute: GestaoSiteDepoimentosRoute,
   GestaoSiteEquipeRoute: GestaoSiteEquipeRoute,
   GestaoSiteLayoutRoute: GestaoSiteLayoutRouteWithChildren,

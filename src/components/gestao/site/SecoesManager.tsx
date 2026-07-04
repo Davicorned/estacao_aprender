@@ -1736,39 +1736,30 @@ function DadosContatoMapaEditor({
           })}
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
-        <Input value={v.telefone} onChange={(e) => patch({ telefone: e.target.value })} placeholder="Telefone exibido (ex: (11) 99999-9999)" />
-        <IconPicker value={v.icone_telefone ?? "Phone"} onChange={(nm) => patch({ icone_telefone: nm })} />
+      <div className="rounded-lg border border-[#D67F43]/40 bg-[#FEF3E8] p-3 text-xs text-[#7a3f18] dark:bg-amber-950/30 dark:text-amber-200">
+        Telefones, e-mails, endereços, horários e mapa desta seção são puxados da tela{" "}
+        <Link to="/gestao/site/contatos" className="font-semibold underline">
+          Site → Contatos
+        </Link>
+        . Aqui você escolhe só o layout, o cabeçalho da seção e os ícones.
       </div>
-      <div className="min-w-0">
-        <LinkField label="Destino ao clicar no telefone" value={v.telefone_link} onChange={(val) => patch({ telefone_link: val })} />
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
-        <Input value={v.email} onChange={(e) => patch({ email: e.target.value })} placeholder="E-mail" />
-        <IconPicker value={v.icone_email ?? "Mail"} onChange={(nm) => patch({ icone_email: nm })} />
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_1fr_180px]">
-        <Input value={v.endereco_titulo} onChange={(e) => patch({ endereco_titulo: e.target.value })} placeholder="Título do endereço" />
-        <Input value={v.endereco_texto} onChange={(e) => patch({ endereco_texto: e.target.value })} placeholder="Endereço" />
-        <IconPicker value={v.icone_endereco ?? "MapPin"} onChange={(nm) => patch({ icone_endereco: nm })} />
-      </div>
-      <div className="grid grid-cols-1 gap-2 sm:grid-cols-[1fr_180px]">
+      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         <div className="space-y-1">
-          <Label className="text-xs">Horários (um por linha)</Label>
-          <Textarea
-            rows={3}
-            value={v.horarios.join("\n")}
-            onChange={(e) => patch({ horarios: e.target.value.split("\n").map((s) => s.trim()).filter(Boolean) })}
-          />
+          <Label className="text-xs">Ícone — telefone</Label>
+          <IconPicker value={v.icone_telefone ?? "Phone"} onChange={(nm) => patch({ icone_telefone: nm })} />
         </div>
         <div className="space-y-1">
-          <Label className="text-xs">Ícone</Label>
+          <Label className="text-xs">Ícone — e-mail</Label>
+          <IconPicker value={v.icone_email ?? "Mail"} onChange={(nm) => patch({ icone_email: nm })} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Ícone — endereço</Label>
+          <IconPicker value={v.icone_endereco ?? "MapPin"} onChange={(nm) => patch({ icone_endereco: nm })} />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs">Ícone — horário</Label>
           <IconPicker value={v.icone_horario ?? "Clock"} onChange={(nm) => patch({ icone_horario: nm })} />
         </div>
-      </div>
-      <div className="space-y-1">
-        <Label className="text-xs">URL do mapa (iframe embed do Google Maps)</Label>
-        <Input value={v.mapa_embed_url} onChange={(e) => patch({ mapa_embed_url: e.target.value })} placeholder="https://www.google.com/maps/embed?..." />
       </div>
     </div>
   );

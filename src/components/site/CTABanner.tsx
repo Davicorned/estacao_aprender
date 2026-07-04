@@ -1,6 +1,7 @@
 import { MessageCircle } from "lucide-react";
 import { FadeUp } from "./FadeUp";
 import type { CtaBannerLayout } from "@/lib/site-templates";
+import { useSiteContatos } from "@/lib/useSiteContatos";
 
 type Props = {
   title?: string;
@@ -16,12 +17,14 @@ export function CTABanner({
   title = "Vamos conversar?",
   description = "Entre em contato com nossa equipe.",
   buttonLabel = "Falar no WhatsApp",
-  href = "https://wa.me/5511932139815",
+  href,
   layout = "centralizado",
   imagem_url,
   bg,
 }: Props = {}) {
-  const external = href.startsWith("http");
+  const { whatsappPrimarioHref } = useSiteContatos();
+  const finalHref = href || whatsappPrimarioHref || "#";
+  const external = finalHref.startsWith("http");
   const brandBg =
     "bg-gradient-to-r from-[var(--site-primary)] to-[var(--site-primary-hover)]";
   const overrideStyle = bg ? { background: bg } : undefined;
@@ -29,7 +32,7 @@ export function CTABanner({
   const buttonOnBrand = (
     <a
       id="whatsapp_start"
-      href={href}
+      href={finalHref}
       target={external ? "_blank" : undefined}
       rel={external ? "noopener noreferrer" : undefined}
       className="inline-flex h-12 max-w-full shrink-0 items-center justify-center gap-2 rounded-full bg-white px-6 text-center text-base font-medium text-[var(--site-primary)] shadow-xl transition-colors hover:bg-white/90 sm:h-14 sm:px-8 sm:text-lg"
@@ -114,7 +117,7 @@ export function CTABanner({
           </div>
           <a
             id="whatsapp_start"
-            href={href}
+            href={finalHref}
             target={external ? "_blank" : undefined}
             rel={external ? "noopener noreferrer" : undefined}
             className="inline-flex h-11 w-full max-w-full shrink-0 items-center justify-center gap-2 rounded-full bg-[var(--site-primary)] px-6 text-sm font-medium text-white shadow-md transition-colors hover:bg-[var(--site-primary-hover)] sm:w-auto"

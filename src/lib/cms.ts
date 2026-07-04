@@ -180,6 +180,85 @@ export type SitePagina = {
   order: number;
 };
 
+// ============ CONTATOS DO SITE (central) ============
+export type ContatoTelefone = {
+  id: string;
+  rotulo: string | null;
+  telefone_exibido: string;
+  whatsapp_enabled: boolean;
+  whatsapp_mensagem: string | null;
+  usar_no_botao_flutuante: boolean;
+  mostrar_no_header: boolean;
+  ordem: number;
+  enabled: boolean;
+};
+
+export type ContatoEmail = {
+  id: string;
+  rotulo: string | null;
+  email: string;
+  ordem: number;
+  enabled: boolean;
+};
+
+export type ContatoEndereco = {
+  id: string;
+  rotulo: string | null;
+  endereco_texto: string;
+  mapa_embed_url: string | null;
+  horarios: string | null;
+  ordem: number;
+  enabled: boolean;
+};
+
+export type SiteContatos = {
+  telefones: ContatoTelefone[];
+  emails: ContatoEmail[];
+  enderecos: ContatoEndereco[];
+};
+
+/** Gera link wa.me a partir do telefone exibido (extrai dígitos; prefixa 55 se BR). */
+export function buildWhatsappLink(
+  telefoneExibido: string,
+  mensagem?: string | null,
+): string {
+  let digits = (telefoneExibido || "").replace(/\D/g, "");
+  if (!digits) return "#";
+  if (digits.startsWith("0")) digits = digits.replace(/^0+/, "");
+  // Brasil sem DDI (10 ou 11 dígitos) → prefixa 55
+  if (digits.length === 10 || digits.length === 11) digits = "55" + digits;
+  const base = `https://wa.me/${digits}`;
+  const msg = (mensagem || "").trim();
+  return msg ? `${base}?text=${encodeURIComponent(msg)}` : base;
+}
+
+/** Retorna a href apropriada para um telefone: wa.me se WhatsApp, senão tel: */
+export function telefoneHref(t: ContatoTelefone): string {
+  if (t.whatsapp_enabled) return buildWhatsappLink(t.telefone_exibido, t.whatsapp_mensagem);
+  const digits = t.telefone_exibido.replace(/\D/g, "");
+  return digits ? `tel:${digits}` : "#";
+}
+
+export function pickBotaoFlutuante(telefones: ContatoTelefone[]): ContatoTelefone | null {
+  return (
+    telefones.find((t) => t.enabled && t.whatsapp_enabled && t.usar_no_botao_flutuante) ?? null
+  );
+}
+
+export function pickHeaderTelefone(telefones: ContatoTelefone[]): ContatoTelefone | null {
+  return telefones.find((t) => t.enabled && t.mostrar_no_header) ?? null;
+}
+
+export function pickWhatsappPrimario(telefones: ContatoTelefone[]): ContatoTelefone | null {
+  return telefones.find((t) => t.enabled && t.whatsapp_enabled) ?? null;
+}
+
+/** Rótulo → link wa.me/tel do primeiro telefone WhatsApp; fallback pra "#". */
+export function whatsappPrimarioHref(telefones: ContatoTelefone[]): string {
+  const t = pickWhatsappPrimario(telefones);
+  return t ? telefoneHref(t) : "#";
+}
+
 export const TEMA_DEFAULTS: Omit<SiteTema, "id"> = {
   cor_primaria: "#D67F43",
   cor_primaria_hover: "#C4682E",
@@ -293,9 +372,11 @@ let temaInflight: Promise<SiteTema | null> | null = null;
 let paginasCache: { data: SitePagina[]; at: number } | null = null;
 let paginasInflight: Promise<SitePagina[]> | null = null;
 const secoesByPaginaCache = new Map<string, { data: SiteSecao[]; at: number }>();
+let contatosCache: { data: SiteContatos; at: number } | null = null;
+let contatosInflight: Promise<SiteContatos> | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema" | "paginas") {
+export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema" | "paginas" | "contatos") {
   if (!which || which === "team") teamCache = null;
   if (!which || which === "testimonials") testimonialsCache = null;
   if (!which || which === "servicos") servicosCache = null;
@@ -305,6 +386,7 @@ export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" 
   if (!which || which === "header") headerCache = null;
   if (!which || which === "tema") temaCache = null;
   if (!which || which === "paginas") paginasCache = null;
+  if (!which || which === "contatos") contatosCache = null;
 }
 
 export async function fetchTeam(includeDisabled = false): Promise<TeamMember[]> {
@@ -592,6 +674,47 @@ export async function fetchPaginaBySlug(slug: string): Promise<SitePagina | null
     banner_imagem_url: publicImageUrl((data as any).banner_imagem_url),
     og_image: publicImageUrl((data as any).og_image),
   } as SitePagina;
+}
+
+export async function fetchSiteContatos(includeDisabled = false): Promise<SiteContatos> {
+  if (!includeDisabled) {
+    if (contatosCache && Date.now() - contatosCache.at < CACHE_TTL_MS) return contatosCache.data;
+    if (contatosInflight) return contatosInflight;
+  }
+  const run = (async () => {
+    const [telRes, emailRes, endRes] = await Promise.all([
+      (async () => {
+        let q = supabase.from("site_contato_telefones").select("*").order("ordem", { ascending: true });
+        if (!includeDisabled) q = q.eq("enabled", true);
+        return await q;
+      })(),
+      (async () => {
+        let q = supabase.from("site_contato_emails").select("*").order("ordem", { ascending: true });
+        if (!includeDisabled) q = q.eq("enabled", true);
+        return await q;
+      })(),
+      (async () => {
+        let q = supabase.from("site_contato_enderecos").select("*").order("ordem", { ascending: true });
+        if (!includeDisabled) q = q.eq("enabled", true);
+        return await q;
+      })(),
+    ]);
+    if (telRes.error) console.error("fetchSiteContatos telefones", telRes.error);
+    if (emailRes.error) console.error("fetchSiteContatos emails", emailRes.error);
+    if (endRes.error) console.error("fetchSiteContatos enderecos", endRes.error);
+    const data: SiteContatos = {
+      telefones: (telRes.data ?? []) as ContatoTelefone[],
+      emails: (emailRes.data ?? []) as ContatoEmail[],
+      enderecos: (endRes.data ?? []) as ContatoEndereco[],
+    };
+    if (!includeDisabled) contatosCache = { data, at: Date.now() };
+    return data;
+  })();
+  if (!includeDisabled) {
+    contatosInflight = run.finally(() => { contatosInflight = null; });
+    return contatosInflight;
+  }
+  return run;
 }
 
 /**
