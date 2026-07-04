@@ -372,9 +372,11 @@ let temaInflight: Promise<SiteTema | null> | null = null;
 let paginasCache: { data: SitePagina[]; at: number } | null = null;
 let paginasInflight: Promise<SitePagina[]> | null = null;
 const secoesByPaginaCache = new Map<string, { data: SiteSecao[]; at: number }>();
+let contatosCache: { data: SiteContatos; at: number } | null = null;
+let contatosInflight: Promise<SiteContatos> | null = null;
 const CACHE_TTL_MS = 5 * 60 * 1000;
 
-export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema" | "paginas") {
+export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" | "hero" | "rodape" | "secoes" | "header" | "tema" | "paginas" | "contatos") {
   if (!which || which === "team") teamCache = null;
   if (!which || which === "testimonials") testimonialsCache = null;
   if (!which || which === "servicos") servicosCache = null;
@@ -384,6 +386,7 @@ export function invalidateCmsCache(which?: "team" | "testimonials" | "servicos" 
   if (!which || which === "header") headerCache = null;
   if (!which || which === "tema") temaCache = null;
   if (!which || which === "paginas") paginasCache = null;
+  if (!which || which === "contatos") contatosCache = null;
 }
 
 export async function fetchTeam(includeDisabled = false): Promise<TeamMember[]> {
