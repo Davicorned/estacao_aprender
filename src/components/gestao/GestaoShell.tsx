@@ -144,14 +144,50 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     );
   };
 
+  const renderSoon = (item: SoonItem) => {
+    const Icon = item.icon;
+    return (
+      <div
+        key={item.label}
+        className="flex items-center justify-between rounded-lg px-3 py-2 text-sm text-gray-400 dark:text-muted-foreground cursor-not-allowed"
+        title="Em breve"
+      >
+        <span className="flex items-center gap-3">
+          <Icon className="h-4 w-4" />
+          {item.label}
+        </span>
+        <span className="text-[10px] font-medium uppercase tracking-wider bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded dark:bg-muted dark:text-muted-foreground">
+          em breve
+        </span>
+      </div>
+    );
+  };
+
   return (
     <>
-      <nav className="space-y-1">{MAIN.map(renderItem)}</nav>
-      <div className="my-4 border-t border-gray-200 dark:border-border" />
-      <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
-        Admin do site
-      </p>
-      <nav className="space-y-1">{SITE.map(renderItem)}</nav>
+      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+        <Stethoscope className="h-3.5 w-3.5" />
+        Clínica
+      </div>
+      <nav className="space-y-1 mb-5">{CLINICA.map(renderItem)}</nav>
+
+      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+        <Globe className="h-3.5 w-3.5" />
+        Meu site
+      </div>
+      <nav className="space-y-1 mb-5">
+        {MEU_SITE.map(renderItem)}
+        {MEU_SITE_SOON.map(renderSoon)}
+      </nav>
+
+      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+        <MessageSquare className="h-3.5 w-3.5" />
+        Mensagens
+      </div>
+      <nav className="space-y-1 mb-5">
+        {MENSAGENS.map(renderItem)}
+        {MENSAGENS_SOON.map(renderSoon)}
+      </nav>
     </>
   );
 }
