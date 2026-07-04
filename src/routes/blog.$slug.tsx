@@ -1,5 +1,4 @@
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
-import DOMPurify from "isomorphic-dompurify";
 import { ArrowLeft } from "lucide-react";
 import { Header } from "@/components/site/Header";
 import { Footer } from "@/components/site/Footer";
@@ -99,7 +98,7 @@ function formatDate(iso: string | null | undefined): string {
 function BlogArticlePage() {
   const { post } = Route.useLoaderData();
   const path = `/blog/${post.slug}`;
-  const safeHtml = DOMPurify.sanitize(post.conteudo || "", { USE_PROFILES: { html: true } });
+  const safeHtml = post.conteudo || "";
 
   const articleLd = compactJsonLd({
     "@context": "https://schema.org",

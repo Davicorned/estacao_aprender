@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 import { toast } from "sonner";
 import {
   Plus,
@@ -34,7 +35,9 @@ import {
   slugify,
 } from "@/lib/blog";
 import { EditorLayout } from "./EditorLayout";
-import { RichTextEditor } from "./RichTextEditor";
+const RichTextEditor = lazy(() =>
+  import("./RichTextEditor").then((m) => ({ default: m.RichTextEditor })),
+);
 
 type EditingState =
   | { mode: "list" }
@@ -326,12 +329,15 @@ function BlogEditor({
           : form.publicado_em
             ? new Date(form.publicado_em).toISOString()
             : null;
+      const conteudoSanitizado = form.conteudo
+        ? DOMPurify.sanitize(form.conteudo, { USE_PROFILES: { html: true } })
+        : "";
       const patch = {
         ...(form.id ? { id: form.id } : {}),
         slug,
         titulo: form.titulo,
         resumo: form.resumo || null,
-        conteudo: form.conteudo || "",
+        conteudo: conteudoSanitizado,
         capa_url: form.capa_url,
         autor: form.autor || null,
         categoria: form.categoria || null,
@@ -386,7 +392,15 @@ function BlogEditor({
           </div>
           <div className="space-y-2">
             <Label>Corpo do artigo</Label>
-            <RichTextEditor value={form.conteudo} onChange={(html) => setForm((f) => ({ ...f, conteudo: html }))} />
+            <Suspense
+              fallback={
+                <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
+                  Carregando editor…
+                </div>
+              }
+            >
+              <RichTextEditor value={form.conteudo} onChange={(html) => setForm((f) => ({ ...f, conteudo: html }))} />
+            </Suspense>
           </div>
         </div>
       ),
