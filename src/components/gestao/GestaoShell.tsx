@@ -92,7 +92,7 @@ const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/site\/equipe/, title: "Equipe (site)" },
   { match: /^\/gestao\/site\/depoimentos/, title: "Depoimentos (site)" },
   { match: /^\/gestao\/site\/servicos/, title: "Serviços (site)" },
-  { match: /^\/gestao\/site\/contatos/, title: "Contatos (site)" },
+  { match: /^\/gestao\/site\/contatos/, title: "Leads" },
   { match: /^\/gestao\/site\/paginas/, title: "Páginas do site" },
   { match: /^\/gestao\/site\/layout\/hero/, title: "Layout · Banner" },
   { match: /^\/gestao\/site\/layout\/secoes/, title: "Layout · Seções" },
