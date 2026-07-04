@@ -20,7 +20,13 @@ import {
   Palette,
   Briefcase,
   Phone,
-  FileText as FileTextIcon,
+  Stethoscope,
+  Globe,
+  MessageSquare,
+  Newspaper,
+  MessageCircle,
+  Bot,
+  Inbox,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -38,8 +44,9 @@ import { fetchTema } from "@/lib/cms";
 const FALLBACK_LOGO = logoAsset.url;
 
 type NavItem = { to: string; label: string; icon: typeof LayoutDashboard; exact?: boolean };
+type SoonItem = { label: string; icon: typeof LayoutDashboard; badge: "em breve" };
 
-const MAIN: NavItem[] = [
+const CLINICA: NavItem[] = [
   { to: "/gestao/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/gestao/agenda", label: "Agenda", icon: Calendar },
   { to: "/gestao/pacientes", label: "Pacientes", icon: Users },
@@ -47,17 +54,29 @@ const MAIN: NavItem[] = [
   { to: "/gestao/servicos", label: "Serviços", icon: Briefcase },
   { to: "/gestao/contratos", label: "Contratos", icon: FileText },
   { to: "/gestao/financeiro", label: "Financeiro", icon: DollarSign },
-  { to: "/gestao/configuracoes", label: "Configurações", icon: Settings },
 ];
 
-const SITE: NavItem[] = [
+const MEU_SITE: NavItem[] = [
   { to: "/gestao/site", label: "Visão geral", icon: LayoutDashboard, exact: true },
-  { to: "/gestao/site/paginas", label: "Páginas", icon: FileTextIcon },
-  { to: "/gestao/site/contatos", label: "Contatos", icon: Phone },
+  { to: "/gestao/site/paginas", label: "Páginas", icon: FileText },
+  { to: "/gestao/site/layout", label: "Layout", icon: Palette },
   { to: "/gestao/site/equipe", label: "Equipe", icon: UserCog },
   { to: "/gestao/site/depoimentos", label: "Depoimentos", icon: MessageSquareQuote },
-  { to: "/gestao/site/servicos", label: "Serviços", icon: Sparkles },
-  { to: "/gestao/site/layout", label: "Layout", icon: Palette },
+  { to: "/gestao/site/servicos", label: "Serviços do site", icon: Sparkles },
+];
+
+const MEU_SITE_SOON: SoonItem[] = [
+  { label: "Blog", icon: Newspaper, badge: "em breve" },
+];
+
+const MENSAGENS_SOON: SoonItem[] = [
+  { label: "WhatsApp", icon: MessageCircle, badge: "em breve" },
+  { label: "Automações", icon: Bot, badge: "em breve" },
+];
+
+const MENSAGENS: NavItem[] = [
+  // TODO: avaliar se o antigo "Contatos" (site) é leads de formulário. Se sim, manter aqui.
+  { to: "/gestao/site/contatos", label: "Leads", icon: Inbox },
 ];
 
 const TITLE_MAP: { match: RegExp; title: string }[] = [
