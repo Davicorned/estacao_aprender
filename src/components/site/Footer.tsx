@@ -2,7 +2,17 @@ import React, { useEffect, useState } from "react";
 import { getRouteApi } from "@tanstack/react-router";
 import { Instagram, Facebook, Linkedin, Youtube, Twitter, Music2, Phone, Mail, MapPin } from "lucide-react";
 import logoAsset from "@/assets/logo-estacao-aprender.svg.asset.json";
-import { fetchRodape, fetchTema, RODAPE_DEFAULTS, type LinkItem, type RedeSocial, type SiteRodape, type SiteTema } from "@/lib/cms";
+import {
+  fetchRodape,
+  fetchTema,
+  RODAPE_DEFAULTS,
+  telefoneHref,
+  type LinkItem,
+  type RedeSocial,
+  type SiteRodape,
+  type SiteTema,
+} from "@/lib/cms";
+import { useSiteContatos } from "@/lib/useSiteContatos";
 import { buildBackground } from "@/components/gestao/site/ColorField";
 
 const FALLBACK_LOGO = logoAsset.url;
@@ -58,6 +68,9 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
     mergeRodape(override ?? initialFromLoader),
   );
   const [tema, setTema] = useState<SiteTema | null>(initialTema);
+  const contatos = useSiteContatos();
+  const temContatos =
+    contatos.telefones.length + contatos.emails.length + contatos.enderecos.length > 0;
   useEffect(() => {
     if (override) {
       setData(mergeRodape(override));
@@ -153,31 +166,69 @@ export function Footer({ override }: { override?: Partial<RodapeData> } = {}) {
     <div style={colStyle}>
       <h4 className="text-sm font-semibold uppercase tracking-wider">Contato</h4>
       <ul className={`mt-4 space-y-4 text-sm ${cls.muted}`}>
-        <li className="flex items-start gap-3">
-          <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
-          <a
-            id="whatsapp_start"
-            href={data.telefone_link ?? "#"}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={cls.hover}
-          >
-            {data.telefone}
-          </a>
-        </li>
-        <li className="flex items-start gap-3">
-          <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
-          <a href={`mailto:${data.email ?? ""}`} className={`break-all ${cls.hover}`}>
-            {data.email}
-          </a>
-        </li>
-        <li className="flex items-start gap-3">
-          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
-          <span>
-            <strong className={`block ${cls.strong}`}>{data.endereco_titulo}</strong>
-            {data.endereco_texto}
-          </span>
-        </li>
+        {temContatos ? (
+          <>
+            {contatos.telefones.map((t) => (
+              <li key={t.id} className="flex items-start gap-3">
+                <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+                <a
+                  id={t.whatsapp_enabled ? "whatsapp_start" : undefined}
+                  href={telefoneHref(t)}
+                  target={t.whatsapp_enabled ? "_blank" : undefined}
+                  rel={t.whatsapp_enabled ? "noopener noreferrer" : undefined}
+                  className={cls.hover}
+                >
+                  {t.rotulo ? `${t.rotulo}: ${t.telefone_exibido}` : t.telefone_exibido}
+                </a>
+              </li>
+            ))}
+            {contatos.emails.map((e) => (
+              <li key={e.id} className="flex items-start gap-3">
+                <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+                <a href={`mailto:${e.email}`} className={`break-all ${cls.hover}`}>
+                  {e.email}
+                </a>
+              </li>
+            ))}
+            {contatos.enderecos.map((en) => (
+              <li key={en.id} className="flex items-start gap-3">
+                <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+                <span>
+                  {en.rotulo && <strong className={`block ${cls.strong}`}>{en.rotulo}</strong>}
+                  {en.endereco_texto}
+                </span>
+              </li>
+            ))}
+          </>
+        ) : (
+          <>
+            <li className="flex items-start gap-3">
+              <Phone className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+              <a
+                id="whatsapp_start"
+                href={data.telefone_link ?? "#"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={cls.hover}
+              >
+                {data.telefone}
+              </a>
+            </li>
+            <li className="flex items-start gap-3">
+              <Mail className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+              <a href={`mailto:${data.email ?? ""}`} className={`break-all ${cls.hover}`}>
+                {data.email}
+              </a>
+            </li>
+            <li className="flex items-start gap-3">
+              <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[var(--site-primary)]" />
+              <span>
+                <strong className={`block ${cls.strong}`}>{data.endereco_titulo}</strong>
+                {data.endereco_texto}
+              </span>
+            </li>
+          </>
+        )}
       </ul>
     </div>
   );
