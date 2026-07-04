@@ -70,14 +70,12 @@ const MEU_SITE_SOON: SoonItem[] = [
 ];
 
 const MENSAGENS_SOON: SoonItem[] = [
+  { label: "Leads", icon: Inbox, badge: "em breve" },
   { label: "WhatsApp", icon: MessageCircle, badge: "em breve" },
   { label: "Automações", icon: Bot, badge: "em breve" },
 ];
 
-const MENSAGENS: NavItem[] = [
-  // TODO: avaliar se o antigo "Contatos" (site) é leads de formulário. Se sim, manter aqui.
-  { to: "/gestao/site/contatos", label: "Leads", icon: Inbox },
-];
+const MENSAGENS: NavItem[] = [];
 
 const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/dashboard/, title: "Dashboard" },
