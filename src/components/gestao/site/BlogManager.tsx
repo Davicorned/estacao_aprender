@@ -392,7 +392,15 @@ function BlogEditor({
           </div>
           <div className="space-y-2">
             <Label>Corpo do artigo</Label>
-            <RichTextEditor value={form.conteudo} onChange={(html) => setForm((f) => ({ ...f, conteudo: html }))} />
+            <Suspense
+              fallback={
+                <div className="rounded-lg border border-border bg-card p-6 text-sm text-muted-foreground">
+                  Carregando editor…
+                </div>
+              }
+            >
+              <RichTextEditor value={form.conteudo} onChange={(html) => setForm((f) => ({ ...f, conteudo: html }))} />
+            </Suspense>
           </div>
         </div>
       ),
