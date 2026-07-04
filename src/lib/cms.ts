@@ -676,6 +676,47 @@ export async function fetchPaginaBySlug(slug: string): Promise<SitePagina | null
   } as SitePagina;
 }
 
+export async function fetchSiteContatos(includeDisabled = false): Promise<SiteContatos> {
+  if (!includeDisabled) {
+    if (contatosCache && Date.now() - contatosCache.at < CACHE_TTL_MS) return contatosCache.data;
+    if (contatosInflight) return contatosInflight;
+  }
+  const run = (async () => {
+    const [telRes, emailRes, endRes] = await Promise.all([
+      (async () => {
+        let q = supabase.from("site_contato_telefones").select("*").order("ordem", { ascending: true });
+        if (!includeDisabled) q = q.eq("enabled", true);
+        return await q;
+      })(),
+      (async () => {
+        let q = supabase.from("site_contato_emails").select("*").order("ordem", { ascending: true });
+        if (!includeDisabled) q = q.eq("enabled", true);
+        return await q;
+      })(),
+      (async () => {
+        let q = supabase.from("site_contato_enderecos").select("*").order("ordem", { ascending: true });
+        if (!includeDisabled) q = q.eq("enabled", true);
+        return await q;
+      })(),
+    ]);
+    if (telRes.error) console.error("fetchSiteContatos telefones", telRes.error);
+    if (emailRes.error) console.error("fetchSiteContatos emails", emailRes.error);
+    if (endRes.error) console.error("fetchSiteContatos enderecos", endRes.error);
+    const data: SiteContatos = {
+      telefones: (telRes.data ?? []) as ContatoTelefone[],
+      emails: (emailRes.data ?? []) as ContatoEmail[],
+      enderecos: (endRes.data ?? []) as ContatoEndereco[],
+    };
+    if (!includeDisabled) contatosCache = { data, at: Date.now() };
+    return data;
+  })();
+  if (!includeDisabled) {
+    contatosInflight = run.finally(() => { contatosInflight = null; });
+    return contatosInflight;
+  }
+  return run;
+}
+
 /**
  * SSR helper: fetches sections + shared collections in parallel for a public page.
  * Uses direct REST fetches instead of supabase-js so public loaders work reliably
