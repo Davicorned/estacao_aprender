@@ -227,7 +227,7 @@ function ThemeToggle() {
 function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
   const { user } = useAuth();
   return (
-    <div className="space-y-1 p-3 dark:border-border">
+    <div className="space-y-1 p-3">
       <div className="my-3 border-t border-gray-200 dark:border-border" />
       <Link
         to="/gestao/configuracoes"
