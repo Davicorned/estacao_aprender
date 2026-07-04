@@ -1,28 +1,34 @@
-## Problema
+## Objetivo
 
-Hoje só validamos conflito por **profissional** e capacidade de **salas**. Não há validação de conflito por **paciente**, então é possível agendar o mesmo paciente no mesmo horário com profissionais diferentes.
-
-## Solução
-
-Adicionar validação de conflito de horário por paciente (independente do profissional / tipo online ou presencial). Cancelados são ignorados. Em edição, ignora o próprio `id`.
+1. Tirar **Serviços** de Configurações e criar página própria `/gestao/servicos`, abaixo de **Profissionais** no menu.
+2. Em **Profissionais**, trocar o campo texto de especialidades (separado por vírgulas) por um **multi-select** com as opções vindas dos **Serviços cadastrados**.
 
 ## Mudanças
 
-### 1) `src/lib/agendamentos.ts`
-- Nova função `checarConflitoPaciente({ pacienteId, data, horaInicio, horaFim, excludeId? }) → Promise<boolean>` — consulta `agendamentos` filtrando por `paciente_id`, `data`, `status != 'cancelado'` e detecta overlap `inicio < b && fim > a`.
-- Nova função `checarConflitosPacienteLote({ pacienteId, datas, horaInicio, horaFim, excludeId? }) → Promise<Set<string>>` (mesmo padrão de `checarConflitosLote`), para uso em recorrência.
+### 1) Nova rota `src/routes/gestao.servicos.tsx`
+- Renderiza `<ServicosSection />` (o componente já existe e não precisa mudar).
 
-### 2) `src/components/gestao/agenda/AgendamentoFormDialog.tsx`
-- No submit (criar e editar), antes de `createAgendamento` / `updateAgendamento`, chamar `checarConflitoPaciente` com `pacienteId = paciente!.id` (passando `excludeId` na edição). Se conflito → toast: **"Este paciente já tem um agendamento neste horário."** e aborta.
-- No preview de recorrência (onde já roda `checarConflitosLote` e `checarCapacidadeSalasLote`), rodar também `checarConflitosPacienteLote` e unir ao conjunto de datas bloqueadas (mostrando contador tipo "X com conflito de paciente" no rodapé do preview).
-- Na criação em lote da recorrência, pular datas que caiam em conflito de paciente da mesma forma que já pula conflitos e falta de sala.
+### 2) `src/routes/gestao.configuracoes.tsx`
+- Remover import e uso de `ServicosSection`. A página passa a mostrar apenas `ClinicaSection` (e o que mais estiver lá).
 
-### 3) Sem migration
-Regra puramente de aplicação (mesma abordagem já usada para conflito de profissional). Não altera schema.
+### 3) `src/components/gestao/GestaoShell.tsx`
+- Adicionar item de menu **Serviços** (ícone `Briefcase` ou `Stethoscope`) logo abaixo de **Profissionais**, apontando para `/gestao/servicos`.
+- Adicionar o `match` no mapa de títulos para `/gestao/servicos`.
 
-## Casos de teste
-1. Paciente A com Prof. X 09:00–10:00 → agendar Paciente A com Prof. Y 09:30–10:30 → **BLOQUEADO**.
-2. Paciente A online + Paciente A presencial no mesmo horário → **BLOQUEADO** (regra é por paciente, tipo irrelevante).
-3. Editar o próprio agendamento sem mudar horário → **PERMITIDO** (excludeId).
-4. Recorrência: datas com conflito de paciente ficam marcadas no preview e não são criadas.
-5. Paciente B em qualquer horário do Paciente A → **PERMITIDO**.
+### 4) `src/components/gestao/config/ProfissionaisSection.tsx` — multi-select de especialidades
+- Ao montar, carregar `fetchServicos(true)` e derivar a lista de nomes como opções (`servico.nome`).
+- Substituir o `<Input>` de especialidades (linha de edição) por um componente multi-select com checkboxes usando `Popover` + `Command` (já disponíveis em `src/components/ui`), padrão combobox multi do shadcn:
+  - Trigger mostra as especialidades selecionadas como badges (mesmo estilo laranja usado na tabela) + placeholder "Selecionar…".
+  - Lista com busca, cada item com checkbox; clicar alterna seleção.
+  - Estado no `draft.especialidades` passa a ser `string[]` em vez de `string`.
+- Migração dos dados atuais: conforme escolhido, **manter como está**. Ao abrir a edição, os valores atuais viram o array inicial; os que casam (case-insensitive) com um serviço aparecem marcados na lista, os que não casam continuam salvos e aparecem como badge extra (com um "×" para remover), mas não são reintroduzidos automaticamente. Nada é reescrito até o usuário salvar.
+- Salvamento continua igual: `especialidades: string[]` direto no update/insert.
+- Exibição na tabela (linha não-editando) permanece igual — já usa `p.especialidades.map(...)`.
+
+### 5) Sem migration
+Nenhuma alteração de schema. `profissionais.especialidades` continua `text[]`.
+
+## Fora de escopo
+- Não criar CRUD/tabela separada de especialidades.
+- Não normalizar/renomear especialidades existentes automaticamente.
+- Não mexer em agendamentos nem em outras telas.
