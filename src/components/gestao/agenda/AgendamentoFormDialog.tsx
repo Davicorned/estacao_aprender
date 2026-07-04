@@ -27,6 +27,8 @@ import {
   addMin,
   checarConflito,
   checarConflitosLote,
+  checarConflitoPaciente,
+  checarConflitosPacienteLote,
   checarCapacidadeSalas,
   checarCapacidadeSalasLote,
   createAgendamento,
@@ -116,6 +118,7 @@ export function AgendamentoFormDialog({
   const [previewDatas, setPreviewDatas] = useState<string[]>([]);
   const [previewConflitos, setPreviewConflitos] = useState<Set<string>>(new Set());
   const [previewSemSala, setPreviewSemSala] = useState<Set<string>>(new Set());
+  const [previewConflitosPaciente, setPreviewConflitosPaciente] = useState<Set<string>>(new Set());
   const [previewSelecionadas, setPreviewSelecionadas] = useState<Set<string>>(new Set());
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -304,11 +307,24 @@ export function AgendamentoFormDialog({
               qtdSalas,
             })
           : new Set<string>();
+      const conflitosPaciente = paciente
+        ? await checarConflitosPacienteLote({
+            pacienteId: paciente.id,
+            datas,
+            horaInicio,
+            horaFim,
+          })
+        : new Set<string>();
       setPreviewDatas(datas);
       setPreviewConflitos(conflitos);
       setPreviewSemSala(semSala);
+      setPreviewConflitosPaciente(conflitosPaciente);
       setPreviewSelecionadas(
-        new Set(datas.filter((d) => !conflitos.has(d) && !semSala.has(d))),
+        new Set(
+          datas.filter(
+            (d) => !conflitos.has(d) && !semSala.has(d) && !conflitosPaciente.has(d),
+          ),
+        ),
       );
       setPreviewOpen(true);
     } catch (e) {
