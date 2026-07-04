@@ -165,26 +165,28 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <>
-      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+      <div className="mb-2 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
         <Stethoscope className="h-3.5 w-3.5" />
         Clínica
       </div>
-      <nav className="space-y-1 mb-5">{CLINICA.map(renderItem)}</nav>
+      <nav className="space-y-1">{CLINICA.map(renderItem)}</nav>
 
-      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+      <div className="my-3 border-t border-gray-200 dark:border-border" />
+      <div className="mb-2 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
         <Globe className="h-3.5 w-3.5" />
         Meu site
       </div>
-      <nav className="space-y-1 mb-5">
+      <nav className="space-y-1">
         {MEU_SITE.map(renderItem)}
         {MEU_SITE_SOON.map(renderSoon)}
       </nav>
 
-      <div className="mb-3 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
+      <div className="my-3 border-t border-gray-200 dark:border-border" />
+      <div className="mb-2 flex items-center gap-2 px-3 text-[11px] font-semibold uppercase tracking-wider text-gray-400 dark:text-muted-foreground">
         <MessageSquare className="h-3.5 w-3.5" />
         Mensagens
       </div>
-      <nav className="space-y-1 mb-5">
+      <nav className="space-y-1">
         {MENSAGENS.map(renderItem)}
         {MENSAGENS_SOON.map(renderSoon)}
       </nav>
