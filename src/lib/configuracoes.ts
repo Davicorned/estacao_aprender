@@ -29,6 +29,7 @@ export type ClinicaConfig = {
   horario_sab_fim: string | null;
   horario_almoco_inicio: string | null;
   horario_almoco_fim: string | null;
+  qtd_salas: number;
 };
 
 export const DURACOES = [30, 40, 50, 60, 90, 120] as const;
