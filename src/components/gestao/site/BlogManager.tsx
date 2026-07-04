@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
+import DOMPurify from "dompurify";
 import { toast } from "sonner";
 import {
   Plus,
@@ -34,7 +35,9 @@ import {
   slugify,
 } from "@/lib/blog";
 import { EditorLayout } from "./EditorLayout";
-import { RichTextEditor } from "./RichTextEditor";
+const RichTextEditor = lazy(() =>
+  import("./RichTextEditor").then((m) => ({ default: m.RichTextEditor })),
+);
 
 type EditingState =
   | { mode: "list" }
