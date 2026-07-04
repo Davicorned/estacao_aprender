@@ -1,17 +1,26 @@
 import { useEffect, useState } from "react";
-import { Plus, Pencil, Trash2, Check, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Check, X, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchProfissionais, type Profissional } from "@/lib/configuracoes";
+import { fetchProfissionais, fetchServicos, type Profissional } from "@/lib/configuracoes";
 
 type Draft = {
   id?: string;
   nome: string;
   titulo: string;
-  especialidades: string;
+  especialidades: string[];
   cor_agenda: string;
   ativo: boolean;
 };
@@ -19,7 +28,7 @@ type Draft = {
 const empty: Draft = {
   nome: "",
   titulo: "",
-  especialidades: "",
+  especialidades: [],
   cor_agenda: "#D67F43",
   ativo: true,
 };
@@ -28,10 +37,16 @@ export function ProfissionaisSection() {
   const [items, setItems] = useState<Profissional[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Draft | null>(null);
+  const [servicoNomes, setServicoNomes] = useState<string[]>([]);
 
   async function load() {
     setLoading(true);
-    setItems(await fetchProfissionais(true));
+    const [profs, servs] = await Promise.all([
+      fetchProfissionais(true),
+      fetchServicos(true),
+    ]);
+    setItems(profs);
+    setServicoNomes(servs.map((s) => s.nome));
     setLoading(false);
   }
   useEffect(() => {
@@ -46,7 +61,7 @@ export function ProfissionaisSection() {
       id: p.id,
       nome: p.nome,
       titulo: p.titulo ?? "",
-      especialidades: p.especialidades.join(", "),
+      especialidades: [...p.especialidades],
       cor_agenda: p.cor_agenda,
       ativo: p.ativo,
     });
@@ -59,10 +74,9 @@ export function ProfissionaisSection() {
     if (!editing) return;
     const nome = editing.nome.trim();
     if (!nome) return toast.error("Nome obrigatório");
-    const especialidades = editing.especialidades
-      .split(",")
-      .map((s) => s.trim())
-      .filter(Boolean);
+    const especialidades = Array.from(
+      new Set(editing.especialidades.map((s) => s.trim()).filter(Boolean)),
+    );
     const payload = {
       nome,
       titulo: editing.titulo.trim() || null,
@@ -142,6 +156,7 @@ export function ProfissionaisSection() {
                     key={p.id}
                     draft={editing}
                     setDraft={setEditing}
+                    servicoNomes={servicoNomes}
                     onSave={save}
                     onCancel={cancel}
                   />
@@ -197,7 +212,13 @@ export function ProfissionaisSection() {
               })}
 
             {!loading && editing && !editing.id && (
-              <EditRow draft={editing} setDraft={setEditing} onSave={save} onCancel={cancel} />
+              <EditRow
+                draft={editing}
+                setDraft={setEditing}
+                servicoNomes={servicoNomes}
+                onSave={save}
+                onCancel={cancel}
+              />
             )}
 
             {!loading && items.length === 0 && !editing && (
@@ -217,14 +238,32 @@ export function ProfissionaisSection() {
 function EditRow({
   draft,
   setDraft,
+  servicoNomes,
   onSave,
   onCancel,
 }: {
   draft: Draft;
   setDraft: (d: Draft) => void;
+  servicoNomes: string[];
   onSave: () => void;
   onCancel: () => void;
 }) {
+  const selected = draft.especialidades;
+  const norm = (s: string) => s.trim().toLowerCase();
+  const isSelected = (nome: string) => selected.some((s) => norm(s) === norm(nome));
+  const toggle = (nome: string) => {
+    if (isSelected(nome)) {
+      setDraft({
+        ...draft,
+        especialidades: selected.filter((s) => norm(s) !== norm(nome)),
+      });
+    } else {
+      setDraft({ ...draft, especialidades: [...selected, nome] });
+    }
+  };
+  const removeOne = (nome: string) =>
+    setDraft({ ...draft, especialidades: selected.filter((s) => s !== nome) });
+
   return (
     <tr className="border-b border-gray-100 bg-[#FEF3E8]/40">
       <td className="px-5 py-3">
@@ -245,11 +284,75 @@ function EditRow({
         />
       </td>
       <td className="px-5 py-3">
-        <Input
-          value={draft.especialidades}
-          onChange={(e) => setDraft({ ...draft, especialidades: e.target.value })}
-          placeholder="ABA, TEA (vírgula)"
-        />
+        <Popover>
+          <PopoverTrigger asChild>
+            <button
+              type="button"
+              className="flex min-h-9 w-full items-center justify-between gap-2 rounded-md border border-input bg-background px-3 py-1.5 text-left text-sm hover:bg-accent/50"
+            >
+              <div className="flex flex-wrap gap-1">
+                {selected.length === 0 && (
+                  <span className="text-muted-foreground">Selecionar especialidades…</span>
+                )}
+                {selected.map((s) => (
+                  <span
+                    key={s}
+                    className="inline-flex items-center gap-1 rounded-full bg-[#FEF3E8] px-2 py-0.5 text-xs text-[#B85A24]"
+                  >
+                    {s}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeOne(s);
+                      }}
+                      className="hover:text-red-600"
+                      aria-label={`Remover ${s}`}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                ))}
+              </div>
+              <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+            </button>
+          </PopoverTrigger>
+          <PopoverContent className="w-72 p-0" align="start">
+            <Command>
+              <CommandInput placeholder="Buscar serviço…" />
+              <CommandList>
+                <CommandEmpty>
+                  {servicoNomes.length === 0
+                    ? "Nenhum serviço cadastrado."
+                    : "Nenhum resultado."}
+                </CommandEmpty>
+                <CommandGroup heading="Serviços">
+                  {servicoNomes.map((nome) => {
+                    const checked = isSelected(nome);
+                    return (
+                      <CommandItem
+                        key={nome}
+                        value={nome}
+                        onSelect={() => toggle(nome)}
+                      >
+                        <div
+                          className={`mr-2 flex h-4 w-4 items-center justify-center rounded border ${
+                            checked
+                              ? "border-[#D67F43] bg-[#D67F43] text-white"
+                              : "border-gray-300"
+                          }`}
+                        >
+                          {checked && <Check className="h-3 w-3" />}
+                        </div>
+                        {nome}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              </CommandList>
+            </Command>
+          </PopoverContent>
+        </Popover>
       </td>
       <td className="px-5 py-3">
         <input

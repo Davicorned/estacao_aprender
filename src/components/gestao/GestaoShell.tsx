@@ -18,6 +18,7 @@ import {
   Monitor,
   Sparkles,
   Palette,
+  Briefcase,
   FileText as FileTextIcon,
 } from "lucide-react";
 import { useAuth } from "@/lib/auth-context";
@@ -42,6 +43,7 @@ const MAIN: NavItem[] = [
   { to: "/gestao/agenda", label: "Agenda", icon: Calendar },
   { to: "/gestao/pacientes", label: "Pacientes", icon: Users },
   { to: "/gestao/profissionais", label: "Profissionais", icon: UserCog },
+  { to: "/gestao/servicos", label: "Serviços", icon: Briefcase },
   { to: "/gestao/contratos", label: "Contratos", icon: FileText },
   { to: "/gestao/financeiro", label: "Financeiro", icon: DollarSign },
   { to: "/gestao/configuracoes", label: "Configurações", icon: Settings },
@@ -63,6 +65,7 @@ const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/pacientes\/[^/]+/, title: "Paciente" },
   { match: /^\/gestao\/pacientes/, title: "Pacientes" },
   { match: /^\/gestao\/profissionais/, title: "Profissionais" },
+  { match: /^\/gestao\/servicos/, title: "Serviços" },
   { match: /^\/gestao\/contratos/, title: "Contratos" },
   { match: /^\/gestao\/financeiro/, title: "Financeiro" },
   { match: /^\/gestao\/configuracoes/, title: "Configurações" },
