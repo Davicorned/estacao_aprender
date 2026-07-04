@@ -11,6 +11,8 @@ import {
   buildWhatsappLink,
   fetchSiteContatos,
   invalidateCmsCache,
+  formatBrazilPhoneDisplay,
+  isValidBrazilPhone,
   type ContatoTelefone,
   type ContatoEmail,
   type ContatoEndereco,
