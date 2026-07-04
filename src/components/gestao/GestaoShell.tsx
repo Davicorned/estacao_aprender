@@ -63,11 +63,10 @@ const MEU_SITE: NavItem[] = [
   { to: "/gestao/site/equipe", label: "Equipe", icon: UserCog },
   { to: "/gestao/site/depoimentos", label: "Depoimentos", icon: MessageSquareQuote },
   { to: "/gestao/site/servicos", label: "Serviços do site", icon: Sparkles },
+  { to: "/gestao/site/blog", label: "Blog", icon: Newspaper },
 ];
 
-const MEU_SITE_SOON: SoonItem[] = [
-  { label: "Blog", icon: Newspaper, badge: "em breve" },
-];
+const MEU_SITE_SOON: SoonItem[] = [];
 
 const MENSAGENS_SOON: SoonItem[] = [
   { label: "Leads", icon: Inbox, badge: "em breve" },
@@ -93,6 +92,7 @@ const TITLE_MAP: { match: RegExp; title: string }[] = [
   { match: /^\/gestao\/site\/servicos/, title: "Serviços (site)" },
   { match: /^\/gestao\/site\/contatos/, title: "Contato" },
   { match: /^\/gestao\/site\/paginas/, title: "Páginas do site" },
+  { match: /^\/gestao\/site\/blog/, title: "Blog" },
   { match: /^\/gestao\/site\/layout\/hero/, title: "Layout · Banner" },
   { match: /^\/gestao\/site\/layout\/secoes/, title: "Layout · Seções" },
   { match: /^\/gestao\/site\/layout\/rodape/, title: "Layout · Rodapé" },

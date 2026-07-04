@@ -36,6 +36,7 @@ import { Route as GestaoSiteLayoutRouteImport } from './routes/gestao.site.layou
 import { Route as GestaoSiteEquipeRouteImport } from './routes/gestao.site.equipe'
 import { Route as GestaoSiteDepoimentosRouteImport } from './routes/gestao.site.depoimentos'
 import { Route as GestaoSiteContatosRouteImport } from './routes/gestao.site.contatos'
+import { Route as GestaoSiteBlogRouteImport } from './routes/gestao.site.blog'
 import { Route as GestaoPacientesNovoRouteImport } from './routes/gestao.pacientes.novo'
 import { Route as GestaoPacientesIdRouteImport } from './routes/gestao.pacientes.$id'
 import { Route as GestaoSiteLayoutIndexRouteImport } from './routes/gestao.site.layout.index'
@@ -181,6 +182,11 @@ const GestaoSiteContatosRoute = GestaoSiteContatosRouteImport.update({
   path: '/site/contatos',
   getParentRoute: () => GestaoRoute,
 } as any)
+const GestaoSiteBlogRoute = GestaoSiteBlogRouteImport.update({
+  id: '/site/blog',
+  path: '/site/blog',
+  getParentRoute: () => GestaoRoute,
+} as any)
 const GestaoPacientesNovoRoute = GestaoPacientesNovoRouteImport.update({
   id: '/novo',
   path: '/novo',
@@ -249,6 +255,7 @@ export interface FileRoutesByFullPath {
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
+  '/gestao/site/blog': typeof GestaoSiteBlogRoute
   '/gestao/site/contatos': typeof GestaoSiteContatosRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
@@ -285,6 +292,7 @@ export interface FileRoutesByTo {
   '/gestao': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
+  '/gestao/site/blog': typeof GestaoSiteBlogRoute
   '/gestao/site/contatos': typeof GestaoSiteContatosRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/gestao/': typeof GestaoIndexRoute
   '/gestao/pacientes/$id': typeof GestaoPacientesIdRoute
   '/gestao/pacientes/novo': typeof GestaoPacientesNovoRoute
+  '/gestao/site/blog': typeof GestaoSiteBlogRoute
   '/gestao/site/contatos': typeof GestaoSiteContatosRoute
   '/gestao/site/depoimentos': typeof GestaoSiteDepoimentosRoute
   '/gestao/site/equipe': typeof GestaoSiteEquipeRoute
@@ -363,6 +372,7 @@ export interface FileRouteTypes {
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
+    | '/gestao/site/blog'
     | '/gestao/site/contatos'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
@@ -399,6 +409,7 @@ export interface FileRouteTypes {
     | '/gestao'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
+    | '/gestao/site/blog'
     | '/gestao/site/contatos'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
@@ -436,6 +447,7 @@ export interface FileRouteTypes {
     | '/gestao/'
     | '/gestao/pacientes/$id'
     | '/gestao/pacientes/novo'
+    | '/gestao/site/blog'
     | '/gestao/site/contatos'
     | '/gestao/site/depoimentos'
     | '/gestao/site/equipe'
@@ -657,6 +669,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GestaoSiteContatosRouteImport
       parentRoute: typeof GestaoRoute
     }
+    '/gestao/site/blog': {
+      id: '/gestao/site/blog'
+      path: '/site/blog'
+      fullPath: '/gestao/site/blog'
+      preLoaderRoute: typeof GestaoSiteBlogRouteImport
+      parentRoute: typeof GestaoRoute
+    }
     '/gestao/pacientes/novo': {
       id: '/gestao/pacientes/novo'
       path: '/novo'
@@ -771,6 +790,7 @@ interface GestaoRouteChildren {
   GestaoProfissionaisRoute: typeof GestaoProfissionaisRoute
   GestaoServicosRoute: typeof GestaoServicosRoute
   GestaoIndexRoute: typeof GestaoIndexRoute
+  GestaoSiteBlogRoute: typeof GestaoSiteBlogRoute
   GestaoSiteContatosRoute: typeof GestaoSiteContatosRoute
   GestaoSiteDepoimentosRoute: typeof GestaoSiteDepoimentosRoute
   GestaoSiteEquipeRoute: typeof GestaoSiteEquipeRoute
@@ -791,6 +811,7 @@ const GestaoRouteChildren: GestaoRouteChildren = {
   GestaoProfissionaisRoute: GestaoProfissionaisRoute,
   GestaoServicosRoute: GestaoServicosRoute,
   GestaoIndexRoute: GestaoIndexRoute,
+  GestaoSiteBlogRoute: GestaoSiteBlogRoute,
   GestaoSiteContatosRoute: GestaoSiteContatosRoute,
   GestaoSiteDepoimentosRoute: GestaoSiteDepoimentosRoute,
   GestaoSiteEquipeRoute: GestaoSiteEquipeRoute,
@@ -818,13 +839,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}
