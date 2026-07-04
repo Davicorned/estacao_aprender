@@ -292,3 +292,24 @@
 .dark .text-blue-800 { color: oklch(0.78 0.13 245) !important; }
 .dark .hover\:text-blue-700:hover,
 .dark .hover\:text-blue-800:hover { color: oklch(0.85 0.12 245) !important; }
+
+/*
+ * Subtle themed scrollbars across the app.
+ */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+}
+
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+*::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover { background: var(--color-muted-foreground); }
+
