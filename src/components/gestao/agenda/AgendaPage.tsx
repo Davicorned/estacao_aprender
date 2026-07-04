@@ -6,6 +6,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   Plus,
+  Video,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -391,7 +392,7 @@ function AgendaGrid({
                     key={a.id}
                     type="button"
                     onClick={() => onBlocoClick(a)}
-                    className={`absolute overflow-hidden rounded border-l-4 px-1.5 py-1 text-left text-[11px] shadow-sm hover:z-10 hover:shadow ${STATUS_STYLES[a.status]}`}
+                    className={`absolute overflow-hidden rounded px-1.5 py-1 text-left text-[11px] shadow-sm hover:z-10 hover:shadow ${a.tipo === "online" ? "border border-dashed" : "border-l-4"} ${STATUS_STYLES[a.status]}`}
                     style={{
                       top: top + 1,
                       height: h - 2,
@@ -399,7 +400,15 @@ function AgendaGrid({
                       width: `calc(${widthPct}% - 4px)`,
                     }}
                   >
-                    <p className="font-bold">{a.hora_inicio.slice(0, 5)}</p>
+                    <div className="flex items-center justify-between gap-1">
+                      <p className="font-bold">{a.hora_inicio.slice(0, 5)}</p>
+                      {a.tipo === "online" && (
+                        <span className="inline-flex items-center gap-0.5 rounded border border-current px-1 text-[9px] font-medium opacity-90">
+                          <Video className="h-2.5 w-2.5" />
+                          Online
+                        </span>
+                      )}
+                    </div>
                     <p className="truncate">{a.paciente?.nome ?? "—"}</p>
                     {a.profissional?.nome && (
                       <span
