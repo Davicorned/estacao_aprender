@@ -180,6 +180,85 @@ export type SitePagina = {
   order: number;
 };
 
+// ============ CONTATOS DO SITE (central) ============
+export type ContatoTelefone = {
+  id: string;
+  rotulo: string | null;
+  telefone_exibido: string;
+  whatsapp_enabled: boolean;
+  whatsapp_mensagem: string | null;
+  usar_no_botao_flutuante: boolean;
+  mostrar_no_header: boolean;
+  ordem: number;
+  enabled: boolean;
+};
+
+export type ContatoEmail = {
+  id: string;
+  rotulo: string | null;
+  email: string;
+  ordem: number;
+  enabled: boolean;
+};
+
+export type ContatoEndereco = {
+  id: string;
+  rotulo: string | null;
+  endereco_texto: string;
+  mapa_embed_url: string | null;
+  horarios: string | null;
+  ordem: number;
+  enabled: boolean;
+};
+
+export type SiteContatos = {
+  telefones: ContatoTelefone[];
+  emails: ContatoEmail[];
+  enderecos: ContatoEndereco[];
+};
+
+/** Gera link wa.me a partir do telefone exibido (extrai dígitos; prefixa 55 se BR). */
+export function buildWhatsappLink(
+  telefoneExibido: string,
+  mensagem?: string | null,
+): string {
+  let digits = (telefoneExibido || "").replace(/\D/g, "");
+  if (!digits) return "#";
+  if (digits.startsWith("0")) digits = digits.replace(/^0+/, "");
+  // Brasil sem DDI (10 ou 11 dígitos) → prefixa 55
+  if (digits.length === 10 || digits.length === 11) digits = "55" + digits;
+  const base = `https://wa.me/${digits}`;
+  const msg = (mensagem || "").trim();
+  return msg ? `${base}?text=${encodeURIComponent(msg)}` : base;
+}
+
+/** Retorna a href apropriada para um telefone: wa.me se WhatsApp, senão tel: */
+export function telefoneHref(t: ContatoTelefone): string {
+  if (t.whatsapp_enabled) return buildWhatsappLink(t.telefone_exibido, t.whatsapp_mensagem);
+  const digits = t.telefone_exibido.replace(/\D/g, "");
+  return digits ? `tel:${digits}` : "#";
+}
+
+export function pickBotaoFlutuante(telefones: ContatoTelefone[]): ContatoTelefone | null {
+  return (
+    telefones.find((t) => t.enabled && t.whatsapp_enabled && t.usar_no_botao_flutuante) ?? null
+  );
+}
+
+export function pickHeaderTelefone(telefones: ContatoTelefone[]): ContatoTelefone | null {
+  return telefones.find((t) => t.enabled && t.mostrar_no_header) ?? null;
+}
+
+export function pickWhatsappPrimario(telefones: ContatoTelefone[]): ContatoTelefone | null {
+  return telefones.find((t) => t.enabled && t.whatsapp_enabled) ?? null;
+}
+
+/** Rótulo → link wa.me/tel do primeiro telefone WhatsApp; fallback pra "#". */
+export function whatsappPrimarioHref(telefones: ContatoTelefone[]): string {
+  const t = pickWhatsappPrimario(telefones);
+  return t ? telefoneHref(t) : "#";
+}
+
 export const TEMA_DEFAULTS: Omit<SiteTema, "id"> = {
   cor_primaria: "#D67F43",
   cor_primaria_hover: "#C4682E",
