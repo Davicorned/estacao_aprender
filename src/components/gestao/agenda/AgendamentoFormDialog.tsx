@@ -27,6 +27,8 @@ import {
   addMin,
   checarConflito,
   checarConflitosLote,
+  checarConflitoPaciente,
+  checarConflitosPacienteLote,
   checarCapacidadeSalas,
   checarCapacidadeSalasLote,
   createAgendamento,
@@ -116,6 +118,7 @@ export function AgendamentoFormDialog({
   const [previewDatas, setPreviewDatas] = useState<string[]>([]);
   const [previewConflitos, setPreviewConflitos] = useState<Set<string>>(new Set());
   const [previewSemSala, setPreviewSemSala] = useState<Set<string>>(new Set());
+  const [previewConflitosPaciente, setPreviewConflitosPaciente] = useState<Set<string>>(new Set());
   const [previewSelecionadas, setPreviewSelecionadas] = useState<Set<string>>(new Set());
   const [previewLoading, setPreviewLoading] = useState(false);
 
@@ -304,11 +307,24 @@ export function AgendamentoFormDialog({
               qtdSalas,
             })
           : new Set<string>();
+      const conflitosPaciente = paciente
+        ? await checarConflitosPacienteLote({
+            pacienteId: paciente.id,
+            datas,
+            horaInicio,
+            horaFim,
+          })
+        : new Set<string>();
       setPreviewDatas(datas);
       setPreviewConflitos(conflitos);
       setPreviewSemSala(semSala);
+      setPreviewConflitosPaciente(conflitosPaciente);
       setPreviewSelecionadas(
-        new Set(datas.filter((d) => !conflitos.has(d) && !semSala.has(d))),
+        new Set(
+          datas.filter(
+            (d) => !conflitos.has(d) && !semSala.has(d) && !conflitosPaciente.has(d),
+          ),
+        ),
       );
       setPreviewOpen(true);
     } catch (e) {
@@ -345,6 +361,18 @@ export function AgendamentoFormDialog({
           setSaving(false);
           return;
         }
+        const confPac = await checarConflitoPaciente({
+          pacienteId: paciente!.id,
+          data,
+          horaInicio,
+          horaFim,
+          excludeId: agendamento.id,
+        });
+        if (confPac) {
+          toast.error("Este paciente já tem um agendamento neste horário.");
+          setSaving(false);
+          return;
+        }
         if (tipo === "presencial") {
           const cap = await checarCapacidadeSalas({
             data,
@@ -372,6 +400,17 @@ export function AgendamentoFormDialog({
         });
         if (conf) {
           toast.error("Já existe um agendamento neste horário");
+          setSaving(false);
+          return;
+        }
+        const confPac = await checarConflitoPaciente({
+          pacienteId: paciente!.id,
+          data,
+          horaInicio,
+          horaFim,
+        });
+        if (confPac) {
+          toast.error("Este paciente já tem um agendamento neste horário.");
           setSaving(false);
           return;
         }
@@ -826,13 +865,14 @@ export function AgendamentoFormDialog({
               {previewDatas.map((d) => {
                 const conf = previewConflitos.has(d);
                 const semSala = previewSemSala.has(d);
+                const confPac = previewConflitosPaciente.has(d);
                 const sel = previewSelecionadas.has(d);
                 const dt = parseIsoDate(d);
                 return (
                   <label
                     key={d}
                     className={`flex items-center gap-3 px-3 py-2 text-sm ${
-                      conf || semSala ? "bg-red-50" : "bg-white"
+                      conf || semSala || confPac ? "bg-red-50" : "bg-white"
                     }`}
                   >
                     <Checkbox
@@ -863,6 +903,11 @@ export function AgendamentoFormDialog({
                         SEM SALA
                       </span>
                     )}
+                    {!conf && !semSala && confPac && (
+                      <span className="rounded-full bg-red-200 px-2 py-0.5 text-[10px] font-semibold text-red-800">
+                        PACIENTE OCUPADO
+                      </span>
+                    )}
                   </label>
                 );
               })}
@@ -871,6 +916,8 @@ export function AgendamentoFormDialog({
               {previewSelecionadas.size} de {previewDatas.length} sessões serão criadas
               {previewConflitos.size > 0 && ` · ${previewConflitos.size} em conflito`}
               {previewSemSala.size > 0 && ` · ${previewSemSala.size} sem sala disponível`}
+              {previewConflitosPaciente.size > 0 &&
+                ` · ${previewConflitosPaciente.size} com paciente ocupado`}
               {contratoVinculadoId && " · vinculadas ao contrato"}
             </div>
             <DialogFooter>
