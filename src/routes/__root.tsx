@@ -18,6 +18,7 @@ import {
   fetchRodape,
   fetchTema,
   fetchHero,
+  fetchSiteContatos,
   HEADER_DEFAULTS,
   RODAPE_DEFAULTS,
   TEMA_DEFAULTS,
@@ -26,6 +27,9 @@ import {
   type SiteRodape,
   type SiteTema,
   type SiteHero,
+  type SiteContatos,
+  pickWhatsappPrimario,
+  telefoneHref,
 } from "../lib/cms";
 
 function NotFoundComponent() {
@@ -98,16 +102,24 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         return fallback;
       }
     };
-    const [header, rodape, tema, hero] = await Promise.all([
+    const [header, rodape, tema, hero, contatos] = await Promise.all([
       safe<SiteHeader | null>(fetchHeader, null),
       safe<SiteRodape | null>(fetchRodape, null),
       safe<SiteTema | null>(fetchTema, null),
       safe<SiteHero | null>(fetchHero, null),
+      safe<SiteContatos>(() => fetchSiteContatos(false), { telefones: [], emails: [], enderecos: [] }),
     ]);
     const h = { ...HEADER_DEFAULTS, ...(header ?? {}) } as SiteHeader;
     const r = { ...RODAPE_DEFAULTS, ...(rodape ?? {}) } as SiteRodape;
     const t = { ...TEMA_DEFAULTS, ...(tema ?? {}) } as SiteTema;
     const he = { ...HERO_DEFAULTS, ...(hero ?? {}) } as SiteHero;
+    const telefonePrimario = pickWhatsappPrimario(contatos.telefones);
+    const seoTelefone =
+      contatos.telefones.find((tt) => tt.enabled)?.telefone_exibido ??
+      r.telefone ?? null;
+    const seoTelefoneLink = telefonePrimario ? telefoneHref(telefonePrimario) : (r.telefone_link ?? null);
+    const seoEmail = contatos.emails[0]?.email ?? r.email ?? null;
+    const seoEndereco = contatos.enderecos[0]?.endereco_texto ?? r.endereco_texto ?? null;
     return {
       seo: {
         brand: h.nome_marca ?? "Estação Aprender",
@@ -116,10 +128,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         logoEscuro: t.logo_escuro_url ?? null,
         favicon: t.favicon_url ?? t.logo_url ?? null,
         heroImage: he.imagem_url ?? null,
-        telefone: r.telefone ?? null,
-        telefoneLink: r.telefone_link ?? null,
-        email: r.email ?? null,
-        endereco: r.endereco_texto ?? null,
+        telefone: seoTelefone,
+        telefoneLink: seoTelefoneLink,
+        email: seoEmail,
+        endereco: seoEndereco,
         redes: (r.redes_sociais ?? [])
           .map((s) => s?.url)
           .filter((u): u is string => !!u && u !== "#"),
@@ -131,6 +143,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         rodape: r,
         hero: he,
         tema: t,
+        contatos,
       },
     };
   },
