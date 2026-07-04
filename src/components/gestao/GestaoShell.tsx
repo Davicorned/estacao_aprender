@@ -229,6 +229,13 @@ function SidebarFooter({ onSignOut }: { onSignOut: () => void }) {
     <div className="space-y-1 p-3">
       <div className="my-3 border-t border-gray-200 dark:border-border" />
       <Link
+        to="/gestao/site/contatos"
+        className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
+      >
+        <Phone className="h-4 w-4" />
+        Contato
+      </Link>
+      <Link
         to="/gestao/configuracoes"
         className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 dark:text-muted-foreground dark:hover:bg-accent dark:hover:text-foreground"
       >
