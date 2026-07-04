@@ -133,7 +133,15 @@ export async function updatePaciente(
 
 export async function deletePaciente(id: string): Promise<void> {
   const { error } = await supabase.from("pacientes").delete().eq("id", id);
-  if (error) throw error;
+  if (error) {
+    // 23503 = foreign_key_violation
+    if ((error as { code?: string }).code === "23503") {
+      throw new Error(
+        "Não é possível excluir: existem agendamentos, contratos ou outros registros vinculados a este paciente. Inative-o em vez de excluir.",
+      );
+    }
+    throw error;
+  }
 }
 
 // ============ Stats de agendamentos ============

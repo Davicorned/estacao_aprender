@@ -339,7 +339,7 @@ export function PacienteForm({ paciente }: { paciente?: Paciente }) {
       void navigate({ to: "/gestao/pacientes" });
     } catch (err) {
       console.error(err);
-      toast.error("Erro ao excluir paciente");
+      toast.error(err instanceof Error ? err.message : "Erro ao excluir paciente");
     }
   }
 
