@@ -455,14 +455,6 @@ export async function checarCapacidadeSalas(params: {
   let pico = 0;
   for (const e of eventos) {
     atual += e.delta;
-    if (atual > pico) pico = e;
-    if (atual > pico) pico = atual;
-  }
-  // recomputa pico corretamente
-  atual = 0;
-  pico = 0;
-  for (const e of eventos) {
-    atual += e.delta;
     if (atual > pico) pico = atual;
   }
   return { ok: pico <= params.qtdSalas, pico };
