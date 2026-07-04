@@ -117,7 +117,7 @@ export function CTABanner({
           </div>
           <a
             id="whatsapp_start"
-            href={href}
+            href={finalHref}
             target={external ? "_blank" : undefined}
             rel={external ? "noopener noreferrer" : undefined}
             className="inline-flex h-11 w-full max-w-full shrink-0 items-center justify-center gap-2 rounded-full bg-[var(--site-primary)] px-6 text-sm font-medium text-white shadow-md transition-colors hover:bg-[var(--site-primary-hover)] sm:w-auto"
