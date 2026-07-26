@@ -45,9 +45,9 @@ export function Modalities({
                   <div className="p-8">
                     <div
                       className="mb-6 flex h-16 w-16 items-center justify-center rounded-2xl"
-                      style={{ backgroundColor: isVar ? undefined : `${cor}1A`, background: isVar ? "var(--site-eyebrow)" : undefined }}
+                      style={{ background: cor }}
                     >
-                      <Icon className="h-8 w-8" style={{ color: cor }} />
+                      <Icon className="h-8 w-8 text-white" />
                     </div>
                     <h3 className="mb-4 text-2xl font-bold text-gray-900">{c.titulo}</h3>
                     <p className="leading-relaxed text-gray-600">{c.descricao}</p>
