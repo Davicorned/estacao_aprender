@@ -36,7 +36,6 @@ export function Modalities({
           {cards.map((c, i) => {
             const Icon = getIcon(c.icone);
             const cor = c.cor || "var(--site-primary)";
-            const isVar = cor.startsWith("var(");
             const external = c.cta_link?.startsWith("http");
             return (
               <FadeUp key={`${c.titulo}-${i}`} delay={i * 0.1}>
